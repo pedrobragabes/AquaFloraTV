@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm --filter dashboard exec tsc --noEmit)",
+      "Bash(pnpm --filter dashboard run typecheck)",
+      "Bash(pnpm install *)"
+    ]
+  }
+}

@@ -166,7 +166,7 @@ export function DevicesDashboard() {
         <nav className="nav-list">
           <a href="/media">Midias</a>
           <a href="/playlists">Playlists</a>
-          <span>Agenda</span>
+          <a href="/schedule">Agenda</a>
           <a aria-current="page" href="/devices">
             TV Box
           </a>
