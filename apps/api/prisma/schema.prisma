@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  image     String?
+  role      String    @default("ADMIN")
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+}
+
+model Media {
+  id             String         @id @default(cuid())
+  filename       String
+  storedName     String         @unique
+  url            String
+  thumbnailUrl   String?
+  mimetype       String
+  sizeBytes      Int
+  durationMs     Int?
+  widthPx        Int?
+  heightPx       Int?
+  md5            String
+  uploadedBy     String?
+  createdAt      DateTime       @default(now())
+
+  playlistItems  PlaylistItem[]
+
+  @@index([createdAt])
+}
+
+model Playlist {
+  id          String         @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  items       PlaylistItem[]
+  schedules   Schedule[]
+
+  @@index([name])
+}
+
+model PlaylistItem {
+  id                 String   @id @default(cuid())
+  playlistId         String
+  mediaId            String
+  order              Int
+  durationOverrideMs Int?
+
+  playlist           Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  media              Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+
+  @@index([playlistId, order])
+  @@unique([playlistId, order])
+}
+
+model Schedule {
+  id         String    @id @default(cuid())
+  name       String
+  playlistId String
+  active     Boolean   @default(true)
+  priority   Int       @default(0)
+
+  daysOfWeek String?
+  startTime  String?
+  endTime    String?
+
+  startDate  DateTime?
+  endDate    DateTime?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  playlist   Playlist  @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+
+  @@index([active, priority])
+}
+
+model GlobalConfig {
+  id                String   @id @default("singleton")
+  defaultPlaylistId String?
+  updatedAt         DateTime @updatedAt
+}
+
+model Device {
+  id                String            @id @default(cuid())
+  name              String
+  token             String            @unique
+  lastSeenAt        DateTime?
+  appVersion        String?
+  deviceModel       String?
+  androidVersion    String?
+  freeDiskMb        Int?
+  totalDiskMb       Int?
+  uptimeSeconds     Int?
+  currentMediaId    String?
+  currentPlaylistId String?
+  networkType       String?
+  ipAddress         String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  logs              DeviceLog[]
+  heartbeats        DeviceHeartbeat[]
+
+  @@index([lastSeenAt])
+}
+
+model DeviceHeartbeat {
+  id             String   @id @default(cuid())
+  deviceId       String
+  timestamp      DateTime @default(now())
+  freeDiskMb     Int?
+  uptimeSeconds  Int?
+  appVersion     String?
+  currentMediaId String?
+  networkType    String?
+
+  device         Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+}
+
+model DeviceLog {
+  id        String   @id @default(cuid())
+  deviceId  String
+  timestamp DateTime @default(now())
+  level     String   @default("INFO")
+  event     String
+  message   String?
+  payload   String?
+
+  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, timestamp])
+  @@index([level])
+}
+
+model AppRelease {
+  id           String   @id @default(cuid())
+  versionCode  Int      @unique
+  versionName  String
+  apkUrl       String
+  apkSizeBytes Int
+  apkMd5       String
+  releaseNotes String?
+  channel      String   @default("STABLE")
+  mandatory    Boolean  @default(false)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  @@index([channel, active, versionCode])
+}
+
+model Account {
+  id                String   @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}

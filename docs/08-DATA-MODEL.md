@@ -1,5 +1,43 @@
 # 08 — Data Model (Prisma)
 
+## Atualizacao 2026-04-27 - schema implementado
+
+O schema real esta em `apps/api/prisma/schema.prisma` e hoje usa SQLite:
+
+```prisma
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+```
+
+Diferencas relevantes contra o plano MySQL abaixo:
+
+- enums foram implementados como `String` para manter simplicidade no SQLite;
+- `Schedule.daysOfWeek` e `DeviceLog.payload` foram implementados como `String` contendo JSON;
+- existe `GlobalConfig` singleton para guardar `defaultPlaylistId`;
+- tabelas NextAuth (`Account`, `Session`, `VerificationToken`) ja existem no schema, mas auth ainda nao foi ligada no dashboard;
+- migration inicial: `apps/api/prisma/migrations/20260427113000_init/migration.sql`;
+- seed: `apps/api/prisma/seed.ts`.
+
+Modelos atualmente implementados:
+
+- `User`
+- `Media`
+- `Playlist`
+- `PlaylistItem`
+- `Schedule`
+- `GlobalConfig`
+- `Device`
+- `DeviceHeartbeat`
+- `DeviceLog`
+- `AppRelease`
+- `Account`
+- `Session`
+- `VerificationToken`
+
+Ao migrar para Hostinger/MySQL no futuro, este documento precisa virar uma revisao real do schema, nao apenas trocar a connection string.
+
 Schema completo em Prisma, DB MySQL. Gerado em `apps/api/prisma/schema.prisma`.
 
 ```prisma
@@ -251,35 +289,42 @@ model VerificationToken {
 ## Notas de design
 
 ### Por que `storedName` separado de `filename`
+
 - `filename` preserva o original (ex: "promo-ração-premium.mp4") pra UI
 - `storedName` é UUID + ext pra evitar colisão no filesystem e problemas de encoding
 
 ### Por que `md5` e não `sha256`
+
 - MD5 é suficiente pra detecção de corruption (não é uso criptográfico)
 - Mais rápido de calcular em arquivos grandes
 - TV Box tem CPU limitada, MD5 stream faster
 
 ### Por que `durationOverrideMs` em PlaylistItem
+
 - Imagens não têm duração intrínseca — usuário define (default 10s)
 - Vídeo ignora esse campo (usa duração própria)
 - Permite customizar: "mostra essa imagem por 5s, essa por 15s"
 
 ### Por que `priority` em Schedule
+
 - Duas schedules podem sobrepor (ex: "quarta 9-18h" + "Black Friday quarta 10-16h")
 - A de maior prioridade vence no intervalo de overlap
 - Default 0, usuário aumenta pra sobrescrever
 
 ### Por que separar `Device` e `DeviceHeartbeat`
+
 - `Device.lastSeenAt` + métricas atuais = snapshot
 - `DeviceHeartbeat` = série temporal pra charts (uptime histórico)
 - Write intensivo (um por 30s) — separar evita mexer em row de device toda vez
 
 ### Por que não TTL nos heartbeats
+
 - MySQL não tem TTL nativo
 - Cron mensal limpa heartbeats > 90 dias (se DB crescer muito)
 - Pra MVP, sem preocupação — 30s × 30 dias × 1 device = ~86k rows, trivial
 
 ### `daysOfWeek Int[]` — nota
+
 - MySQL 5.7+ suporta JSON, mas Prisma mapeia `Int[]` de forma mais limpa em Postgres
 - Em MySQL 8+, Prisma usa `JSON` column
 - Se der atrito, alternativa: tabela `ScheduleDay` normalizada
@@ -334,6 +379,7 @@ async function getCurrentPlaylist(deviceId: string): Promise<Playlist | null> {
 ## Migrations futuras
 
 Candidatas conforme features entram:
+
 - `add_tags_to_media` — tags/categorias
 - `add_media_last_accessed_at` — suportar limpeza automática por inatividade (30-60 dias)
 - `add_banners` — banners dinâmicos (P2)

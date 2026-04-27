@@ -1,5 +1,32 @@
 # 02 — Arquitetura
 
+## Atualizacao 2026-04-27 - arquitetura real do MVP
+
+A arquitetura planejada abaixo ainda serve como visao de longo prazo, mas o MVP atual mudou para execucao local no PC do escritorio.
+
+Arquitetura implementada hoje:
+
+```text
+Diego (browser)
+  -> http://localhost:3000 ou http://IP-DO-PC:3000
+     Next.js dashboard
+       -> http://localhost:3001/api
+          Express API + Prisma + SQLite
+          storage/media
+
+Player
+  -> /player no dashboard, simulando a TV
+  -> registra device, busca current-playlist, toca midias em loop e envia heartbeat
+```
+
+Componentes implementados:
+
+- `apps/api`: Express, Prisma SQLite, upload com Multer, `/storage` estatico, playlists, schedules, devices, releases e SSE.
+- `apps/dashboard`: telas `/media`, `/playlists`, `/devices` e `/player`.
+- `scripts/windows`: start de producao local e registro no Task Scheduler.
+
+Hostinger/MySQL ficam como plano futuro se a loja precisar acesso externo/HTTPS publico. Para a operacao inicial, PC local + SQLite e suficiente e reduz pontos de falha.
+
 ## Visão geral
 
 Três componentes principais se comunicando via HTTPS público:
@@ -137,14 +164,15 @@ TV Box:
 
 Escolha: **híbrido poll (5min) + SSE push**.
 
-| | Poll puro | WebSocket/SSE puro | Híbrido |
-|---|---|---|---|
-| Simplicidade | ✅ trivial | ⚠️ reconnect logic | ✅ poll garante |
-| Latência | ❌ até 5 min | ✅ instantâneo | ✅ instantâneo quando conectado |
-| Resiliência | ✅ sem estado | ❌ falha se conexão cai | ✅ fallback pro poll |
-| Uso de bateria / CPU | ✅ baixo | ⚠️ conexão persistente | ✅ aceitável (TV tá sempre ligada) |
+|                      | Poll puro     | WebSocket/SSE puro      | Híbrido                            |
+| -------------------- | ------------- | ----------------------- | ---------------------------------- |
+| Simplicidade         | ✅ trivial    | ⚠️ reconnect logic      | ✅ poll garante                    |
+| Latência             | ❌ até 5 min  | ✅ instantâneo          | ✅ instantâneo quando conectado    |
+| Resiliência          | ✅ sem estado | ❌ falha se conexão cai | ✅ fallback pro poll               |
+| Uso de bateria / CPU | ✅ baixo      | ⚠️ conexão persistente  | ✅ aceitável (TV tá sempre ligada) |
 
 SSE (não WebSocket) porque:
+
 - Push é one-way (servidor → device)
 - SSE é HTTP comum, passa por proxy/CDN sem gambiarra
 - Reconnect automático built-in no browser/fetch
@@ -174,6 +202,7 @@ Capacidade: 50GB total, 6GB já usado por outros sites (Pedro), **~44GB livres**
 ### MySQL
 
 Schema mínimo em `docs/08-DATA-MODEL.md`. Tabelas core:
+
 - `Media` (arquivos enviados)
 - `Playlist` + `PlaylistItem`
 - `Schedule` (regras de quando rodar qual playlist)
@@ -197,20 +226,24 @@ Não é fortaleza bancária. É o suficiente pra uso comercial small-scale.
 ## Resiliência
 
 ### Se a internet da loja cair
+
 - TV Box continua tocando do cache local indefinidamente
 - Heartbeat para, dashboard mostra "offline há X min"
 - Quando volta: poll detecta mudanças e baixa novidades
 
 ### Se a Hostinger cair
+
 - TV Box continua tocando do cache local
 - Sem sync, sem update, sem dashboard até voltar
 - Fallback plan B: subir API no Proxmox de casa (doc `07-DEPLOY.md` tem o procedimento)
 
 ### Se o app crashar
+
 - Se AquaTV estiver como launcher (HOME intent), Android reinicia automaticamente
 - Se não, BOOT_COMPLETED receiver inicia no próximo reboot
 - Heartbeat ausente > 5 min = alerta no dashboard (email/push opcional)
 
 ### Se Diego derrubar o dashboard
+
 - Dashboard rodando na Hostinger, não tem como Diego "derrubar" do browser
 - Ele pode subir mídia corrompida — validação no upload bloqueia

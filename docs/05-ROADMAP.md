@@ -1,16 +1,49 @@
 # 05 — Roadmap
 
+## Estado real em 2026-04-27
+
+O roadmap original abaixo foi planejado para Hostinger + MySQL + Android cedo. A execucao mudou para um MVP local no PC do escritorio, com SQLite e player web simulado primeiro.
+
+Concluido hoje:
+
+- Monorepo funcional com pnpm/turbo.
+- API Express com Prisma SQLite, migration inicial e seed.
+- Upload/listagem/remocao de midias.
+- CRUD base de playlists, items e playlist default.
+- CRUD base de schedules e resolucao de playlist atual.
+- Registro de devices, heartbeat, current-playlist, logs e SSE/force-sync.
+- Dashboard `/media`, `/playlists`, `/devices`.
+- Player web `/player` para simular a TV.
+- Scripts Windows para start local e Task Scheduler.
+- `.gitignore` cobrindo logs, storage, SQLite DB e tsbuildinfo.
+
+Ainda pendente para considerar MVP operacional na loja:
+
+- Teste de boot real no PC do escritorio com Task Scheduler.
+- Liberar acesso pela rede local e firewall do Windows.
+- Tela `/schedule` para Diego configurar dia/hora sem API manual.
+- Backup simples do SQLite e da pasta `storage/`.
+- App Android TV real na STV-3000 Plus.
+
+Se a sessao cair ou acabar token, retomar por aqui:
+
+1. `git status --short`.
+2. `.\scripts\windows\start-aquatv.ps1`.
+3. Abrir `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/devices` e `http://localhost:3000/player`.
+4. Se a UI estiver sem estilo, encerrar processos antigos das portas 3000/3001 e iniciar de novo.
+5. Priorizar `/schedule` antes do Android, porque hoje playlist manual ja existe mas agendamento visual ainda nao.
+
 ## Resumo
 
 **5 fases, 19-27 dias de trabalho efetivo, 2-3 meses calendário** em ritmo de 2-4h/dia (side project tranquilo, chefe sem pressa).
 
-| Fase | Escopo | Estimativa | Dependências |
-|---|---|---|---|
-| Fase 0 | Setup | 1-2d | — |
-| Fase 1 | API + DB | 3-4d | Fase 0 |
-| Fase 2 | Android player | 7-10d | Fase 1 |
-| Fase 3 | Dashboard | 5-7d | Fase 1 |
-| Fase 4 | Polimento | 3-4d | Fase 2 + 3 |
+| Fase   | Escopo         | Estimativa | Dependências |
+| ------ | -------------- | ---------- | ------------ |
+| Fase 0 | Setup          | 1-2d       | —            |
+| Fase 1 | API + DB       | 3-4d       | Fase 0       |
+| Fase 2 | Android player | 7-10d      | Fase 1       |
+| Fase 3 | Dashboard      | 5-7d       | Fase 1       |
+| Fase 4 | Polimento      | 3-4d       | Fase 2 + 3   |
 
 Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo sequencial.
 
@@ -39,6 +72,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Testar deploy manual via SSH (apenas ver se funciona)
 
 ### Critério de aceite
+
 - `pnpm install` funciona na raiz
 - `pnpm dev` sobe dashboard + api localmente
 - Acesso a `app.aquafloragroshop.com.br` retorna hello world
@@ -91,6 +125,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Deploy automatizado (GitHub Actions → Hostinger SSH rsync)
 
 ### Critério de aceite
+
 - Todos endpoints respondem corretamente via HTTP client
 - Upload de arquivo de teste funciona e arquivo é servido de `/storage`
 - Migration aplicada em produção
@@ -135,6 +170,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Rodar 48h contínuo sem crash (smoke test)
 
 ### Critério de aceite
+
 - TV Box pega playlist da API em prod, baixa, toca em loop
 - Heartbeat aparece no dashboard (pode ser via DB query ainda, sem UI)
 - Forçando nova APK no endpoint `/api/app/latest`, device baixa + instala sozinho
@@ -142,6 +178,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - Religando internet, TV detecta mudanças em < 5 min
 
 ### Riscos específicos da Fase 2
+
 - `expo-video` bugar em Android TV 11 antigo → plano B `react-native-video`
 - `PackageInstaller` exigir permissão especial → documentar procedimento de setup
 - Vendor OTA resetar configs → desativar OTA no setup inicial
@@ -198,6 +235,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Deploy automatizado (GitHub Actions)
 
 ### Critério de aceite
+
 - Diego loga, faz upload, monta playlist, agenda, sync chega no device em ≤ 5 min
 - Diego vê device online em tempo real
 - Pedro sobe nova APK pelo dashboard e device baixa sozinho
@@ -227,6 +265,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Migração definitiva: cancelar Flux
 
 ### Critério de aceite
+
 - 2 semanas sem crash em produção
 - Diego consegue operar sozinho sem tirar dúvida
 - README bom o suficiente pra mostrar em portfólio

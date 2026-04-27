@@ -1,5 +1,53 @@
 # 07 — Deploy
 
+## Atualizacao 2026-04-27 - deploy local Windows
+
+O deploy primario atual nao e Hostinger. O MVP roda no PC do escritorio, iniciando junto com o Windows.
+
+### Start manual
+
+Na raiz do repo:
+
+```powershell
+.\scripts\windows\start-aquatv.ps1
+```
+
+O script:
+
+- define `NODE_ENV=production`;
+- define/cria `STORAGE_PATH`;
+- cria `logs/`;
+- aplica a migration SQLite inicial se `apps/api/prisma/dev.db` ainda nao existir;
+- roda seed;
+- executa `pnpm build`;
+- sobe API na porta `3001`;
+- sobe dashboard na porta `3000`.
+
+### Start automatico no logon
+
+```powershell
+.\scripts\windows\register-startup-task.ps1
+```
+
+Isso registra a task `AquaTV Local Server` no Task Scheduler. Proximo teste obrigatorio: reiniciar o PC e confirmar se `http://localhost:3000/media` e `http://localhost:3001/health` respondem sem intervencao manual.
+
+### Acesso pela rede local
+
+Para Diego/TV acessarem de outro aparelho:
+
+1. Descobrir o IP do PC do escritorio.
+2. Liberar as portas `3000` e `3001` no firewall do Windows.
+3. Acessar `http://IP-DO-PC:3000`.
+
+### Backup minimo
+
+Antes de operar na loja, criar rotina simples de copia para:
+
+- `apps/api/prisma/dev.db`
+- `storage/`
+
+Hostinger continua documentado abaixo como plano futuro para HTTPS publico.
+
 ## Visão geral
 
 **Dashboard + API** → Hostinger Business via SSH + rsync (GitHub Actions)
@@ -11,6 +59,7 @@
 ## Hostinger Business — setup inicial
 
 ### 1. Criar Node.js app
+
 Painel Hostinger → Avançado → Node.js
 
 - **Node.js version**: 20.x LTS
@@ -20,6 +69,7 @@ Painel Hostinger → Avançado → Node.js
 - **Environment variables** (ver seção abaixo)
 
 ### 2. Criar MySQL database
+
 Painel → Databases → MySQL
 
 - Database: `aquatv_prod`
@@ -29,11 +79,13 @@ Painel → Databases → MySQL
 - Grant all privileges
 
 Connection string:
+
 ```
 mysql://aquatv_user:<password>@localhost:3306/aquatv_prod
 ```
 
 ### 3. DNS
+
 Painel Hostinger → Domains → `aquafloragroshop.com.br` → DNS
 
 - Adicionar registro A ou CNAME: `app` → IP do servidor (ou CNAME pro apex)
@@ -42,11 +94,15 @@ Painel Hostinger → Domains → `aquafloragroshop.com.br` → DNS
 Propagação: 5-30 min. Testar via `dig app.aquafloragroshop.com.br`.
 
 ### 4. SSL
+
 Hostinger auto-provisiona Let's Encrypt. Forçar HTTPS:
+
 - Painel → SSL → Forçar HTTPS
 
 ### 5. SSH key pra GitHub Actions
+
 Gerar chave dedicada:
+
 ```bash
 ssh-keygen -t ed25519 -C "github-actions-aquatv" -f ~/.ssh/aquatv_deploy
 ```
@@ -153,6 +209,7 @@ Trigger: manual ou push de tag `player-v*`.
 ## Migrations
 
 ### Dev
+
 ```bash
 pnpm --filter api prisma migrate dev --name add_schedules
 ```
@@ -160,7 +217,9 @@ pnpm --filter api prisma migrate dev --name add_schedules
 Cria migration + aplica local + regenera client.
 
 ### Prod
+
 CI aplica automaticamente:
+
 ```bash
 pnpm --filter api prisma migrate deploy
 ```
@@ -168,7 +227,9 @@ pnpm --filter api prisma migrate deploy
 **Nunca usar `prisma db push` em produção** — só em dev/prototipagem.
 
 ### Rollback
+
 MySQL não tem rollback nativo de DDL. Plano:
+
 1. Backup antes de deploy via `mysqldump`
 2. Se deu ruim, restaura do backup
 3. Reverter commit da migration no repo
@@ -211,6 +272,7 @@ Não fica em `public_html` pra evitar listagem. API serve via rota `/storage/*` 
 ## Monitoramento
 
 Fase 4. Por enquanto:
+
 - Hostinger tem dashboard básico de CPU/RAM/disco
 - Logs da API via `pm2 logs` (Hostinger usa pm2 internamente)
 - Erros do app Expo: Sentry free tier (500 erros/mês)

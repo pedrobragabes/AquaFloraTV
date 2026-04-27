@@ -1,8 +1,48 @@
 # 09 — API Reference
 
+## Atualizacao 2026-04-27 - endpoints implementados localmente
+
+Base local atual:
+
+- API: `http://localhost:3001/api`
+- Health: `http://localhost:3001/health`
+- Storage: `http://localhost:3001/storage/...`
+
+Endpoints ja implementados:
+
+- `GET /api/media`
+- `POST /api/media/upload` com campo multipart `file`
+- `DELETE /api/media/:id`
+- `GET /api/playlists` (inclui `defaultPlaylistId`)
+- `POST /api/playlists`
+- `GET /api/playlists/default`
+- `PUT /api/playlists/default`
+- `GET /api/playlists/:id`
+- `PUT /api/playlists/:id`
+- `DELETE /api/playlists/:id`
+- `GET /api/schedules`
+- `POST /api/schedules`
+- `GET /api/schedules/current`
+- `GET /api/schedules/:id`
+- `PUT /api/schedules/:id`
+- `DELETE /api/schedules/:id`
+- `GET /api/devices`
+- `POST /api/devices`
+- `POST /api/devices/:id/heartbeat`
+- `GET /api/devices/:id/current-playlist`
+- `GET /api/devices/:id/stream`
+- `POST /api/devices/:id/force-sync`
+- `GET /api/devices/:id/logs`
+- `POST /api/devices/:id/logs`
+- `GET /api/devices/:id/heartbeats`
+- app releases base em `/api/app/...`
+
+Auth de browser ainda nao esta ativa; os endpoints administrativos estao abertos no MVP local. O token de device ja existe para registro/heartbeat/player.
+
 Base URL produção: `https://app.aquafloragroshop.com.br/api`
 
 Auth:
+
 - **Browser (Diego)**: session cookie via NextAuth
 - **Device (TV Box)**: header `Authorization: Bearer <device-token>`
 
@@ -13,12 +53,15 @@ Formato: JSON (exceto upload multipart e download de arquivos).
 ## Auth
 
 ### `GET /api/auth/session`
+
 Retorna sessão NextAuth. Usado pelo dashboard.
 
 ### `GET /api/auth/signin/google`
+
 Redirect pro OAuth Google.
 
 ### `POST /api/auth/signout`
+
 Encerra sessão.
 
 **Allowlist de emails** configurada via `ADMIN_EMAILS` env var. Qualquer outro email recebe 403.
@@ -28,14 +71,17 @@ Encerra sessão.
 ## Media
 
 ### `GET /api/media`
+
 Lista paginada.
 
 Query params:
+
 - `page` (int, default 1)
 - `pageSize` (int, default 20, max 100)
 - `search` (string, opcional)
 
 Response:
+
 ```json
 {
   "data": [
@@ -54,15 +100,18 @@ Response:
 ```
 
 ### `POST /api/media/upload`
+
 Upload multipart.
 
 Fields:
+
 - `file` (required, binário) — MP4, JPG ou PNG
 - `thumbnail` (optional, binário) — JPG gerado pelo ffmpeg.wasm
 - `duration` (optional, int) — duração em ms se vídeo
 - `width`, `height` (optional, int)
 
 Response 201:
+
 ```json
 {
   "id": "clx...",
@@ -74,6 +123,7 @@ Response 201:
 Limites: `MAX_UPLOAD_MB` (default 500). Rate: 10 uploads/min por user.
 
 ### `DELETE /api/media/:id`
+
 Apaga arquivo + row. Falha se mídia em alguma playlist (return 409, forçar via `?force=true`).
 
 ---
@@ -81,20 +131,25 @@ Apaga arquivo + row. Falha se mídia em alguma playlist (return 409, forçar via
 ## Playlists
 
 ### `GET /api/playlists`
+
 Lista todas.
 
 ### `GET /api/playlists/:id`
+
 Detalhe com items + media expandida.
 
 ### `POST /api/playlists`
+
 ```json
 { "name": "Promo Ração", "description": "Quartas 9-18h" }
 ```
 
 ### `PUT /api/playlists/:id`
+
 Atualiza nome/descrição e items (reorder, add, remove).
 
 Body:
+
 ```json
 {
   "name": "Promo Ração",
@@ -106,6 +161,7 @@ Body:
 ```
 
 ### `DELETE /api/playlists/:id`
+
 Apaga playlist. Se referenciada em schedule ativa, 409.
 
 ---
@@ -113,10 +169,13 @@ Apaga playlist. Se referenciada em schedule ativa, 409.
 ## Schedules
 
 ### `GET /api/schedules`
+
 Lista. Query param `active=true` pra filtrar.
 
 ### `POST /api/schedules`
+
 Recorrente:
+
 ```json
 {
   "name": "Quarta promo ração",
@@ -129,6 +188,7 @@ Recorrente:
 ```
 
 One-off:
+
 ```json
 {
   "name": "Black Friday",
@@ -140,12 +200,15 @@ One-off:
 ```
 
 ### `PUT /api/schedules/:id`
+
 ### `DELETE /api/schedules/:id`
 
 ### `GET /api/schedules/current`
+
 Debug: o que o agendador resolveria agora?
 
 Response:
+
 ```json
 {
   "now": "2026-04-23T14:30:00-03:00",
@@ -159,6 +222,7 @@ Response:
 ## Devices
 
 ### `POST /api/devices`
+
 Registra novo device. Gera token JWT.
 
 ```json
@@ -166,23 +230,27 @@ Registra novo device. Gera token JWT.
 ```
 
 Response 201:
+
 ```json
 {
   "id": "clx...",
   "name": "TV Balcão Aquaflora",
-  "token": "eyJhbGci..."  // JWT longo, Pedro cola no app
+  "token": "eyJhbGci..." // JWT longo, Pedro cola no app
 }
 ```
 
 Só retorna o token uma vez (Fase 4 pode adicionar rotate).
 
 ### `GET /api/devices`
+
 Lista todos. Admin only.
 
 ### `GET /api/devices/:id`
+
 Detalhe com últimos 20 heartbeats + stats.
 
 ### `POST /api/devices/:id/heartbeat`
+
 **Auth: device token.**
 
 ```json
@@ -200,17 +268,19 @@ Detalhe com últimos 20 heartbeats + stats.
 Response 204.
 
 ### `GET /api/devices/:id/current-playlist`
+
 **Auth: device token.**
 
 Retorna playlist que o device deve estar tocando agora. Avalia schedule.
 
 Response:
+
 ```json
 {
   "playlist": {
     "id": "clx...",
     "name": "Promo Ração",
-    "hash": "sha256:abc..."  // pro device comparar antes de baixar
+    "hash": "sha256:abc..." // pro device comparar antes de baixar
   },
   "items": [
     {
@@ -231,9 +301,11 @@ Response:
 ```
 
 ### `GET /api/devices/:id/stream`
+
 **Auth: device token.** Server-Sent Events.
 
 Eventos possíveis:
+
 - `sync` — device deve re-sincar agora
 - `update` — nova APK disponível
 - `ping` — keep-alive (a cada 20s)
@@ -247,14 +319,17 @@ data: {}
 ```
 
 ### `POST /api/devices/:id/force-sync`
+
 Admin dispara re-sync. Emite evento SSE no canal do device.
 
 Response 202.
 
 ### `GET /api/devices/:id/logs`
+
 Lista logs do device. Query: `level`, `event`, `from`, `to`, `limit`.
 
 ### `GET /api/devices/:id/heartbeats`
+
 Série temporal. Query: `from`, `to` (ISO datetime), `resolution` (minute/hour/day).
 
 ---
@@ -262,6 +337,7 @@ Série temporal. Query: `from`, `to` (ISO datetime), `resolution` (minute/hour/d
 ## App Releases
 
 ### `GET /api/app/latest`
+
 **Auth: device token.**
 
 Retorna último release do canal do device (stable por default).
@@ -279,9 +355,11 @@ Retorna último release do canal do device (stable por default).
 ```
 
 ### `GET /api/app/releases`
+
 Admin lista todas.
 
 ### `POST /api/app/releases`
+
 Admin cria (usado pelo CI após build).
 
 ```json
@@ -298,6 +376,7 @@ Admin cria (usado pelo CI após build).
 ```
 
 ### `PUT /api/app/releases/:id`
+
 Toggle `active`, update notes.
 
 ---
@@ -305,12 +384,15 @@ Toggle `active`, update notes.
 ## Storage (arquivos estáticos)
 
 ### `GET /storage/media/:filename`
+
 Serve arquivo de mídia. **Sem auth** (URL é secret enough via UUID). Cache headers longos.
 
 ### `GET /storage/thumbs/:filename`
+
 Thumbnail.
 
 ### `GET /storage/apks/:filename`
+
 APK pra download do device.
 
 ---
@@ -318,6 +400,7 @@ APK pra download do device.
 ## Errors
 
 Formato padrão:
+
 ```json
 {
   "error": {
@@ -329,6 +412,7 @@ Formato padrão:
 ```
 
 Códigos HTTP:
+
 - 400 — input inválido
 - 401 — não autenticado
 - 403 — sem permissão
@@ -341,11 +425,11 @@ Códigos HTTP:
 
 ## Rate limits
 
-| Rota | Limite |
-|---|---|
-| `POST /api/media/upload` | 10/min por user |
+| Rota                              | Limite                           |
+| --------------------------------- | -------------------------------- |
+| `POST /api/media/upload`          | 10/min por user                  |
 | `POST /api/devices/:id/heartbeat` | 60/min por device (30s × margem) |
-| Outros | 100/min por IP |
+| Outros                            | 100/min por IP                   |
 
 ---
 

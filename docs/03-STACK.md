@@ -1,5 +1,20 @@
 # 03 — Stack
 
+## Atualizacao 2026-04-27 - stack implementada
+
+O plano inicial abaixo citava Hostinger, MySQL, Tailwind, NextAuth e app Android como base imediata. A implementacao real do MVP local ficou mais simples:
+
+| Camada      | Implementado agora                       | Observacao                                             |
+| ----------- | ---------------------------------------- | ------------------------------------------------------ |
+| Monorepo    | pnpm workspaces + turborepo              | Mantido do plano original                              |
+| Dashboard   | Next.js 15 + TypeScript + CSS global     | Tailwind/NextAuth ainda nao entraram                   |
+| API         | Express + Prisma + SQLite + Multer + SSE | MySQL pausado porque o runtime primario virou PC local |
+| Storage     | pasta local `storage/`                   | Ignorada no git                                        |
+| Start local | PowerShell + Windows Task Scheduler      | Roda ao ligar/logar no Windows                         |
+| Android TV  | ainda nao implementado                   | Proxima etapa, usando `/player` como referencia        |
+
+Trade-off aceito: SQLite e menos "infra de producao" que MySQL, mas para um unico PC, uma loja e baixa concorrencia ele reduz instalacao, backup e manutencao. Se depois migrar para Hostinger, Prisma deixa a migracao para MySQL viavel com ajuste de schema/migration.
+
 ## Princípios da escolha
 
 1. **Custo zero incremental** — Hostinger já pago, tudo mais open source
@@ -33,42 +48,45 @@ aquatv/
 
 ## Dashboard — Next.js 15
 
-| Lib | Função | Por quê |
-|---|---|---|
-| Next.js 15 | Framework web | App Router + Server Actions maduros |
-| TypeScript | Tipagem | Cobre tudo |
-| Tailwind CSS | Styling | Produtividade, design system implícito |
-| NextAuth v5 (Auth.js) | Auth Google | Integração trivial com App Router |
-| SWR | Data fetching | Revalidação fácil, cache local |
-| dnd-kit | Drag and drop | Playlist reorder + agendador visual |
-| `ffmpeg.wasm` | Processamento client-side | Thumbnail + validação sem precisar de ffmpeg server |
-| react-hook-form | Formulários | Padrão de mercado |
-| zod | Validação | Runtime types, pareia com Prisma |
+| Lib                   | Função                    | Por quê                                             |
+| --------------------- | ------------------------- | --------------------------------------------------- |
+| Next.js 15            | Framework web             | App Router + Server Actions maduros                 |
+| TypeScript            | Tipagem                   | Cobre tudo                                          |
+| Tailwind CSS          | Styling                   | Produtividade, design system implícito              |
+| NextAuth v5 (Auth.js) | Auth Google               | Integração trivial com App Router                   |
+| SWR                   | Data fetching             | Revalidação fácil, cache local                      |
+| dnd-kit               | Drag and drop             | Playlist reorder + agendador visual                 |
+| `ffmpeg.wasm`         | Processamento client-side | Thumbnail + validação sem precisar de ffmpeg server |
+| react-hook-form       | Formulários               | Padrão de mercado                                   |
+| zod                   | Validação                 | Runtime types, pareia com Prisma                    |
 
 **Descartados**:
+
 - Chakra/MUI: pesado pra caso de uso simples
 - Redux: overkill pra estado local
 - tRPC: feature legal mas acrescenta camada; REST cobre tudo aqui
 
 ## API — Node + Express
 
-| Lib | Função | Por quê |
-|---|---|---|
-| Express 4 | Framework HTTP | Conhecido, simples, Hostinger suporta |
-| Prisma | ORM | Type-safe, migration system, DX top |
-| mysql2 | Driver MySQL | Driver oficial, Prisma usa |
-| Multer | Upload multipart | Padrão Express pra uploads |
-| jsonwebtoken | JWT do device | Token do player assinado |
-| zod | Validação de input | Mesmo da dashboard, compartilhável |
-| winston | Logs | Estruturado, útil pra debug |
-| express-rate-limit | Rate limit | Proteção mínima em upload |
+| Lib                | Função             | Por quê                               |
+| ------------------ | ------------------ | ------------------------------------- |
+| Express 4          | Framework HTTP     | Conhecido, simples, Hostinger suporta |
+| Prisma             | ORM                | Type-safe, migration system, DX top   |
+| mysql2             | Driver MySQL       | Driver oficial, Prisma usa            |
+| Multer             | Upload multipart   | Padrão Express pra uploads            |
+| jsonwebtoken       | JWT do device      | Token do player assinado              |
+| zod                | Validação de input | Mesmo da dashboard, compartilhável    |
+| winston            | Logs               | Estruturado, útil pra debug           |
+| express-rate-limit | Rate limit         | Proteção mínima em upload             |
 
 **Escolhido Express sobre alternatives**:
+
 - Fastify: mais rápido mas ecossistema menor
 - Hono: moderno mas experimental pra prod
 - Next.js API Routes: acoplaria dashboard e API (separação explícita é melhor)
 
 **SSE em vez de WebSocket**:
+
 - Push é one-way
 - SSE = HTTP, passa por qualquer proxy
 - Reconnect built-in
@@ -76,18 +94,19 @@ aquatv/
 
 ## Player Android — Expo bare
 
-| Lib | Função | Por quê |
-|---|---|---|
-| Expo SDK 50+ (bare workflow) | Framework RN | Autoupdate, file system, background fetch |
-| React Native 0.73+ | Base | Obviously |
-| expo-video | Playback | Novo API Expo, melhor que expo-av |
-| expo-file-system | Storage local | Cache de vídeos + APK |
-| expo-background-fetch | Sync periódica | Poll a cada 5min mesmo app em background |
-| expo-screen-orientation | Lock portrait | Forçar orientação vertical |
-| expo-crypto | MD5 validation | Checar integridade do download |
-| expo-updates | OTA de JS | Update hot de código JS sem rebuild APK |
+| Lib                          | Função         | Por quê                                   |
+| ---------------------------- | -------------- | ----------------------------------------- |
+| Expo SDK 50+ (bare workflow) | Framework RN   | Autoupdate, file system, background fetch |
+| React Native 0.73+           | Base           | Obviously                                 |
+| expo-video                   | Playback       | Novo API Expo, melhor que expo-av         |
+| expo-file-system             | Storage local  | Cache de vídeos + APK                     |
+| expo-background-fetch        | Sync periódica | Poll a cada 5min mesmo app em background  |
+| expo-screen-orientation      | Lock portrait  | Forçar orientação vertical                |
+| expo-crypto                  | MD5 validation | Checar integridade do download            |
+| expo-updates                 | OTA de JS      | Update hot de código JS sem rebuild APK   |
 
 **Bare workflow (não managed)** porque:
+
 - Precisamos mexer no `AndroidManifest.xml` (LEANBACK, HOME intent, permissions)
 - Permite integrar código nativo customizado se necessário
 - Auto-update via `PackageInstaller` nativo exige acesso ao manifest
@@ -134,6 +153,7 @@ aquatv/
 ### `@aquatv/types`
 
 Tipos compartilhados entre dashboard, api e player:
+
 - `Media`, `Playlist`, `PlaylistItem`, `Schedule`
 - `Device`, `DeviceHeartbeat`, `DeviceLog`
 - `AppRelease`
@@ -144,6 +164,7 @@ Gerado parcialmente a partir do `schema.prisma` via `prisma generate`.
 ### `@aquatv/api-client`
 
 Wrapper fetch tipado pra consumir a API:
+
 - Re-exporta tipos do `@aquatv/types`
 - Client único usável no Next.js e no Expo
 - Handling de auth (JWT ou session)
@@ -164,17 +185,17 @@ Wrapper fetch tipado pra consumir a API:
 
 ## Resumo em uma tabela
 
-| Camada | Tech | Alternativa descartada | Razão |
-|---|---|---|---|
-| Monorepo | pnpm + turbo | Nx | Simplicidade |
-| Dashboard | Next.js 15 | Remix | Familiaridade |
-| Styling | Tailwind | CSS Modules | Velocidade |
-| Auth | NextAuth v5 | Custom JWT | Google OAuth trivial |
-| API | Express | Fastify | Ecossistema |
-| ORM | Prisma | TypeORM | DX |
-| DB | MySQL | Postgres | Hostinger default |
-| Mobile | Expo bare | RN CLI puro | Tooling Expo |
-| Video player | expo-video | react-native-video | Moderno (com fallback) |
-| Sync push | SSE | WebSocket | Simpler, one-way basta |
-| Host | Hostinger | Proxmox/Vercel | Já pago + SLA |
-| Build APK | EAS | Android Studio local | Zero setup |
+| Camada       | Tech         | Alternativa descartada | Razão                  |
+| ------------ | ------------ | ---------------------- | ---------------------- |
+| Monorepo     | pnpm + turbo | Nx                     | Simplicidade           |
+| Dashboard    | Next.js 15   | Remix                  | Familiaridade          |
+| Styling      | Tailwind     | CSS Modules            | Velocidade             |
+| Auth         | NextAuth v5  | Custom JWT             | Google OAuth trivial   |
+| API          | Express      | Fastify                | Ecossistema            |
+| ORM          | Prisma       | TypeORM                | DX                     |
+| DB           | MySQL        | Postgres               | Hostinger default      |
+| Mobile       | Expo bare    | RN CLI puro            | Tooling Expo           |
+| Video player | expo-video   | react-native-video     | Moderno (com fallback) |
+| Sync push    | SSE          | WebSocket              | Simpler, one-way basta |
+| Host         | Hostinger    | Proxmox/Vercel         | Já pago + SLA          |
+| Build APK    | EAS          | Android Studio local   | Zero setup             |
