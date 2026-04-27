@@ -244,7 +244,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 
 ## Fase 4 — Polimento (3-4 dias)
 
-**Objetivo**: produto pronto pra substituir o Flux em produção com confiança.
+**Objetivo**: produto pronto pra assumir produção com confiança.
 
 ### Tasks
 
@@ -261,8 +261,8 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
   - [ ] `docs/runbook.md` — como resolver os 10 problemas mais prováveis
   - [ ] `docs/operacao-diego.md` — manual do usuário
 - [ ] README matador com screenshots + diagrama
-- [ ] Smoke test 2 semanas em paralelo com Flux
-- [ ] Migração definitiva: cancelar Flux
+- [ ] Smoke test 2 semanas em paralelo com a solução atual
+- [ ] Migração definitiva: desativar a solução atual
 
 ### Critério de aceite
 
@@ -278,7 +278,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - **Semana 2-3**: Fase 2 (Android, onde vai doer mais)
 - **Semana 4-5**: Fase 3 (Dashboard)
 - **Semana 6**: Fase 4 (Polimento)
-- **Semana 7-8**: Smoke test em paralelo com Flux
-- **Semana 9**: Migração + cancelamento do Flux
+- **Semana 7-8**: Smoke test em paralelo com a solução atual
+- **Semana 9**: Migração + desativação da solução atual
 
 **Total: ~2 meses calendário.**

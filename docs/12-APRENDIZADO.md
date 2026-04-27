@@ -86,7 +86,7 @@ A maioria de projetos de portfólio cobre 1-2 dos acima. **Esse cobre os 5.**
 - Disaster recovery (backup DB, plano B Proxmox)
 
 ### Product thinking
-- Identificação de gaps do concorrente (Flux Digital)
+- Identificação de gaps da solução atual de mercado
 - Priorização com matriz P0/P1/P2/P3
 - Métricas de sucesso explícitas
 - Escopo com "NÃO está no escopo" declarado
@@ -154,7 +154,7 @@ Além das skills, Pedro sai com:
 - [ ] **Primeira experiência com cliente externo** — lidar com Diego como usuário real
 - [ ] **Portfolio piece que rende conversa** — entrevistador tem muito o que perguntar
 - [ ] **Base pra futuros projetos** — arquitetura reutilizável pra sistema conectado (IoT, kiosk, edge)
-- [ ] **Potencial spin-off** — se o resultado for bom, vira SaaS próprio (concorrente do Flux)
+- [ ] **Potencial spin-off** — se o resultado for bom, vira SaaS próprio no segmento
 
 ---
 
@@ -166,6 +166,6 @@ Além das skills, Pedro sai com:
 - ⭐ **Fase 2.5**: auto-update da APK funciona (NUNCA MAIS SUBIR ESCADA)
 - ⭐ **Fase 3 concluída**: Diego consegue operar o sistema sozinho
 - ⭐ **Fase 4 concluída**: 2 semanas estável em produção
-- 🎉 **Marco principal**: cancelar Flux Digital e comemorar
+- 🎉 **Marco principal**: desativar a plataforma anterior e comemorar
 
 Cada marco vale um tweet, post no LinkedIn, commit screenshot. **Compartilhar o processo ao longo do caminho é parte do valor do portfólio**, não só o produto final.

@@ -2,12 +2,12 @@
 
 ## Priorização
 
-- **P0** — MVP obrigatório (paridade com Flux Digital)
+- **P0** — MVP obrigatório (paridade com a solução atual)
 - **P1** — Diferenciais chave (justificam o custo de construir)
 - **P2** — Polimento e qualidade
 - **P3** — Futuro (não entra no MVP)
 
-## P0 — Paridade com Flux Digital
+## P0 — Paridade com a solução atual
 
 ### Upload de mídia
 - [ ] Drag-and-drop de arquivos no dashboard
@@ -57,7 +57,7 @@
 ## P1 — Diferenciais chave
 
 ### 🌟 Agendamento contextual
-**Motivação**: Flux só tem playlist linear. Diego quer "quarta de 9-18h roda promo ração" sem precisar trocar manualmente toda semana.
+**Motivação**: A solução atual só tem playlist linear. Diego quer "quarta de 9-18h roda promo ração" sem precisar trocar manualmente toda semana.
 
 - [ ] Criar `Schedule` associando playlist a janela temporal
 - [ ] Grade visual semanal no dashboard (estilo Google Calendar)
@@ -70,7 +70,7 @@
 - [ ] API avalia schedule server-side em `/api/devices/:id/current-playlist`
 
 ### 🌟 Auto-update da APK
-**Motivação**: Pedro sobe escada hoje com pendrive toda vez que precisa atualizar o Flux. Chega.
+**Motivação**: Pedro sobe escada hoje com pendrive toda vez que precisa atualizar o player atual. Chega.
 
 - [ ] Tabela `AppRelease` no DB (version, url, md5, mandatory, notes)
 - [ ] Endpoint `/api/app/latest` retorna último release
@@ -82,7 +82,7 @@
 - [ ] Rollback manual: Pedro volta uma release anterior como "latest" se nova bugar
 
 ### Métricas ricas de device
-**Motivação**: Flux só mostra online/offline. Diego/Pedro querem saber o que tá rolando.
+**Motivação**: A solução atual só mostra online/offline. Diego/Pedro querem saber o que tá rolando.
 
 - [ ] Heartbeat envia: uptime, freeDisk, currentMediaId, appVersion, lastSyncAt, networkType
 - [ ] Dashboard mostra card por device com todas métricas
@@ -135,12 +135,12 @@
 
 ### Operação
 - [ ] Multi-tenant (atender outras lojas com a mesma infra)
-- [ ] Plano de assinatura (vira SaaS próprio — concorrente do Flux)
+- [ ] Plano de assinatura (vira SaaS próprio no segmento)
 - [ ] Billing integrado
 
-## Feature matrix: AquaTV vs Flux Digital
+## Feature matrix: AquaTV vs solução atual
 
-| Feature | Flux Digital | AquaTV (MVP) | AquaTV (full) |
+| Feature | Solução atual | AquaTV (MVP) | AquaTV (full) |
 |---|---|---|---|
 | Upload mídia | ✅ | ✅ | ✅ |
 | Playlist | ✅ | ✅ | ✅ |

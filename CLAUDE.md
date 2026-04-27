@@ -4,7 +4,7 @@ Este arquivo é lido automaticamente por agentes Claude ao abrir o projeto. Mant
 
 ## O que é
 
-Digital signage customizado para a loja **Aquaflora Grow Shop** (aquário). Substitui o serviço SaaS Flux Digital (R$35/mês) por uma stack própria, oferecendo features que o Flux não tem: **agendamento contextual por dia/hora** e **auto-update da APK**.
+Digital signage customizado para a loja **Aquaflora Grow Shop** (aquário). Usa uma stack própria com **agendamento contextual por dia/hora** e **auto-update da APK**.
 
 ## Quem é quem
 
@@ -48,7 +48,7 @@ Roadmap completo: `docs/05-ROADMAP.md`.
 
 - **Hostinger** (não Proxmox) — já pago, SLA profissional, elimina dependência da casa do Pedro
 - **MySQL** (não Postgres) — default da Hostinger, Prisma suporta tranquilo
-- **Portrait no app** (não pré-rotação server-side) — Flux já provou que resolve via código Expo
+- **Portrait no app** (não pré-rotação server-side) — abordagem já validada via código Expo
 - **Poll + SSE híbrido** — baseline 5min + push instantâneo via SSE
 - **App como launcher** (kiosk mode) — boot direto, auto-restart grátis via OS
 - **ffmpeg.wasm no browser** — Hostinger não roda ffmpeg server-side
@@ -57,7 +57,7 @@ ADRs completos: `docs/11-DECISOES.md`.
 
 ## Features core
 
-1. **Upload + playlist manual** (paridade Flux)
+1. **Upload + playlist manual** (baseline do MVP)
 2. **Agendamento contextual** — grade semanal visual, banners temporários, pré-agendamento sazonal (DIFERENCIAL)
 3. **Auto-update da APK** — app baixa nova versão sozinho, Pedro nunca mais sobe escada com pendrive (DIFERENCIAL)
 4. **Métricas ricas de device** — uptime, espaço livre, mídia atual, histórico
@@ -66,7 +66,7 @@ Detalhes: `docs/04-FEATURES.md`.
 
 ## Device em produção
 
-**Aquário STV-3000 Plus**, Android TV 11, patch de segurança 2021-10, launcher vendor "Aquário V5.5.5". Flux Digital já rodou nele — Android TV 11 + portrait + sideload via pendrive todos confirmados funcionando. Setup específico: `docs/06-DEVICE-SETUP.md`.
+**Aquário STV-3000 Plus**, Android TV 11, patch de segurança 2021-10, launcher vendor "Aquário V5.5.5". Uma plataforma anterior já rodou nele — Android TV 11 + portrait + sideload via pendrive confirmados funcionando. Setup específico: `docs/06-DEVICE-SETUP.md`.
 
 ## Riscos abertos
 

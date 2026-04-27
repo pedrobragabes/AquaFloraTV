@@ -108,7 +108,7 @@ TV na loja é vertical. Opções pra fazer o vídeo tocar certo:
 
 ### Consequências
 
-✅ Flux Digital prova que funciona — corrigiu bug de orientação via update do app
+✅ Validação em plataforma anterior prova que funciona — bug de orientação foi resolvido via update do app
 ✅ Elimina necessidade de ffmpeg server-side (confirma ADR-001)
 ✅ Diego sobe vídeo "tal qual recebe" (reels do Instagram são nativamente portrait)
 ⚠️ Risco: overlays do sistema (volume, notificações) podem quebrar layout — aceitável pra signage fechada

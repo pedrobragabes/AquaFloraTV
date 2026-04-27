@@ -8,9 +8,9 @@ A TV tem dois papéis:
 1. **Entretenimento passivo** pro cliente enquanto espera atendimento
 2. **Marketing direcionado** mostrando promoções, produtos novos, reels institucionais
 
-## Sistema atual (Flux Digital)
+## Sistema atual (plataforma de mercado)
 
-Hoje a loja usa o **Flux Digital** (`app.fluxdigital.com`), um SaaS de digital signage:
+Hoje a loja usa uma **plataforma SaaS de digital signage**:
 
 - **Custo**: R$35/mês
 - **Funcionalidade**: upload de mídia, montagem de playlist, push pra dispositivo, status online/offline
@@ -21,7 +21,7 @@ Hoje a loja usa o **Flux Digital** (`app.fluxdigital.com`), um SaaS de digital s
   - Sem histórico de uptime, sem analytics de mídia
   - Multi-device não testado (pode ter limitação por plano)
 
-O Flux funciona bem pro básico, mas tem teto baixo de customização.
+A plataforma atual funciona bem pro básico, mas tem teto baixo de customização.
 
 ## Quem é quem
 
@@ -36,7 +36,7 @@ O Flux funciona bem pro básico, mas tem teto baixo de customização.
 ### Diego (cliente / chefe)
 - Dono da Aquaflora Grow Shop
 - Faz upload do conteúdo, monta playlists
-- Hoje usa Flux Digital
+- Hoje usa plataforma SaaS de signage
 - **Sem pressa** — prefere qualidade sobre velocidade
 - Valoriza economia recorrente e independência de vendor
 
@@ -47,8 +47,8 @@ O Flux funciona bem pro básico, mas tem teto baixo de customização.
 - Custo incremental zero (Hostinger já pago, domínio já comprado)
 
 ### Estratégica
-- **Independência de vendor** — se Flux subir preço / mudar políticas / sumir, loja não fica refém
-- **Features sob medida** — agendamento contextual é impossível no Flux; trivial no sistema próprio
+- **Independência de vendor** — se o fornecedor subir preço / mudar políticas / sumir, loja não fica refém
+- **Features sob medida** — agendamento contextual não existe na solução atual; trivial no sistema próprio
 - **Escala** — infra suporta adicionar outras TVs em futuras lojas sem custo adicional
 
 ### Pedro (aprendizado)
@@ -63,7 +63,7 @@ Vale muito mais no currículo que "mais um CRUD".
 
 ## Critérios de sucesso
 
-### Paridade mínima com Flux Digital
+### Paridade mínima com a solução atual
 - [ ] Diego faz upload de mídia via browser
 - [ ] Diego monta playlist com drag-and-drop
 - [ ] Diego vê status online/offline do device
@@ -78,7 +78,7 @@ Vale muito mais no currículo que "mais um CRUD".
 - [ ] Dashboard mostra uptime, espaço livre, mídia atual, histórico de sync
 
 ### Operacionais
-- [ ] Sistema roda estável ≥ 2 semanas antes de desativar o Flux
+- [ ] Sistema roda estável ≥ 2 semanas antes de desativar a solução atual
 - [ ] Documentação suficiente pra Diego operar sozinho
 - [ ] Runbook de troubleshooting pra Pedro em caso de quebra
 

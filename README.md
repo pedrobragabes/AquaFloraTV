@@ -1,6 +1,6 @@
 # AquaTV
 
-Digital signage customizado para a AquaFlora AgroShop. O objetivo e substituir o Flux Digital por uma stack propria, com upload de midias, playlists, agendamento contextual e, em fase futura, app Android TV com auto-update de APK.
+Digital signage customizado para a AquaFlora AgroShop. O objetivo e operar uma stack propria, com upload de midias, playlists, agendamento contextual e, em fase futura, app Android TV com auto-update de APK.
 
 ## Estado atual - 2026-04-27
 

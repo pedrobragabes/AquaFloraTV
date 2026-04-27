@@ -4,7 +4,7 @@ Este arquivo e lido automaticamente por agentes Codex ao abrir o projeto. Ele de
 
 ## O que e
 
-Digital signage customizado para a loja **Aquaflora Grow Shop**. Substitui o Flux Digital por uma stack propria com upload de midia, playlists, agendamento contextual e, depois, auto-update da APK.
+Digital signage customizado para a loja **Aquaflora Grow Shop** com stack propria para upload de midia, playlists, agendamento contextual e, depois, auto-update da APK.
 
 ## Quem e quem
 
