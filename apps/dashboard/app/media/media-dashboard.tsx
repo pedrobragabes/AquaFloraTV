@@ -178,7 +178,7 @@ export function MediaDashboard() {
             Mídias
           </a>
           <a href="/playlists">Playlists</a>
-          <span>Agenda</span>
+          <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
           <span>APKs</span>
         </nav>
