@@ -10,42 +10,44 @@
 ## P0 — Paridade com a solução atual
 
 ### Upload de mídia
-- [ ] Drag-and-drop de arquivos no dashboard
-- [ ] Formatos aceitos: MP4 (H.264), JPG, PNG
-- [ ] Limite de tamanho por arquivo (300MB)
+- [x] Drag-and-drop de arquivos no dashboard
+- [x] Formatos aceitos: MP4 (H.264), JPG, PNG
+- [x] Limite de tamanho por arquivo (300MB)
 - [ ] Validação client-side via `ffmpeg.wasm` (codec + resolução)
 - [ ] Geração de thumbnail automática (frame 1s pra vídeos)
 - [ ] Barra de progresso durante upload
 - [ ] Preview inline antes de adicionar à playlist
 
 ### Gestão de playlists
-- [ ] Criar playlist com nome
-- [ ] Adicionar mídias à playlist
+- [x] Criar playlist com nome
+- [x] Adicionar mídias à playlist
 - [ ] Reordenar via drag-and-drop (dnd-kit)
 - [ ] Tempo de exibição por imagem (default 10s, configurável)
-- [ ] Remover item da playlist
+- [x] Remover item da playlist
 - [ ] Deletar playlist inteira
 - [ ] Duplicar playlist
 
 ### Player Android
+**Status atual**: implementado parcialmente no player web `/player` (simulador), app Android real ainda pendente.
+
 - [ ] App roda na TV Box ao boot (auto-start)
-- [ ] Baixa a playlist ativa via API
+- [x] Baixa a playlist ativa via API (no player web)
 - [ ] Cache local só da playlist ativa + fallback
 - [ ] Validação MD5 no download
-- [ ] Playback loop contínuo
+- [x] Playback loop contínuo (no player web)
 - [ ] Orientação portrait travada
-- [ ] Sem som (playback muted)
-- [ ] Transição instantânea entre mídias (sem fade por ora)
+- [x] Sem som (playback muted)
+- [x] Transição instantânea entre mídias (sem fade por ora)
 - [ ] Continua tocando do cache se internet cair
 - [ ] Limpeza automática de arquivos órfãos no cache local
 
 ### Status básico
-- [ ] Dashboard mostra device online/offline
-- [ ] Heartbeat do device a cada 30s
-- [ ] Indicador visual na lista de devices
+- [x] Dashboard mostra device online/offline
+- [x] Heartbeat do device a cada 30s
+- [x] Indicador visual na lista de devices
 
 ### Sincronização
-- [ ] Device detecta nova versão da playlist em ≤ 5 min
+- [x] Device detecta nova versão da playlist em ≤ 5 min (polling no player web)
 - [ ] Download incremental (só mídias novas)
 - [ ] Botão "Sincronizar agora" no dashboard → push SSE → sync imediato
 
@@ -59,21 +61,22 @@
 ### 🌟 Agendamento contextual
 **Motivação**: A solução atual só tem playlist linear. Diego quer "quarta de 9-18h roda promo ração" sem precisar trocar manualmente toda semana.
 
-- [ ] Criar `Schedule` associando playlist a janela temporal
-- [ ] Grade visual semanal no dashboard (estilo Google Calendar)
+- [x] Criar `Schedule` associando playlist a janela temporal
+- [x] Grade visual semanal no dashboard
 - [ ] Arrasta playlist pros slots (dnd-kit)
-- [ ] Regra de prioridade quando slots sobrepõem (maior prioridade vence)
+- [x] Regra de prioridade quando slots sobrepõem (maior prioridade vence)
 - [ ] Agendamento único (one-off, ex: "Black Friday")
-- [ ] Agendamento recorrente (ex: "toda quarta 9-18h")
-- [ ] Preview: "o que estaria tocando agora?" / "o que vai tocar às 15h?"
-- [ ] Default playlist ("fallback") quando nenhum schedule aplicável
-- [ ] API avalia schedule server-side em `/api/devices/:id/current-playlist`
+- [x] Agendamento recorrente (ex: "toda quarta 9-18h")
+- [x] Preview: "o que estaria tocando agora?"
+- [ ] Preview: "o que vai tocar às 15h?"
+- [x] Default playlist ("fallback") quando nenhum schedule aplicável
+- [x] API avalia schedule server-side em `/api/devices/:id/current-playlist`
 
 ### 🌟 Auto-update da APK
 **Motivação**: Pedro sobe escada hoje com pendrive toda vez que precisa atualizar o player atual. Chega.
 
-- [ ] Tabela `AppRelease` no DB (version, url, md5, mandatory, notes)
-- [ ] Endpoint `/api/app/latest` retorna último release
+- [x] Tabela `AppRelease` no DB (version, url, md5, mandatory, notes)
+- [x] Endpoint `/api/app/latest` retorna último release
 - [ ] Dashboard: página "Releases" pra subir nova APK
 - [ ] App checa no boot (+ a cada 24h): se versão nova, baixa
 - [ ] Valida MD5 após download
@@ -105,13 +108,13 @@
 
 - [ ] Dark mode no dashboard (padrão atual)
 - [ ] Modo claro opcional
-- [ ] Mobile-responsive dashboard (Diego pode gerenciar do celular)
+- [x] Mobile-responsive dashboard (Diego pode gerenciar do celular)
 - [ ] Notificação email quando device offline > 15 min
 - [ ] Log exportável (CSV) de uptime
 - [ ] Transição fade entre mídias (tempo configurável)
 - [ ] Imagens com zoom/pan lento (efeito Ken Burns) — opcional
 - [ ] QR code da loja nas mídias (sobreposto em canto)
-- [ ] Player modo "preview" no dashboard (tocar playlist no browser)
+- [x] Player modo "preview" no dashboard (tocar playlist no browser)
 - [ ] Busca no histórico de mídias
 - [ ] Tags/categorias nas mídias (filtro)
 
@@ -148,9 +151,9 @@
 | Online/offline | ✅ | ✅ | ✅ |
 | Agendamento por hora/dia | ❌ | ✅ | ✅ |
 | Banners dinâmicos | ❌ | ⏳ P2 | ✅ |
-| Auto-update APK | ❌ | ✅ | ✅ |
-| Métricas detalhadas | ❌ | ✅ | ✅ |
-| Histórico de uptime | ❌ | ✅ | ✅ |
+| Auto-update APK | ❌ | ⏳ backend parcial | ✅ |
+| Métricas detalhadas | ❌ | ⏳ parcial | ✅ |
+| Histórico de uptime | ❌ | ⏳ P2 | ✅ |
 | Multi-device | ❓ (não testado) | ⏳ P3 | ✅ |
 | Custo | R$35/mês | R$0 | R$0 |
 | Independência de vendor | ❌ | ✅ | ✅ |

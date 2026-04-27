@@ -12,7 +12,7 @@ Concluido hoje:
 - CRUD base de playlists, items e playlist default.
 - CRUD base de schedules e resolucao de playlist atual.
 - Registro de devices, heartbeat, current-playlist, logs e SSE/force-sync.
-- Dashboard `/media`, `/playlists`, `/devices`.
+- Dashboard `/media`, `/playlists`, `/schedule`, `/devices`.
 - Player web `/player` para simular a TV.
 - Scripts Windows para start local e Task Scheduler.
 - `.gitignore` cobrindo logs, storage, SQLite DB e tsbuildinfo.
@@ -21,7 +21,7 @@ Ainda pendente para considerar MVP operacional na loja:
 
 - Teste de boot real no PC do escritorio com Task Scheduler.
 - Liberar acesso pela rede local e firewall do Windows.
-- Tela `/schedule` para Diego configurar dia/hora sem API manual.
+- Fechar autenticacao de admin no dashboard (Google OAuth/NextAuth).
 - Backup simples do SQLite e da pasta `storage/`.
 - App Android TV real na STV-3000 Plus.
 
@@ -29,9 +29,9 @@ Se a sessao cair ou acabar token, retomar por aqui:
 
 1. `git status --short`.
 2. `.\scripts\windows\start-aquatv.ps1`.
-3. Abrir `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/devices` e `http://localhost:3000/player`.
+3. Abrir `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/schedule`, `http://localhost:3000/devices` e `http://localhost:3000/player`.
 4. Se a UI estiver sem estilo, encerrar processos antigos das portas 3000/3001 e iniciar de novo.
-5. Priorizar `/schedule` antes do Android, porque hoje playlist manual ja existe mas agendamento visual ainda nao.
+5. Priorizar validacao de boot/rede local e, em seguida, iniciar app Android TV real.
 
 ## Resumo
 
@@ -87,40 +87,40 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 ### Tasks
 
 - [ ] Configurar Prisma com MySQL connection string
-- [ ] Criar schema completo (`docs/08-DATA-MODEL.md`)
-- [ ] Primeira migration
-- [ ] Seed de dados mínimos (admin user, default playlist)
-- [ ] Setup Express + TypeScript
-- [ ] Middleware base: CORS, rate-limit, error handler, logger
-- [ ] JWT middleware pro device auth
+- [x] Criar schema completo (`docs/08-DATA-MODEL.md`)
+- [x] Primeira migration
+- [x] Seed de dados mínimos (admin user, default playlist)
+- [x] Setup Express + TypeScript
+- [x] Middleware base: CORS, rate-limit, error handler, logger
+- [x] JWT middleware pro device auth
 - [ ] NextAuth bridge (ou Google OAuth manual pro admin)
 - [ ] Endpoints Media:
-  - [ ] `GET /api/media` — lista paginada
-  - [ ] `POST /api/media/upload` — multipart, Multer → /storage
-  - [ ] Validar limite de upload por arquivo (300MB)
-  - [ ] `DELETE /api/media/:id`
+  - [x] `GET /api/media` — lista paginada
+  - [x] `POST /api/media/upload` — multipart, Multer → /storage
+  - [x] Validar limite de upload por arquivo (300MB)
+  - [x] `DELETE /api/media/:id`
 - [ ] Endpoints Playlist:
-  - [ ] `GET /api/playlists`
-  - [ ] `POST /api/playlists`
-  - [ ] `PUT /api/playlists/:id`
-  - [ ] `DELETE /api/playlists/:id`
+  - [x] `GET /api/playlists`
+  - [x] `POST /api/playlists`
+  - [x] `PUT /api/playlists/:id`
+  - [x] `DELETE /api/playlists/:id`
 - [ ] Endpoints Schedule:
-  - [ ] `GET /api/schedules`
-  - [ ] `POST /api/schedules`
-  - [ ] `PUT /api/schedules/:id`
-  - [ ] `DELETE /api/schedules/:id`
+  - [x] `GET /api/schedules`
+  - [x] `POST /api/schedules`
+  - [x] `PUT /api/schedules/:id`
+  - [x] `DELETE /api/schedules/:id`
 - [ ] Endpoints Device:
-  - [ ] `POST /api/devices` — registrar novo device
-  - [ ] `POST /api/devices/:id/heartbeat`
-  - [ ] `GET /api/devices/:id/current-playlist` — avalia schedule
-  - [ ] `GET /api/devices/:id/stream` — SSE
-  - [ ] `POST /api/devices/:id/force-sync` — emite evento SSE
+  - [x] `POST /api/devices` — registrar novo device
+  - [x] `POST /api/devices/:id/heartbeat`
+  - [x] `GET /api/devices/:id/current-playlist` — avalia schedule
+  - [x] `GET /api/devices/:id/stream` — SSE
+  - [x] `POST /api/devices/:id/force-sync` — emite evento SSE
 - [ ] Endpoints App:
-  - [ ] `GET /api/app/latest`
+  - [x] `GET /api/app/latest`
   - [ ] `GET /api/app/download/:version`
-  - [ ] `POST /api/app/releases` (admin)
-- [ ] Servir `/storage/*` estático
-- [ ] Configurar thresholds de armazenamento via env (warn 70%, crítico 85%)
+  - [x] `POST /api/app/releases` (sem auth admin por enquanto)
+- [x] Servir `/storage/*` estático
+- [x] Configurar thresholds de armazenamento via env (warn 70%, crítico 85%)
 - [ ] Job de limpeza automática de mídia sem uso (default 45 dias, configurável 30-60)
 - [ ] Deploy automatizado (GitHub Actions → Hostinger SSH rsync)
 
@@ -192,39 +192,40 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 
 ### Tasks
 
-- [ ] Setup Next.js 15 App Router
+- [x] Setup Next.js 15 App Router
 - [ ] Setup NextAuth v5 (Google provider, allowlist emails)
-- [ ] Layout base: sidebar + topbar + content
+- [x] Layout base: sidebar + topbar + content
 - [ ] Páginas:
   - [ ] `/login` — redirect NextAuth
   - [ ] `/dashboard` — overview (device status, última sync)
-  - [ ] `/media` — grid de mídias com upload
-  - [ ] `/playlists` — lista + editor
+  - [x] `/media` — grid de mídias com upload
+  - [x] `/playlists` — lista + editor
   - [ ] `/playlists/:id` — editor com dnd-kit
-  - [ ] `/schedule` — grade semanal visual
-  - [ ] `/devices` — lista de TV Boxes
+  - [x] `/schedule` — grade semanal visual
+  - [x] `/devices` — lista de TV Boxes
   - [ ] `/devices/:id` — detalhe com métricas + histórico
   - [ ] `/releases` — gestão de APKs
 - [ ] Componente Upload:
-  - [ ] Drag-drop zone
+  - [x] Drag-drop zone
   - [ ] Preview inline antes de enviar
   - [ ] `ffmpeg.wasm` pra validar codec + thumbnail
   - [ ] POST pra `/api/media/upload` com progress
 - [ ] Componente PlaylistEditor:
   - [ ] Lista ordenável de items (dnd-kit)
   - [ ] Add mídia via modal de busca
-  - [ ] Remove/duplicate item
+  - [x] Remove item
+  - [ ] Duplicate item
 - [ ] Componente ScheduleGrid:
   - [ ] Grade 7 dias × 24 horas
   - [ ] Arrastar playlist pros slots
   - [ ] Modal de configuração (recorrente, prioridade, datas)
-  - [ ] Preview "está tocando agora: Playlist X"
+  - [x] Preview "está tocando agora: Playlist X"
 - [ ] Componente DeviceCard:
-  - [ ] Status online/offline (polling ou SSE)
-  - [ ] Métricas: uptime, disco, app version
+  - [x] Status online/offline (polling ou SSE)
+  - [x] Métricas: uptime, disco, app version
   - [ ] Alertas visuais de armazenamento (70% / 85%)
-  - [ ] Mídia atual
-  - [ ] Botão "Sincronizar agora"
+  - [x] Mídia atual
+  - [x] Botão "Sincronizar agora"
   - [ ] Chart uptime últimos 7d
 - [ ] Componente ReleaseManager:
   - [ ] Upload de APK
