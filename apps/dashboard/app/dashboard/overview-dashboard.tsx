@@ -4,7 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type MediaResponse = { pagination: { total: number } };
 type PlaylistResponse = {
-  data: Array<{ id: string; name: string }>;
+  data: Array<{
+    id: string;
+    name: string;
+    _count?: {
+      items: number;
+    };
+  }>;
   defaultPlaylistId: string | null;
 };
 type ScheduleResponse = { data: Array<{ id: string; active: boolean }> };
@@ -63,6 +69,8 @@ export function OverviewDashboard() {
   const apiBaseUrl = useMemo(resolveApiBaseUrl, []);
   const [mediaCount, setMediaCount] = useState(0);
   const [playlistCount, setPlaylistCount] = useState(0);
+  const [playlists, setPlaylists] = useState<PlaylistResponse['data']>([]);
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState('');
   const [defaultPlaylistId, setDefaultPlaylistId] = useState<string | null>(null);
   const [defaultPlaylistName, setDefaultPlaylistName] = useState<string | null>(null);
   const [scheduleCount, setScheduleCount] = useState(0);
@@ -120,6 +128,14 @@ export function OverviewDashboard() {
 
       setMediaCount(media.pagination.total);
       setPlaylistCount(playlists.data.length);
+      setPlaylists(playlists.data);
+      setSelectedPlaylistId((currentSelected) => {
+        if (currentSelected && playlists.data.some((playlist) => playlist.id === currentSelected)) {
+          return currentSelected;
+        }
+
+        return current?.playlist?.id ?? playlists.defaultPlaylistId ?? playlists.data[0]?.id ?? '';
+      });
       setDefaultPlaylistId(playlists.defaultPlaylistId);
       setDefaultPlaylistName(
         playlists.data.find((playlist) => playlist.id === playlists.defaultPlaylistId)?.name ??
@@ -160,6 +176,27 @@ export function OverviewDashboard() {
 
     await loadOverview();
   }, [apiBaseUrl, defaultPlaylistId, loadOverview]);
+
+  const playSelectedPlaylist = useCallback(async () => {
+    if (!selectedPlaylistId) {
+      setError('Selecione uma playlist.');
+      return;
+    }
+
+    setError(null);
+    const response = await fetch(`${apiBaseUrl}/api/playlists/default`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ playlistId: selectedPlaylistId }),
+    });
+
+    if (!response.ok) {
+      setError(`Falha ao trocar playlist (${response.status})`);
+      return;
+    }
+
+    await loadOverview();
+  }, [apiBaseUrl, loadOverview, selectedPlaylistId]);
 
   const stopPlayback = useCallback(async () => {
     setError(null);
@@ -282,9 +319,35 @@ export function OverviewDashboard() {
             ) : null}
           </article>
           <article>
-            <p className="eyebrow">Playlist padrao</p>
-            <strong>{defaultPlaylistName ?? 'Nao definida'}</strong>
-            <span>usada quando nenhuma regra de agenda vence</span>
+            <p className="eyebrow">Controle rapido</p>
+            <strong>{defaultPlaylistName ?? 'Nenhuma playlist selecionada'}</strong>
+            <label className="overview-playlist-picker">
+              <span>Playlist para tocar agora</span>
+              <select
+                value={selectedPlaylistId}
+                onChange={(event) => setSelectedPlaylistId(event.target.value)}
+              >
+                <option value="">Selecione uma playlist</option>
+                {playlists.map((playlist) => (
+                  <option key={playlist.id} value={playlist.id}>
+                    {playlist.name} ({playlist._count?.items ?? 0} itens)
+                  </option>
+                ))}
+              </select>
+            </label>
+            <div className="overview-actions">
+              <button
+                className="primary-button compact-action"
+                type="button"
+                disabled={!selectedPlaylistId}
+                onClick={() => void playSelectedPlaylist()}
+              >
+                Tocar selecionada
+              </button>
+              <a className="inline-action is-quiet" href="/playlists">
+                Editar playlists
+              </a>
+            </div>
           </article>
         </section>
 

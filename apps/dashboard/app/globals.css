@@ -977,8 +977,32 @@ h1 {
 .overview-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
   margin-top: 4px;
+}
+
+.overview-playlist-picker {
+  display: grid;
+  gap: 7px;
+}
+
+.overview-playlist-picker span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.overview-playlist-picker select {
+  min-width: 0;
+  min-height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #ffffff;
+  color: var(--ink);
+  padding: 8px 10px;
+  font: inherit;
 }
 
 .inline-action.is-quiet {
