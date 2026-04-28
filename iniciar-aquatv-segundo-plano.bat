@@ -3,7 +3,7 @@ setlocal
 cd /d "%~dp0"
 
 echo Iniciando AquaTV em segundo plano...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "Start-Process powershell.exe -WindowStyle Hidden -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ""%~dp0scripts\windows\start-aquatv.ps1"" -ProjectPath ""%~dp0.""'"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\start-aquatv-background.ps1" -ProjectPath "%~dp0."
 
 if errorlevel 1 (
   echo.
