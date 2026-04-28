@@ -19,15 +19,28 @@ function ConvertTo-PowerShellLiteral([string]$Value) {
   return "'" + ($Value -replace "'", "''") + "'"
 }
 
+function Stop-ExistingListeners([int[]]$Ports) {
+  $processIds = Get-NetTCPConnection -LocalPort $Ports -ErrorAction SilentlyContinue |
+    Where-Object { $_.State -eq "Listen" -and $_.OwningProcess -ne 0 } |
+    Select-Object -ExpandProperty OwningProcess -Unique
+
+  foreach ($processId in $processIds) {
+    Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+  }
+}
+
 Start-Transcript -Path (Join-Path $logPath "aquatv-startup.log") -Append
 
 try {
   $pnpm = Get-Command pnpm -ErrorAction Stop
 
+  Stop-ExistingListeners -Ports @(3000, 3001)
+
   if (-not (Test-Path $dbPath)) {
     & $pnpm.Source --filter "@aquatv/api" exec prisma db execute --schema prisma/schema.prisma --file $migrationPath
   }
 
+  & $pnpm.Source --filter "@aquatv/api" exec prisma generate --schema prisma/schema.prisma
   & $pnpm.Source --filter "@aquatv/api" prisma:seed
   & $pnpm.Source build
 

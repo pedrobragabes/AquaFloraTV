@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import { adminSessionCookieName } from '../../../../lib/auth-cookie';
+import { adminSessionCookieName, shouldUseSecureCookie } from '../../../../lib/auth-cookie';
 
 export function GET(request: Request) {
   const response = NextResponse.redirect(new URL('/login', request.url));
@@ -9,7 +9,7 @@ export function GET(request: Request) {
     value: '',
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(request),
     path: '/',
     maxAge: 0,
   });

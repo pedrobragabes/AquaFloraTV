@@ -7,6 +7,7 @@ import {
   getAdminEmail,
   getConfiguredAdminPassword,
   isAuthEnabled,
+  shouldUseSecureCookie,
 } from '../../../../lib/auth-cookie';
 
 type LoginBody = {
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     value: await createAdminSessionCookie(getAdminEmail()),
     httpOnly: true,
     sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
+    secure: shouldUseSecureCookie(request),
     path: '/',
     maxAge: adminSessionMaxAge,
   });

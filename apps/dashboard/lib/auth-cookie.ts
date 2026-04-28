@@ -113,6 +113,23 @@ export function isAuthEnabled(): boolean {
   return process.env.DASHBOARD_AUTH_ENABLED !== 'false';
 }
 
+export function shouldUseSecureCookie(request: Request): boolean {
+  if (process.env.DASHBOARD_COOKIE_SECURE === 'true') {
+    return true;
+  }
+
+  if (process.env.DASHBOARD_COOKIE_SECURE === 'false') {
+    return false;
+  }
+
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  if (forwardedProto) {
+    return forwardedProto === 'https';
+  }
+
+  return new URL(request.url).protocol === 'https:';
+}
+
 export async function createAdminSessionCookie(email: string): Promise<string> {
   const payload = encodeJson({
     email,
