@@ -14,7 +14,7 @@ type CurrentPlayback = {
   playlist: { id: string; name: string; itemCount: number } | null;
 };
 
-const fallbackApiUrl = 'http://localhost:3001';
+const fallbackApiUrl = 'http://localhost:7741';
 const onlineThresholdMs = 90_000;
 
 function resolveApiBaseUrl(): string {
@@ -23,7 +23,7 @@ function resolveApiBaseUrl(): string {
   }
 
   if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    return `${window.location.protocol}//${window.location.hostname}:7741`;
   }
 
   return fallbackApiUrl;

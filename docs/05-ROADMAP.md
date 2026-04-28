@@ -41,8 +41,8 @@ Objetivo: Diego acessa o dashboard na rede local e o servidor sobe sozinho.
 - [ ] Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio
 - [ ] Rodar `configure-firewall.ps1` como Administrador se outro device nao abrir o dashboard
 - [ ] Registrar startup task com permissao suficiente
-- [ ] Reiniciar o PC e validar `http://localhost:3000/dashboard` e `http://localhost:3001/health`
-- [ ] Acessar de celular/notebook pela rede local usando `http://IP-DO-PC:3000`
+- [ ] Reiniciar o PC e validar `http://localhost:7740/dashboard` e `http://localhost:7741/health`
+- [ ] Acessar de celular/notebook pela rede local usando `http://IP-DO-PC:7740`
 
 ### Sprint B — Player Android core
 
@@ -98,8 +98,8 @@ Se a sessao cair ou acabar token, retomar por aqui:
 
 1. `git status --short`.
 2. `.\scripts\windows\start-aquatv.ps1`.
-3. Abrir `http://localhost:3000/dashboard`, `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/schedule`, `http://localhost:3000/devices`, `http://localhost:3000/releases` e `http://localhost:3000/player`.
-4. Se a UI estiver sem estilo, encerrar processos antigos das portas 3000/3001 e iniciar de novo.
+3. Abrir `http://localhost:7740/dashboard`, `http://localhost:7740/media`, `http://localhost:7740/playlists`, `http://localhost:7740/schedule`, `http://localhost:7740/devices`, `http://localhost:7740/releases` e `http://localhost:7740/player`.
+4. Se a UI estiver sem estilo, encerrar processos antigos das portas 7740/7741 e iniciar de novo.
 5. Priorizar validacao de boot/rede local e, em seguida, iniciar app Android TV real.
 
 ## Resumo

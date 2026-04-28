@@ -18,8 +18,8 @@ Dashboard Next.js + API Node/Express + Prisma/SQLite rodando no **PC local do es
 ```text
 Diego (browser)
   -> PC do escritorio
-     Next.js dashboard :3000
-     Express API       :3001
+     Next.js dashboard :7740
+     Express API       :7741
      SQLite dev.db + storage/media
   -> TV Box STV-3000 Plus futuramente via app Android TV
 ```
@@ -80,9 +80,9 @@ Validacoes ja feitas durante a sessao:
 1. Rodar `git status --short` para ver o que ficou pendente.
 2. Verificar se API e dashboard sobem:
    - `.\scripts\windows\start-aquatv.ps1`
-   - abrir `http://localhost:3000/media`
-   - abrir `http://localhost:3001/health`
-3. Se a UI aparecer sem CSS, encerrar processos antigos nas portas 3000/3001 e iniciar de novo pelo script Windows.
+   - abrir `http://localhost:7740/media`
+   - abrir `http://localhost:7741/health`
+3. Se a UI aparecer sem CSS, encerrar processos antigos nas portas 7740/7741 e iniciar de novo pelo script Windows.
 4. Conferir acesso pela rede local usando o IP do PC do escritorio; se bloquear, rodar `scripts/windows/configure-firewall.ps1` como admin.
 5. Registrar/testar backup diario com `scripts/windows/register-backup-task.ps1`.
 6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.

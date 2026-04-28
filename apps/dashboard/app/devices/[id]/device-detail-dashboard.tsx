@@ -38,7 +38,7 @@ type DeviceDetail = {
   logs: DeviceLog[];
 };
 
-const fallbackApiUrl = 'http://localhost:3001';
+const fallbackApiUrl = 'http://localhost:7741';
 
 function resolveApiBaseUrl(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {
@@ -46,7 +46,7 @@ function resolveApiBaseUrl(): string {
   }
 
   if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    return `${window.location.protocol}//${window.location.hostname}:7741`;
   }
 
   return fallbackApiUrl;

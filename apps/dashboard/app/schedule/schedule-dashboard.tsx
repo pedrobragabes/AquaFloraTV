@@ -55,9 +55,9 @@ function resolveApiBaseUrl(): string {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
   }
   if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    return `${window.location.protocol}//${window.location.hostname}:7741`;
   }
-  return 'http://localhost:3001';
+  return 'http://localhost:7741';
 }
 
 function colorForSchedule(schedules: Schedule[], id: string): string {

@@ -20,8 +20,8 @@ O script:
 - aplica a migration SQLite inicial se `apps/api/prisma/dev.db` ainda nao existir;
 - roda seed;
 - executa `pnpm build`;
-- sobe API na porta `3001`;
-- sobe dashboard na porta `3000`.
+- sobe API na porta `7741`;
+- sobe dashboard na porta `7740`.
 
 Antes de operar na loja, criar `apps/dashboard/.env.local` com:
 
@@ -39,7 +39,7 @@ Em desenvolvimento, sem `DASHBOARD_ADMIN_PASSWORD`, a senha local e `aquatv-loca
 .\scripts\windows\register-startup-task.ps1
 ```
 
-Isso registra a task `AquaTV Local Server` no Task Scheduler. Proximo teste obrigatorio: reiniciar o PC e confirmar se `http://localhost:3000/media` e `http://localhost:3001/health` respondem sem intervencao manual.
+Isso registra a task `AquaTV Local Server` no Task Scheduler. Proximo teste obrigatorio: reiniciar o PC e confirmar se `http://localhost:7740/media` e `http://localhost:7741/health` respondem sem intervencao manual.
 
 Se o Windows retornar `Acesso negado`, abrir PowerShell com permissao suficiente e rodar o comando novamente.
 
@@ -48,8 +48,8 @@ Se o Windows retornar `Acesso negado`, abrir PowerShell com permissao suficiente
 Para Diego/TV acessarem de outro aparelho:
 
 1. Descobrir o IP do PC do escritorio.
-2. Liberar as portas `3000` e `3001` no firewall do Windows.
-3. Acessar `http://IP-DO-PC:3000`.
+2. Liberar as portas `7740` e `7741` no firewall do Windows.
+3. Acessar `http://IP-DO-PC:7740`.
 
 Script auxiliar (PowerShell como Administrador):
 
@@ -155,7 +155,7 @@ ssh-keygen -t ed25519 -C "github-actions-aquatv" -f ~/.ssh/aquatv_deploy
 
 ```env
 NODE_ENV=production
-PORT=3001
+PORT=7741
 
 DATABASE_URL="mysql://aquatv_user:REDACTED@localhost:3306/aquatv_prod"
 

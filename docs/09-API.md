@@ -4,9 +4,9 @@
 
 Base local atual:
 
-- API: `http://localhost:3001/api`
-- Health: `http://localhost:3001/health`
-- Storage: `http://localhost:3001/storage/...`
+- API: `http://localhost:7741/api`
+- Health: `http://localhost:7741/health`
+- Storage: `http://localhost:7741/storage/...`
 
 Endpoints ja implementados:
 

@@ -17,8 +17,8 @@ Depois da conversa de implementacao, ficou claro que o app vai ficar no PC do es
 
 Rodar o MVP no PC local do escritorio:
 
-- Next.js dashboard na porta `3000`;
-- Express API na porta `3001`;
+- Next.js dashboard na porta `7740`;
+- Express API na porta `7741`;
 - SQLite em `apps/api/prisma/dev.db`;
 - storage local em `storage/`;
 - start via PowerShell e Windows Task Scheduler.

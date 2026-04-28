@@ -27,9 +27,9 @@ Hostinger deixou de ser o caminho primario imediato. A decisao atual e rodar no 
 
 ```text
 Diego no browser
-  -> http://localhost:3000 ou http://IP-DO-PC:3000
+  -> http://localhost:7740 ou http://IP-DO-PC:7740
      Next.js dashboard
-       -> http://localhost:3001/api
+       -> http://localhost:7741/api
           Express API + Prisma + SQLite
           storage/media
 
@@ -98,18 +98,18 @@ Liberar acesso pela rede local (PowerShell como Administrador):
 
 URLs:
 
-- Dashboard: `http://localhost:3000`
-- Login: `http://localhost:3000/login`
-- API health: `http://localhost:3001/health`
-- Resumo: `http://localhost:3000/dashboard`
-- Midias: `http://localhost:3000/media`
-- Playlists: `http://localhost:3000/playlists`
-- Agenda: `http://localhost:3000/schedule`
-- Devices: `http://localhost:3000/devices`
-- APKs: `http://localhost:3000/releases`
-- Player web: `http://localhost:3000/player`
+- Dashboard: `http://localhost:7740`
+- Login: `http://localhost:7740/login`
+- API health: `http://localhost:7741/health`
+- Resumo: `http://localhost:7740/dashboard`
+- Midias: `http://localhost:7740/media`
+- Playlists: `http://localhost:7740/playlists`
+- Agenda: `http://localhost:7740/schedule`
+- Devices: `http://localhost:7740/devices`
+- APKs: `http://localhost:7740/releases`
+- Player web: `http://localhost:7740/player`
 
-Para acessar de outro aparelho na mesma rede, usar o IP do PC do escritorio no lugar de `localhost` e liberar as portas `3000` e `3001` no firewall do Windows.
+Para acessar de outro aparelho na mesma rede, usar o IP do PC do escritorio no lugar de `localhost` e liberar as portas `7740` e `7741` no firewall do Windows.
 
 Em desenvolvimento, se `DASHBOARD_ADMIN_PASSWORD` nao estiver configurado, a senha local e `aquatv-local`. Para operar na loja, configurar `DASHBOARD_ADMIN_PASSWORD` em `apps/dashboard/.env.local`.
 
@@ -151,10 +151,10 @@ aquatv/
 ## Proximos passos se retomar depois
 
 1. Testar o start limpo: reiniciar o PC, confirmar se a task sobe API e dashboard sozinha.
-2. Abrir no browser do proprio PC: `http://localhost:3000/media`.
-3. Abrir de outro aparelho na rede usando `http://IP-DO-PC:3000`.
+2. Abrir no browser do proprio PC: `http://localhost:7740/media`.
+3. Abrir de outro aparelho na rede usando `http://IP-DO-PC:7740`.
 4. Se nao abrir pela rede, rodar `.\scripts\windows\configure-firewall.ps1` em PowerShell como Administrador.
-5. Se a pagina aparecer sem estilo, matar processos antigos nas portas 3000/3001 e rodar `.\scripts\windows\start-aquatv.ps1` de novo.
+5. Se a pagina aparecer sem estilo, matar processos antigos nas portas 7740/7741 e rodar `.\scripts\windows\start-aquatv.ps1` de novo.
 6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
 7. Comecar o app Android TV real, usando o `/player` web como referencia de comportamento.
 

@@ -8,9 +8,9 @@ Arquitetura implementada hoje:
 
 ```text
 Diego (browser)
-  -> http://localhost:3000 ou http://IP-DO-PC:3000
+  -> http://localhost:7740 ou http://IP-DO-PC:7740
      Next.js dashboard
-       -> http://localhost:3001/api
+       -> http://localhost:7741/api
           Express API + Prisma + SQLite
           storage/media + storage/apks
 

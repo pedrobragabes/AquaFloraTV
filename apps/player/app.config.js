@@ -1,4 +1,4 @@
-const apiUrl = process.env.API_URL ?? 'http://IP-DO-PC:3001/api';
+const apiUrl = process.env.API_URL ?? 'http://IP-DO-PC:7741/api';
 
 module.exports = {
   expo: {

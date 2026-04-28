@@ -13,6 +13,7 @@ $migrationPath = Join-Path $ProjectPath "apps\api\prisma\migrations\202604271130
 New-Item -ItemType Directory -Force -Path $logPath, $storagePath | Out-Null
 
 $env:NODE_ENV = "production"
+$env:PORT = "7741"
 $env:STORAGE_PATH = $storagePath
 
 function ConvertTo-PowerShellLiteral([string]$Value) {
@@ -34,7 +35,7 @@ Start-Transcript -Path (Join-Path $logPath "aquatv-startup.log") -Append
 try {
   $pnpm = Get-Command pnpm -ErrorAction Stop
 
-  Stop-ExistingListeners -Ports @(3000, 3001)
+  Stop-ExistingListeners -Ports @(7740, 7741)
 
   if (-not (Test-Path $dbPath)) {
     & $pnpm.Source --filter "@aquatv/api" exec prisma db execute --schema prisma/schema.prisma --file $migrationPath

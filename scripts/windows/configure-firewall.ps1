@@ -1,6 +1,6 @@
 param(
   [string]$RulePrefix = "AquaTV Local",
-  [int[]]$Ports = @(3000, 3001)
+  [int[]]$Ports = @(7740, 7741)
 )
 
 $ErrorActionPreference = "Stop"

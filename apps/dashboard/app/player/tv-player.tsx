@@ -34,7 +34,7 @@ type PlayerStatus = 'starting' | 'registering' | 'syncing' | 'playing' | 'empty'
 
 const credentialsStorageKey = 'aquatv.player.credentials.v1';
 const playerStartedAt = Date.now();
-const fallbackApiUrl = 'http://localhost:3001';
+const fallbackApiUrl = 'http://localhost:7741';
 const imageFallbackDurationMs = 10_000;
 const playlistPollMs = 60_000;
 const heartbeatMs = 30_000;
@@ -45,7 +45,7 @@ function resolveApiBaseUrl(): string {
   }
 
   if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:3001`;
+    return `${window.location.protocol}//${window.location.hostname}:7741`;
   }
 
   return fallbackApiUrl;
