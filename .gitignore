@@ -15,5 +15,6 @@ coverage
 .DS_Store
 logs
 storage
+backups
 .claude
 ANALISE-INTERNA.md

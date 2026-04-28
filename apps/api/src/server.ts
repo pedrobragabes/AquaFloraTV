@@ -8,6 +8,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { apiRouter } from './routes/index.js';
+import { startMediaCleanupJob } from './services/media-cleanup.js';
 
 export const app = express();
 
@@ -49,3 +50,7 @@ app.use('/api', apiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
+
+if (env.NODE_ENV !== 'test') {
+  startMediaCleanupJob();
+}

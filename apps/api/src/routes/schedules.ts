@@ -91,6 +91,25 @@ schedulesRouter.get('/current', async (_req, res, next) => {
   }
 });
 
+schedulesRouter.get('/:id', async (req, res, next) => {
+  try {
+    const { id } = scheduleIdParamSchema.parse(req.params);
+
+    const schedule = await prisma.schedule.findUnique({
+      where: { id },
+      include: { playlist: true },
+    });
+
+    if (!schedule) {
+      throw new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found');
+    }
+
+    res.json(schedule);
+  } catch (error) {
+    next(error);
+  }
+});
+
 schedulesRouter.post('/', async (req, res, next) => {
   try {
     const payload = createScheduleSchema.parse(req.body);

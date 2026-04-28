@@ -253,13 +253,15 @@ export function ScheduleDashboard() {
           <small>Loja local</small>
         </div>
         <nav className="nav-list">
+          <a href="/dashboard">Resumo</a>
           <a href="/media">Mídias</a>
           <a href="/playlists">Playlists</a>
           <a aria-current="page" href="/schedule">
             Agenda
           </a>
           <a href="/devices">TV Box</a>
-          <span>APKs</span>
+          <a href="/releases">APKs</a>
+          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 

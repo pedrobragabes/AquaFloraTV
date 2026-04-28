@@ -253,6 +253,70 @@ export function PlaylistDashboard() {
     setDraftItems((current) => current.filter((item) => item.key !== key));
   }
 
+  function duplicateDraftItem(item: DraftItem): void {
+    const randomId = typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now());
+    setDraftItems((current) => {
+      const itemIndex = current.findIndex((draftItem) => draftItem.key === item.key);
+      const duplicated = {
+        ...item,
+        key: `${item.media.id}-copy-${randomId}`,
+      };
+
+      if (itemIndex < 0) {
+        return [...current, duplicated];
+      }
+
+      return [...current.slice(0, itemIndex + 1), duplicated, ...current.slice(itemIndex + 1)];
+    });
+  }
+
+  function updateDraftDuration(key: string, seconds: string): void {
+    const parsedSeconds = Number(seconds);
+    const durationOverrideMs =
+      seconds.trim().length === 0 || !Number.isFinite(parsedSeconds)
+        ? null
+        : Math.max(1, Math.round(parsedSeconds)) * 1000;
+
+    setDraftItems((current) =>
+      current.map((item) => (item.key === key ? { ...item, durationOverrideMs } : item)),
+    );
+  }
+
+  async function deleteSelectedPlaylist(): Promise<void> {
+    if (!selectedPlaylist) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/playlists/${selectedPlaylist.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: { message?: string };
+        } | null;
+        throw new Error(payload?.error?.message ?? `Exclusao falhou (${response.status})`);
+      }
+
+      setSelectedPlaylist(null);
+      setSelectedPlaylistId(null);
+      setDraftItems([]);
+      await loadPlaylists();
+      setNotice('Playlist removida.');
+    } catch (deleteError) {
+      const message =
+        deleteError instanceof Error ? deleteError.message : 'Falha ao remover playlist';
+      setError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function savePlaylist(): Promise<void> {
     if (!selectedPlaylist) {
       setError('Selecione uma playlist antes de salvar.');
@@ -332,13 +396,15 @@ export function PlaylistDashboard() {
           <small>Loja local</small>
         </div>
         <nav className="nav-list">
+          <a href="/dashboard">Resumo</a>
           <a href="/media">Midias</a>
           <a aria-current="page" href="/playlists">
             Playlists
           </a>
           <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
-          <span>APKs</span>
+          <a href="/releases">APKs</a>
+          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 
@@ -420,6 +486,14 @@ export function PlaylistDashboard() {
               >
                 Usar na TV
               </button>
+              <button
+                className="danger-button"
+                type="button"
+                disabled={!selectedPlaylist || isSaving}
+                onClick={() => void deleteSelectedPlaylist()}
+              >
+                Excluir
+              </button>
             </div>
 
             <div className="playlist-sequence">
@@ -445,6 +519,22 @@ export function PlaylistDashboard() {
                   <div className="sequence-copy">
                     <strong>{item.media.filename}</strong>
                     <span>{item.media.mimetype}</span>
+                    {item.media.mimetype.startsWith('image/') ? (
+                      <label className="duration-field">
+                        <span>Segundos</span>
+                        <input
+                          inputMode="numeric"
+                          min={1}
+                          type="number"
+                          value={
+                            item.durationOverrideMs
+                              ? Math.round(item.durationOverrideMs / 1000)
+                              : ''
+                          }
+                          onChange={(event) => updateDraftDuration(item.key, event.target.value)}
+                        />
+                      </label>
+                    ) : null}
                   </div>
                   <div className="sequence-actions">
                     <button
@@ -460,6 +550,9 @@ export function PlaylistDashboard() {
                       disabled={index === draftItems.length - 1}
                     >
                       Descer
+                    </button>
+                    <button type="button" onClick={() => duplicateDraftItem(item)}>
+                      Duplicar
                     </button>
                     <button type="button" onClick={() => removeDraftItem(item.key)}>
                       Remover

@@ -1,6 +1,6 @@
 # 09 — API Reference
 
-## Atualizacao 2026-04-27 - endpoints implementados localmente
+## Atualizacao 2026-04-28 - endpoints implementados localmente
 
 Base local atual:
 
@@ -35,7 +35,13 @@ Endpoints ja implementados:
 - `GET /api/devices/:id/logs`
 - `POST /api/devices/:id/logs`
 - `GET /api/devices/:id/heartbeats`
-- app releases base em `/api/app/...`
+- `GET /api/app/latest`
+- `GET /api/app/releases`
+- `POST /api/app/releases`
+- `POST /api/app/releases/upload`
+- `GET /api/app/download/:version`
+- `PUT /api/app/releases/:id`
+- `PUT /api/app/releases/:id/latest`
 
 Auth de browser ainda nao esta ativa; os endpoints administrativos estao abertos no MVP local. O token de device ja existe para registro/heartbeat/player.
 
@@ -124,7 +130,7 @@ Limites: `MAX_UPLOAD_MB` (default 500). Rate: 10 uploads/min por user.
 
 ### `DELETE /api/media/:id`
 
-Apaga arquivo + row. Falha se mídia em alguma playlist (return 409, forçar via `?force=true`).
+Apaga arquivo + row. Falha com 409 se mídia estiver em alguma playlist.
 
 ---
 
@@ -328,6 +334,21 @@ Response 202.
 
 Lista logs do device. Query: `level`, `event`, `from`, `to`, `limit`.
 
+### `POST /api/devices/:id/logs`
+
+**Auth: device token.**
+
+Registra evento do device.
+
+```json
+{
+  "level": "INFO",
+  "event": "sync_complete",
+  "message": "Playlist sincronizada",
+  "payload": { "items": 4 }
+}
+```
+
 ### `GET /api/devices/:id/heartbeats`
 
 Série temporal. Query: `from`, `to` (ISO datetime), `resolution` (minute/hour/day).
@@ -337,8 +358,6 @@ Série temporal. Query: `from`, `to` (ISO datetime), `resolution` (minute/hour/d
 ## App Releases
 
 ### `GET /api/app/latest`
-
-**Auth: device token.**
 
 Retorna último release do canal do device (stable por default).
 
@@ -375,9 +394,33 @@ Admin cria (usado pelo CI após build).
 }
 ```
 
+### `POST /api/app/releases/upload`
+
+Admin cria release fazendo upload direto da APK. Usado pelo dashboard `/releases`.
+
+Multipart fields:
+
+- `apk` (required, arquivo `.apk`)
+- `versionCode` (required, int)
+- `versionName` (required, string)
+- `channel` (`STABLE` ou `BETA`, default `STABLE`)
+- `mandatory` (`true`/`false`, default `false`)
+- `active` (`true`/`false`, default `true`)
+- `releaseNotes` (optional)
+
+A API salva em `storage/apks`, calcula `apkMd5` e cria o registro `AppRelease`.
+
+### `GET /api/app/download/:version`
+
+Baixa a APK por `versionCode` ou `versionName`. Se a release usa URL externa, responde redirect.
+
 ### `PUT /api/app/releases/:id`
 
 Toggle `active`, update notes.
+
+### `PUT /api/app/releases/:id/latest`
+
+Marca a release como latest do canal dela. Na pratica, ativa essa release e desativa as outras do mesmo canal.
 
 ---
 

@@ -27,6 +27,7 @@ Register-ScheduledTask `
   -Trigger $trigger `
   -Settings $settings `
   -Description "Inicia API e dashboard do AquaTV no login do Windows." `
+  -ErrorAction Stop `
   -Force | Out-Null
 
 Write-Host "Tarefa registrada: $TaskName"

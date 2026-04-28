@@ -2,11 +2,16 @@
   "name": "@aquatv/player",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.json",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@aquatv/api-client": "workspace:*",
+    "@aquatv/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.17.30",

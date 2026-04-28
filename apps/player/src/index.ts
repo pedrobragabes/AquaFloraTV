@@ -1,1 +1,3 @@
-console.log('AquaTV Player placeholder da Fase 0. Implementacao Expo bare entra na Fase 2.');
+export * from './player-api.js';
+export * from './sync-planner.js';
+export * from './types.js';

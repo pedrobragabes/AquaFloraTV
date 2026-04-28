@@ -7,10 +7,11 @@ O plano inicial abaixo citava Hostinger, MySQL, Tailwind, NextAuth e app Android
 | Camada      | Implementado agora                       | Observacao                                             |
 | ----------- | ---------------------------------------- | ------------------------------------------------------ |
 | Monorepo    | pnpm workspaces + turborepo              | Mantido do plano original                              |
-| Dashboard   | Next.js 15 + TypeScript + CSS global     | Tailwind/NextAuth ainda nao entraram                   |
+| Dashboard   | Next.js 15 + TypeScript + CSS global     | Tailwind/NextAuth nao entraram; auth local por senha   |
 | API         | Express + Prisma + SQLite + Multer + SSE | MySQL pausado porque o runtime primario virou PC local |
 | Storage     | pasta local `storage/`                   | Ignorada no git                                        |
 | Start local | PowerShell + Windows Task Scheduler      | Roda ao ligar/logar no Windows                         |
+| Backup      | PowerShell + ZIP local                   | Copia SQLite e `storage/` com retencao simples         |
 | Android TV  | ainda nao implementado                   | Proxima etapa, usando `/player` como referencia        |
 
 Trade-off aceito: SQLite e menos "infra de producao" que MySQL, mas para um unico PC, uma loja e baixa concorrencia ele reduz instalacao, backup e manutencao. Se depois migrar para Hostinger, Prisma deixa a migracao para MySQL viavel com ajuste de schema/migration.

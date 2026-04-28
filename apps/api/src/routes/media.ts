@@ -151,14 +151,26 @@ mediaRouter.delete('/:id', async (req, res, next) => {
   try {
     const { id } = mediaIdParamSchema.parse(req.params);
 
-    await prisma.media.delete({
+    const media = await prisma.media.delete({
       where: { id },
     });
+    await unlink(path.resolve(mediaStoragePath, media.storedName)).catch(() => undefined);
 
     res.status(204).send();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       next(new HttpError(404, 'MEDIA_NOT_FOUND', 'Media not found'));
+      return;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      next(
+        new HttpError(
+          409,
+          'MEDIA_IN_USE',
+          'Media cannot be removed while it is linked to a playlist',
+        ),
+      );
       return;
     }
 

@@ -2,18 +2,24 @@
 
 Digital signage customizado para a AquaFlora AgroShop. O objetivo e operar uma stack propria, com upload de midias, playlists, agendamento contextual e, em fase futura, app Android TV com auto-update de APK.
 
-## Estado atual - 2026-04-27
+## Estado atual - 2026-04-28
 
 Hoje o projeto esta funcional como MVP local no PC do escritorio:
 
 - API Express + Prisma + SQLite.
-- Dashboard Next.js com telas `/media`, `/playlists`, `/devices` e `/player`.
+- Dashboard Next.js com telas `/media`, `/playlists`, `/schedule`, `/devices`, `/releases` e `/player`.
+- Login local do dashboard com cookie assinado e senha de admin.
 - Upload de imagens/videos para `storage/media`.
 - Playlist default configuravel.
 - Resolucao de playlist atual por schedule ou fallback default.
+- Limpeza automatica diaria de midias sem uso apos `MEDIA_RETENTION_DAYS`.
 - Player web simulado em `/player`, com loop de midias, registro de device e heartbeat.
 - Painel de devices com status, metricas recebidas e botao de force-sync.
+- Pagina de detalhe de device com heartbeats/logs recentes.
+- Painel de APKs em `/releases`, com upload, MD5 calculado pela API, download e promocao de latest por canal.
+- Nucleo TypeScript do futuro app Android em `apps/player`, com cliente API, manifesto de cache e planner de sync.
 - Scripts Windows para rodar em producao local e registrar inicio automatico no logon.
+- Scripts Windows para backup local do SQLite e da pasta `storage/`.
 
 Hostinger deixou de ser o caminho primario imediato. A decisao atual e rodar no PC local do escritorio, porque o equipamento tem folga (i9 9900K) e reduz dependencias de deploy neste MVP. Hostinger fica como opcao futura se precisar acesso externo ou operacao fora da rede local.
 
@@ -72,16 +78,40 @@ Registrar para iniciar quando o Windows fizer logon:
 .\scripts\windows\register-startup-task.ps1
 ```
 
+Backup manual:
+
+```powershell
+.\scripts\windows\backup-aquatv.ps1
+```
+
+Registrar backup diario as 03:00:
+
+```powershell
+.\scripts\windows\register-backup-task.ps1
+```
+
+Liberar acesso pela rede local (PowerShell como Administrador):
+
+```powershell
+.\scripts\windows\configure-firewall.ps1
+```
+
 URLs:
 
 - Dashboard: `http://localhost:3000`
+- Login: `http://localhost:3000/login`
 - API health: `http://localhost:3001/health`
+- Resumo: `http://localhost:3000/dashboard`
 - Midias: `http://localhost:3000/media`
 - Playlists: `http://localhost:3000/playlists`
+- Agenda: `http://localhost:3000/schedule`
 - Devices: `http://localhost:3000/devices`
+- APKs: `http://localhost:3000/releases`
 - Player web: `http://localhost:3000/player`
 
 Para acessar de outro aparelho na mesma rede, usar o IP do PC do escritorio no lugar de `localhost` e liberar as portas `3000` e `3001` no firewall do Windows.
+
+Em desenvolvimento, se `DASHBOARD_ADMIN_PASSWORD` nao estiver configurado, a senha local e `aquatv-local`. Para operar na loja, configurar `DASHBOARD_ADMIN_PASSWORD` em `apps/dashboard/.env.local`.
 
 ## Comandos uteis
 
@@ -102,7 +132,7 @@ aquatv/
   packages/
     types/
     api-client/
-  scripts/windows/   start local e Task Scheduler
+  scripts/windows/   start local, Task Scheduler e backup
   docs/              documentacao do projeto
 ```
 
@@ -114,15 +144,19 @@ aquatv/
 - Playlist smoke criou playlist, adicionou midia e marcou como default.
 - `GET /api/schedules/current` retornou a playlist default com item.
 - Player web registrou device e heartbeat apareceu em `/api/devices`.
+- Login local protegeu `/releases` e liberou acesso apos senha.
+- Smoke de APK validou upload, `GET /api/app/latest`, download e dashboard `/releases`.
+- Smoke de backup criou ZIP em `backups/`.
 
 ## Proximos passos se retomar depois
 
 1. Testar o start limpo: reiniciar o PC, confirmar se a task sobe API e dashboard sozinha.
 2. Abrir no browser do proprio PC: `http://localhost:3000/media`.
 3. Abrir de outro aparelho na rede usando `http://IP-DO-PC:3000`.
-4. Se a pagina aparecer sem estilo, matar processos antigos nas portas 3000/3001 e rodar `.\scripts\windows\start-aquatv.ps1` de novo.
-5. Implementar a tela `/schedule` para Diego montar regras por dia/hora.
-6. Comecar o app Android TV real, usando o `/player` web como referencia de comportamento.
+4. Se nao abrir pela rede, rodar `.\scripts\windows\configure-firewall.ps1` em PowerShell como Administrador.
+5. Se a pagina aparecer sem estilo, matar processos antigos nas portas 3000/3001 e rodar `.\scripts\windows\start-aquatv.ps1` de novo.
+6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
+7. Comecar o app Android TV real, usando o `/player` web como referencia de comportamento.
 
 ## Documentacao
 

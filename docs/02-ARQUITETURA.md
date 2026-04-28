@@ -12,7 +12,7 @@ Diego (browser)
      Next.js dashboard
        -> http://localhost:3001/api
           Express API + Prisma + SQLite
-          storage/media
+          storage/media + storage/apks
 
 Player
   -> /player no dashboard, simulando a TV
@@ -21,9 +21,9 @@ Player
 
 Componentes implementados:
 
-- `apps/api`: Express, Prisma SQLite, upload com Multer, `/storage` estatico, playlists, schedules, devices, releases e SSE.
-- `apps/dashboard`: telas `/media`, `/playlists`, `/devices` e `/player`.
-- `scripts/windows`: start de producao local e registro no Task Scheduler.
+- `apps/api`: Express, Prisma SQLite, upload com Multer, `/storage` estatico, playlists, schedules, devices, releases/APKs, logs, SSE e limpeza diaria de midias sem uso.
+- `apps/dashboard`: auth local por senha, telas `/dashboard`, `/media`, `/playlists`, `/schedule`, `/devices`, `/devices/:id`, `/releases` e `/player`.
+- `scripts/windows`: start de producao local, registro no Task Scheduler e backup local.
 
 Hostinger/MySQL ficam como plano futuro se a loja precisar acesso externo/HTTPS publico. Para a operacao inicial, PC local + SQLite e suficiente e reduz pontos de falha.
 
@@ -149,9 +149,9 @@ No boot do app:
 
 ```
 Diego:
-  ├─ Abre dashboard → redirect /api/auth/signin
-  ├─ Login Google via NextAuth (só whitelistados: Diego + Pedro)
-  └─ Session cookie HTTP-only
+  ├─ Abre dashboard → redirect /login
+  ├─ Informa senha local configurada em DASHBOARD_ADMIN_PASSWORD
+  └─ Session cookie HTTP-only assinado
 
 TV Box:
   ├─ Registro inicial: Pedro gera device + token no dashboard

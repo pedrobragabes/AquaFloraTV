@@ -42,6 +42,13 @@ const deviceLogsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
 });
 
+const createDeviceLogSchema = z.object({
+  level: z.enum(['DEBUG', 'INFO', 'WARN', 'ERROR']).default('INFO'),
+  event: z.string().trim().min(1),
+  message: z.string().trim().optional(),
+  payload: z.unknown().optional(),
+});
+
 const heartbeatsQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
@@ -280,6 +287,29 @@ devicesRouter.post('/:id/force-sync', async (req, res, next) => {
       queued: true,
       listeners: listeners.size,
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+devicesRouter.post('/:id/logs', async (req, res, next) => {
+  try {
+    const { id } = deviceIdParamSchema.parse(req.params);
+    await assertDeviceToken(id, req.header('authorization'));
+
+    const payload = createDeviceLogSchema.parse(req.body);
+
+    const log = await prisma.deviceLog.create({
+      data: {
+        deviceId: id,
+        level: payload.level,
+        event: payload.event,
+        ...(payload.message !== undefined ? { message: payload.message } : {}),
+        ...(payload.payload !== undefined ? { payload: JSON.stringify(payload.payload) } : {}),
+      },
+    });
+
+    res.status(201).json(log);
   } catch (error) {
     next(error);
   }

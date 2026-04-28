@@ -23,6 +23,16 @@ O script:
 - sobe API na porta `3001`;
 - sobe dashboard na porta `3000`.
 
+Antes de operar na loja, criar `apps/dashboard/.env.local` com:
+
+```env
+DASHBOARD_AUTH_ENABLED=true
+DASHBOARD_ADMIN_PASSWORD=UMA_SENHA_FORTE
+NEXTAUTH_SECRET=UMA_STRING_LONGA_ALEATORIA
+```
+
+Em desenvolvimento, sem `DASHBOARD_ADMIN_PASSWORD`, a senha local e `aquatv-local`. Nao usar esse fallback na loja.
+
 ### Start automatico no logon
 
 ```powershell
@@ -30,6 +40,8 @@ O script:
 ```
 
 Isso registra a task `AquaTV Local Server` no Task Scheduler. Proximo teste obrigatorio: reiniciar o PC e confirmar se `http://localhost:3000/media` e `http://localhost:3001/health` respondem sem intervencao manual.
+
+Se o Windows retornar `Acesso negado`, abrir PowerShell com permissao suficiente e rodar o comando novamente.
 
 ### Acesso pela rede local
 
@@ -39,12 +51,37 @@ Para Diego/TV acessarem de outro aparelho:
 2. Liberar as portas `3000` e `3001` no firewall do Windows.
 3. Acessar `http://IP-DO-PC:3000`.
 
-### Backup minimo
+Script auxiliar (PowerShell como Administrador):
 
-Antes de operar na loja, criar rotina simples de copia para:
+```powershell
+.\scripts\windows\configure-firewall.ps1
+```
 
-- `apps/api/prisma/dev.db`
-- `storage/`
+### Backup local
+
+Backup manual:
+
+```powershell
+.\scripts\windows\backup-aquatv.ps1
+```
+
+O ZIP sai em `backups/aquatv-YYYYMMDD-HHMMSS.zip` e inclui:
+
+- `apps/api/prisma/dev.db` e arquivos auxiliares SQLite (`-wal`, `-shm`) se existirem;
+- `storage/`, incluindo `media/` e `apks/`.
+
+Registrar backup diario as 03:00:
+
+```powershell
+.\scripts\windows\register-backup-task.ps1
+```
+
+Padrao de retencao: 14 dias. Para mudar:
+
+```powershell
+.\scripts\windows\backup-aquatv.ps1 -RetentionDays 30
+.\scripts\windows\register-backup-task.ps1 -At "02:30" -RetentionDays 30
+```
 
 Hostinger continua documentado abaixo como plano futuro para HTTPS publico.
 
@@ -304,4 +341,4 @@ Se Hostinger quebrar / inviabilizar algo:
 5. MySQL ou Postgres local
 6. Mesmo código, variáveis de ambiente diferentes
 
-Documentado aqui, mas objetivo é não precisar. Hostinger é primário.
+Documentado aqui, mas objetivo é não precisar no MVP local. Hostinger fica como plano futuro/alternativo se precisar HTTPS publico ou acesso fora da rede local.

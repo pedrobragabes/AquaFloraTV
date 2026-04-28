@@ -1,6 +1,6 @@
 # 05 — Roadmap
 
-## Estado real em 2026-04-27
+## Estado real em 2026-04-28
 
 O roadmap original abaixo foi planejado para Hostinger + MySQL + Android cedo. A execucao mudou para um MVP local no PC do escritorio, com SQLite e player web simulado primeiro.
 
@@ -11,25 +11,94 @@ Concluido hoje:
 - Upload/listagem/remocao de midias.
 - CRUD base de playlists, items e playlist default.
 - CRUD base de schedules e resolucao de playlist atual.
-- Registro de devices, heartbeat, current-playlist, logs e SSE/force-sync.
-- Dashboard `/media`, `/playlists`, `/schedule`, `/devices`.
+- Registro de devices, heartbeat, current-playlist, logs, SSE/force-sync e releases de APK.
+- Auth local do dashboard com cookie assinado e senha de admin.
+- Dashboard `/dashboard`, `/media`, `/playlists`, `/schedule`, `/devices`, `/devices/:id`, `/releases`.
 - Player web `/player` para simular a TV.
-- Scripts Windows para start local e Task Scheduler.
-- `.gitignore` cobrindo logs, storage, SQLite DB e tsbuildinfo.
+- API de upload/download de APKs, MD5 e promocao de latest por canal.
+- Limpeza automatica diaria de midias sem uso apos `MEDIA_RETENTION_DAYS`.
+- Scripts Windows para start local, Task Scheduler, backup e firewall.
+- `.gitignore` cobrindo logs, storage, backups, SQLite DB e tsbuildinfo.
 
 Ainda pendente para considerar MVP operacional na loja:
 
 - Teste de boot real no PC do escritorio com Task Scheduler.
-- Liberar acesso pela rede local e firewall do Windows.
-- Fechar autenticacao de admin no dashboard (Google OAuth/NextAuth).
-- Backup simples do SQLite e da pasta `storage/`.
+- Rodar `configure-firewall.ps1` como administrador no PC do escritorio, se a rede bloquear.
+- Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
+- Google OAuth/NextAuth fica como upgrade futuro se acesso externo virar requisito.
+- Registrar/testar backup diario no Task Scheduler.
 - App Android TV real na STV-3000 Plus.
+
+## Sprints restantes ate 100% funcional
+
+### Sprint A — Operacao local no PC do escritorio
+
+Objetivo: Diego acessa o dashboard na rede local e o servidor sobe sozinho.
+
+- [x] Dashboard protegido por senha local
+- [x] Backup diario registrado no Task Scheduler
+- [x] Script para liberar firewall Windows
+- [ ] Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio
+- [ ] Rodar `configure-firewall.ps1` como Administrador se outro device nao abrir o dashboard
+- [ ] Registrar startup task com permissao suficiente
+- [ ] Reiniciar o PC e validar `http://localhost:3000/dashboard` e `http://localhost:3001/health`
+- [ ] Acessar de celular/notebook pela rede local usando `http://IP-DO-PC:3000`
+
+### Sprint B — Player Android core
+
+Objetivo: transformar `apps/player` de placeholder em base real do app da TV.
+
+- [x] Tipos compartilhados para registro, heartbeat, playlist atual, logs e releases
+- [x] API client com registro de device, heartbeat, logs, current-playlist e latest release
+- [x] Manifesto local do player com playlist ativa e midias em cache
+- [x] Planner de sync: detectar downloads, evictions e troca de playlist
+- [ ] Storage adapter Android com `expo-file-system`
+- [ ] Validador MD5 com `expo-crypto`
+- [ ] Download atomico `.tmp -> final`
+- [ ] Eviction real no disco do device
+
+### Sprint C — APK Android TV tocando midia
+
+Objetivo: APK instalada na STV-3000 Plus registra device, baixa playlist e toca em loop.
+
+- [ ] Scaffold Expo bare/prebuild para `apps/player`
+- [ ] Manifest Android TV com Leanback launcher, portrait e permissao de boot
+- [ ] Tela de onboarding para configurar API URL/device
+- [ ] Tela `PlayerScreen` com `expo-video`
+- [ ] Fallback para `react-native-video` se `expo-video` falhar na STV-3000
+- [ ] Heartbeat real com uptime, disco, versao, midia atual, rede e IP
+- [ ] SSE ou poll 5 min para sync
+- [ ] Teste fisico: MP4 vertical tocando por 2h sem crash
+
+### Sprint D — Auto-update real da APK
+
+Objetivo: Pedro sobe APK no dashboard e a TV atualiza sozinha.
+
+- [x] Backend/dashboard de releases
+- [x] Download de APK por versao
+- [ ] App checa `/api/app/latest` no boot e a cada 24h
+- [ ] App baixa APK nova e valida MD5
+- [ ] Modulo nativo/PackageInstaller para instalar update
+- [ ] Restart pos-install
+- [ ] Teste fisico: publicar versionCode +1 e confirmar update na TV
+
+### Sprint E — Smoke de producao na loja
+
+Objetivo: substituir a solucao atual com confianca.
+
+- [ ] Rodar 48h com player web no PC e dashboard operando
+- [ ] Rodar 48h com STV-3000 tocando do cache
+- [ ] Desligar internet e confirmar playback offline
+- [ ] Religando internet, confirmar sync em ate 5 min
+- [ ] Reboot completo da TV: app abre sozinho em ate 60s
+- [ ] Backup ZIP existe e restaura banco/storage em ambiente limpo
+- [ ] Diego faz upload, playlist, agenda e force-sync sem ajuda
 
 Se a sessao cair ou acabar token, retomar por aqui:
 
 1. `git status --short`.
 2. `.\scripts\windows\start-aquatv.ps1`.
-3. Abrir `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/schedule`, `http://localhost:3000/devices` e `http://localhost:3000/player`.
+3. Abrir `http://localhost:3000/dashboard`, `http://localhost:3000/media`, `http://localhost:3000/playlists`, `http://localhost:3000/schedule`, `http://localhost:3000/devices`, `http://localhost:3000/releases` e `http://localhost:3000/player`.
 4. Se a UI estiver sem estilo, encerrar processos antigos das portas 3000/3001 e iniciar de novo.
 5. Priorizar validacao de boot/rede local e, em seguida, iniciar app Android TV real.
 
@@ -93,7 +162,8 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [x] Setup Express + TypeScript
 - [x] Middleware base: CORS, rate-limit, error handler, logger
 - [x] JWT middleware pro device auth
-- [ ] NextAuth bridge (ou Google OAuth manual pro admin)
+- [x] Auth local do dashboard por senha e cookie assinado
+- [ ] NextAuth/Google OAuth para acesso externo futuro
 - [ ] Endpoints Media:
   - [x] `GET /api/media` — lista paginada
   - [x] `POST /api/media/upload` — multipart, Multer → /storage
@@ -106,6 +176,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
   - [x] `DELETE /api/playlists/:id`
 - [ ] Endpoints Schedule:
   - [x] `GET /api/schedules`
+  - [x] `GET /api/schedules/:id`
   - [x] `POST /api/schedules`
   - [x] `PUT /api/schedules/:id`
   - [x] `DELETE /api/schedules/:id`
@@ -117,11 +188,13 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
   - [x] `POST /api/devices/:id/force-sync` — emite evento SSE
 - [ ] Endpoints App:
   - [x] `GET /api/app/latest`
-  - [ ] `GET /api/app/download/:version`
+  - [x] `GET /api/app/download/:version`
   - [x] `POST /api/app/releases` (sem auth admin por enquanto)
+  - [x] `POST /api/app/releases/upload` (multipart pelo dashboard)
+  - [x] `PUT /api/app/releases/:id/latest`
 - [x] Servir `/storage/*` estático
 - [x] Configurar thresholds de armazenamento via env (warn 70%, crítico 85%)
-- [ ] Job de limpeza automática de mídia sem uso (default 45 dias, configurável 30-60)
+- [x] Job de limpeza automática de mídia sem uso (default 45 dias, configurável 30-60)
 - [ ] Deploy automatizado (GitHub Actions → Hostinger SSH rsync)
 
 ### Critério de aceite
@@ -193,28 +266,29 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 ### Tasks
 
 - [x] Setup Next.js 15 App Router
-- [ ] Setup NextAuth v5 (Google provider, allowlist emails)
+- [x] Auth local por senha para MVP em rede local
+- [ ] Setup NextAuth/Google provider se dashboard virar publico
 - [x] Layout base: sidebar + topbar + content
 - [ ] Páginas:
-  - [ ] `/login` — redirect NextAuth
-  - [ ] `/dashboard` — overview (device status, última sync)
+  - [x] `/login` — senha local
+  - [x] `/dashboard` — overview (device status, última sync)
   - [x] `/media` — grid de mídias com upload
   - [x] `/playlists` — lista + editor
   - [ ] `/playlists/:id` — editor com dnd-kit
   - [x] `/schedule` — grade semanal visual
   - [x] `/devices` — lista de TV Boxes
-  - [ ] `/devices/:id` — detalhe com métricas + histórico
-  - [ ] `/releases` — gestão de APKs
+  - [x] `/devices/:id` — detalhe com métricas + histórico
+  - [x] `/releases` — gestão de APKs
 - [ ] Componente Upload:
   - [x] Drag-drop zone
-  - [ ] Preview inline antes de enviar
+  - [x] Preview inline antes de enviar
   - [ ] `ffmpeg.wasm` pra validar codec + thumbnail
-  - [ ] POST pra `/api/media/upload` com progress
+  - [x] POST pra `/api/media/upload` com progress
 - [ ] Componente PlaylistEditor:
   - [ ] Lista ordenável de items (dnd-kit)
   - [ ] Add mídia via modal de busca
   - [x] Remove item
-  - [ ] Duplicate item
+  - [x] Duplicate item
 - [ ] Componente ScheduleGrid:
   - [ ] Grade 7 dias × 24 horas
   - [ ] Arrastar playlist pros slots
@@ -223,15 +297,15 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Componente DeviceCard:
   - [x] Status online/offline (polling ou SSE)
   - [x] Métricas: uptime, disco, app version
-  - [ ] Alertas visuais de armazenamento (70% / 85%)
+  - [x] Alertas visuais de armazenamento (70% / 85%)
   - [x] Mídia atual
   - [x] Botão "Sincronizar agora"
   - [ ] Chart uptime últimos 7d
 - [ ] Componente ReleaseManager:
-  - [ ] Upload de APK
-  - [ ] Lista de versões
-  - [ ] Toggle "latest"
-  - [ ] Release notes
+  - [x] Upload de APK
+  - [x] Lista de versões
+  - [x] Toggle "latest"
+  - [x] Release notes
 - [ ] Dark mode (padrão)
 - [ ] Deploy automatizado (GitHub Actions)
 

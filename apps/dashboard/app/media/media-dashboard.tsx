@@ -71,9 +71,14 @@ export function MediaDashboard() {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const apiBaseUrl = useMemo(resolveApiBaseUrl, []);
+  const selectedPreviewUrl = useMemo(
+    () => (selectedFile ? URL.createObjectURL(selectedFile) : null),
+    [selectedFile],
+  );
 
   const totalSize = useMemo(
     () => media.reduce((total, item) => total + item.sizeBytes, 0),
@@ -113,6 +118,14 @@ export function MediaDashboard() {
     void loadMedia();
   }, [loadMedia]);
 
+  useEffect(() => {
+    return () => {
+      if (selectedPreviewUrl) {
+        URL.revokeObjectURL(selectedPreviewUrl);
+      }
+    };
+  }, [selectedPreviewUrl]);
+
   function handleFile(file: File | null): void {
     if (!file) {
       return;
@@ -124,6 +137,7 @@ export function MediaDashboard() {
     }
 
     setSelectedFile(file);
+    setUploadProgress(0);
     setError(null);
   }
 
@@ -136,23 +150,40 @@ export function MediaDashboard() {
     setIsUploading(true);
     setError(null);
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
-
     try {
-      const response = await fetch(`${apiBaseUrl}/api/media/upload`, {
-        method: 'POST',
-        body: formData,
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', `${apiBaseUrl}/api/media/upload`);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            setUploadProgress(Math.round((event.loaded / event.total) * 100));
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve();
+            return;
+          }
+
+          try {
+            const payload = JSON.parse(xhr.responseText) as { error?: { message?: string } };
+            reject(new Error(payload.error?.message ?? `Upload falhou (${xhr.status})`));
+          } catch {
+            reject(new Error(`Upload falhou (${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error('Falha de rede durante o upload'));
+        xhr.send(formData);
       });
 
-      if (!response.ok) {
-        const payload = (await response.json().catch(() => null)) as {
-          error?: { message?: string };
-        } | null;
-        throw new Error(payload?.error?.message ?? `Upload falhou (${response.status})`);
-      }
-
       setSelectedFile(null);
+      setUploadProgress(100);
       if (inputRef.current) {
         inputRef.current.value = '';
       }
@@ -174,13 +205,15 @@ export function MediaDashboard() {
           <small>Loja local</small>
         </div>
         <nav className="nav-list">
+          <a href="/dashboard">Resumo</a>
           <a aria-current="page" href="/media">
             Mídias
           </a>
           <a href="/playlists">Playlists</a>
           <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
-          <span>APKs</span>
+          <a href="/releases">APKs</a>
+          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 
@@ -267,6 +300,30 @@ export function MediaDashboard() {
         </section>
 
         {error ? <p className="error-banner">{error}</p> : null}
+
+        {selectedFile && selectedPreviewUrl ? (
+          <section className="selected-media-preview">
+            <div className="selected-media-frame">
+              {selectedFile.type.startsWith('image/') ? (
+                <img alt="" src={selectedPreviewUrl} />
+              ) : (
+                <video muted playsInline preload="metadata" src={selectedPreviewUrl} />
+              )}
+            </div>
+            <div>
+              <p className="eyebrow">Preview</p>
+              <strong>{selectedFile.name}</strong>
+              <span>
+                {selectedFile.type || 'arquivo'} · {formatBytes(selectedFile.size)}
+              </span>
+              {isUploading ? (
+                <div className="progress-track" aria-label="Progresso do upload">
+                  <span style={{ width: `${uploadProgress}%` }} />
+                </div>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         <section className="media-grid" aria-busy={isLoading}>
           {isLoading ? <p className="muted">Carregando biblioteca...</p> : null}

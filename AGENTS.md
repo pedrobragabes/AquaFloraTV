@@ -35,7 +35,7 @@ Hostinger nao e mais o caminho primario imediato. Fica como plano futuro/alterna
 - **Runtime**: Windows, com script PowerShell e Task Scheduler.
 - **Android**: planejado em Expo bare para Android TV 11.
 
-## Estado atual - 2026-04-27
+## Estado atual - 2026-04-28
 
 Codigo implementado hoje:
 
@@ -43,13 +43,20 @@ Codigo implementado hoje:
 - Prisma SQLite com migration inicial e seed.
 - CRUD base de midias, playlists, schedules, devices e app releases.
 - Upload de imagem/video em `/api/media/upload`.
+- Upload de APK em `/api/app/releases/upload`, download em `/api/app/download/:version` e promocao de latest por canal.
 - Playlist default via `GlobalConfig`.
 - Resolucao de playlist atual por schedule ou fallback default.
-- Dashboard `/media`, `/playlists`, `/devices`.
+- Auth local do dashboard com cookie assinado e `DASHBOARD_ADMIN_PASSWORD`.
+- Dashboard `/dashboard`, `/media`, `/playlists`, `/schedule`, `/devices`, `/devices/:id`, `/releases`.
 - Player web `/player` com loop, registro de device e heartbeat.
+- `apps/player` ja tem nucleo TypeScript do player Android: cliente API, manifesto de cache e planner de sync; camada Expo/Android ainda pendente.
+- Limpeza automatica diaria de midias sem uso apos `MEDIA_RETENTION_DAYS`.
 - Scripts:
   - `scripts/windows/start-aquatv.ps1`
   - `scripts/windows/register-startup-task.ps1`
+  - `scripts/windows/backup-aquatv.ps1`
+  - `scripts/windows/register-backup-task.ps1`
+  - `scripts/windows/configure-firewall.ps1`
 
 Validacoes ja feitas durante a sessao:
 
@@ -76,9 +83,10 @@ Validacoes ja feitas durante a sessao:
    - abrir `http://localhost:3000/media`
    - abrir `http://localhost:3001/health`
 3. Se a UI aparecer sem CSS, encerrar processos antigos nas portas 3000/3001 e iniciar de novo pelo script Windows.
-4. Conferir acesso pela rede local usando o IP do PC do escritorio.
-5. Proxima feature de produto: tela `/schedule`.
-6. Proxima feature de device: app Android TV real, reaproveitando o comportamento do `/player`.
+4. Conferir acesso pela rede local usando o IP do PC do escritorio; se bloquear, rodar `scripts/windows/configure-firewall.ps1` como admin.
+5. Registrar/testar backup diario com `scripts/windows/register-backup-task.ps1`.
+6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
+7. Proxima feature de device: app Android TV real, reaproveitando o comportamento do `/player`.
 
 ## Como agentes Codex devem operar neste projeto
 

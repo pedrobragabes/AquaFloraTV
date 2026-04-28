@@ -122,6 +122,13 @@ importers:
         version: 18.3.7(@types/react@18.3.28)
 
   apps/player:
+    dependencies:
+      '@aquatv/api-client':
+        specifier: workspace:*
+        version: link:../../packages/api-client
+      '@aquatv/types':
+        specifier: workspace:*
+        version: link:../../packages/types
     devDependencies:
       '@types/node':
         specifier: ^20.17.30

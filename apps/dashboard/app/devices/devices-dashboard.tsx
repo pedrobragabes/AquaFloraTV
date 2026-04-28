@@ -80,6 +80,30 @@ function formatDisk(freeDiskMb: number | null, totalDiskMb: number | null): stri
   return `${freeDiskMb ?? totalDiskMb} MB`;
 }
 
+function getDiskUsagePct(device: Device): number | null {
+  if (device.freeDiskMb === null || device.totalDiskMb === null || device.totalDiskMb <= 0) {
+    return null;
+  }
+
+  return Math.round(((device.totalDiskMb - device.freeDiskMb) / device.totalDiskMb) * 100);
+}
+
+function getDiskAlertClass(usagePct: number | null): string {
+  if (usagePct === null) {
+    return '';
+  }
+
+  if (usagePct >= 85) {
+    return ' is-critical';
+  }
+
+  if (usagePct >= 70) {
+    return ' is-warning';
+  }
+
+  return '';
+}
+
 function isDeviceOnline(device: Device): boolean {
   if (!device.lastSeenAt) {
     return false;
@@ -164,13 +188,15 @@ export function DevicesDashboard() {
           <small>Loja local</small>
         </div>
         <nav className="nav-list">
+          <a href="/dashboard">Resumo</a>
           <a href="/media">Midias</a>
           <a href="/playlists">Playlists</a>
           <a href="/schedule">Agenda</a>
           <a aria-current="page" href="/devices">
             TV Box
           </a>
-          <span>APKs</span>
+          <a href="/releases">APKs</a>
+          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 
@@ -218,6 +244,7 @@ export function DevicesDashboard() {
 
           {devices.map((device) => {
             const online = isDeviceOnline(device);
+            const diskUsagePct = getDiskUsagePct(device);
 
             return (
               <article className="device-card" key={device.id}>
@@ -236,6 +263,9 @@ export function DevicesDashboard() {
                   >
                     {isSyncingId === device.id ? 'Enviando...' : 'Forcar sync'}
                   </button>
+                  <a className="secondary-button button-link" href={`/devices/${device.id}`}>
+                    Detalhes
+                  </a>
                 </div>
 
                 <dl className="device-facts">
@@ -257,7 +287,10 @@ export function DevicesDashboard() {
                   </div>
                   <div>
                     <dt>Disco</dt>
-                    <dd>{formatDisk(device.freeDiskMb, device.totalDiskMb)}</dd>
+                    <dd className={`disk-value${getDiskAlertClass(diskUsagePct)}`}>
+                      {formatDisk(device.freeDiskMb, device.totalDiskMb)}
+                      {diskUsagePct !== null ? ` (${diskUsagePct}%)` : ''}
+                    </dd>
                   </div>
                   <div>
                     <dt>Midia atual</dt>
