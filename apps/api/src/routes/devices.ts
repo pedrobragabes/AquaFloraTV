@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
 
-import type { Response } from 'express';
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
@@ -8,11 +7,16 @@ import { z } from 'zod';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 import { resolveCurrentPlayback } from '../services/schedule-resolution.js';
+import {
+  addDeviceListener,
+  broadcastDeviceSync,
+  getDeviceListenerCount,
+  removeDeviceListener,
+  sendSseEvent,
+} from '../services/device-sync.js';
 import { HttpError } from '../utils/http-error.js';
 
 export const devicesRouter = Router();
-
-const deviceStreams = new Map<string, Set<Response>>();
 
 const deviceIdParamSchema = z.object({
   id: z.string().min(1),
@@ -55,15 +59,6 @@ const heartbeatsQuerySchema = z.object({
   resolution: z.enum(['minute', 'hour', 'day']).optional(),
 });
 
-function sendSseEvent(res: Response, event: string, payload: unknown): void {
-  res.write(`event: ${event}\n`);
-  res.write(`data: ${JSON.stringify(payload)}\n\n`);
-}
-
-function getDeviceListeners(deviceId: string): Set<Response> {
-  return deviceStreams.get(deviceId) ?? new Set<Response>();
-}
-
 async function assertDeviceToken(deviceId: string, authorizationHeader?: string): Promise<void> {
   if (!authorizationHeader || !authorizationHeader.startsWith('Bearer ')) {
     throw new HttpError(401, 'UNAUTHORIZED', 'Missing Bearer token');
@@ -73,6 +68,26 @@ async function assertDeviceToken(deviceId: string, authorizationHeader?: string)
 
   const device = await prisma.device.findUnique({ where: { id: deviceId } });
   if (!device || device.token !== token) {
+    throw new HttpError(401, 'UNAUTHORIZED', 'Invalid device token');
+  }
+}
+
+async function assertDeviceTokenFromRequest(
+  deviceId: string,
+  authorizationHeader: string | undefined,
+  tokenQuery: unknown,
+): Promise<void> {
+  if (authorizationHeader?.startsWith('Bearer ')) {
+    await assertDeviceToken(deviceId, authorizationHeader);
+    return;
+  }
+
+  if (typeof tokenQuery !== 'string' || tokenQuery.length === 0) {
+    throw new HttpError(401, 'UNAUTHORIZED', 'Missing device token');
+  }
+
+  const device = await prisma.device.findUnique({ where: { id: deviceId } });
+  if (!device || device.token !== tokenQuery) {
     throw new HttpError(401, 'UNAUTHORIZED', 'Invalid device token');
   }
 }
@@ -240,16 +255,14 @@ devicesRouter.get('/:id/current-playlist', async (req, res, next) => {
 devicesRouter.get('/:id/stream', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
-    await assertDeviceToken(id, req.header('authorization'));
+    await assertDeviceTokenFromRequest(id, req.header('authorization'), req.query.token);
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    const listeners = getDeviceListeners(id);
-    listeners.add(res);
-    deviceStreams.set(id, listeners);
+    addDeviceListener(id, res);
 
     sendSseEvent(res, 'connected', { ok: true });
 
@@ -259,15 +272,7 @@ devicesRouter.get('/:id/stream', async (req, res, next) => {
 
     req.on('close', () => {
       clearInterval(keepAliveTimer);
-
-      const currentListeners = getDeviceListeners(id);
-      currentListeners.delete(res);
-
-      if (currentListeners.size === 0) {
-        deviceStreams.delete(id);
-      } else {
-        deviceStreams.set(id, currentListeners);
-      }
+      removeDeviceListener(id, res);
     });
   } catch (error) {
     next(error);
@@ -277,15 +282,12 @@ devicesRouter.get('/:id/stream', async (req, res, next) => {
 devicesRouter.post('/:id/force-sync', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
-    const listeners = getDeviceListeners(id);
-
-    for (const listener of listeners) {
-      sendSseEvent(listener, 'sync', { reason: 'manual' });
-    }
+    const listeners = broadcastDeviceSync('manual', id);
 
     res.status(202).json({
       queued: true,
-      listeners: listeners.size,
+      listeners,
+      activeListeners: getDeviceListenerCount(id),
     });
   } catch (error) {
     next(error);

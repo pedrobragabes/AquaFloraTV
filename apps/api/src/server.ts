@@ -24,7 +24,11 @@ const corsOptions: CorsOptions = env.ALLOWED_ORIGINS.includes('*')
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 app.use(cors(corsOptions));
 
 app.use(

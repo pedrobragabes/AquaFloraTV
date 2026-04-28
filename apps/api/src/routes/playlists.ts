@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { prisma } from '../lib/prisma.js';
+import { broadcastDeviceSync } from '../services/device-sync.js';
 import { HttpError } from '../utils/http-error.js';
 
 export const playlistsRouter = Router();
@@ -12,7 +13,7 @@ const playlistIdParamSchema = z.object({
 });
 
 const defaultPlaylistSchema = z.object({
-  playlistId: z.string().min(1),
+  playlistId: z.string().min(1).nullable(),
 });
 
 const playlistItemSchema = z.object({
@@ -78,13 +79,15 @@ playlistsRouter.put('/default', async (req, res, next) => {
   try {
     const payload = defaultPlaylistSchema.parse(req.body);
 
-    const playlist = await prisma.playlist.findUnique({
-      where: { id: payload.playlistId },
-      select: { id: true },
-    });
+    if (payload.playlistId) {
+      const playlist = await prisma.playlist.findUnique({
+        where: { id: payload.playlistId },
+        select: { id: true },
+      });
 
-    if (!playlist) {
-      throw new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist not found');
+      if (!playlist) {
+        throw new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist not found');
+      }
     }
 
     const config = await prisma.globalConfig.upsert({
@@ -96,6 +99,7 @@ playlistsRouter.put('/default', async (req, res, next) => {
       },
     });
 
+    broadcastDeviceSync(payload.playlistId ? 'playlist-default-changed' : 'playback-stopped');
     res.json({ playlistId: config.defaultPlaylistId });
   } catch (error) {
     next(error);
@@ -183,6 +187,7 @@ playlistsRouter.put('/:id', async (req, res, next) => {
       });
     });
 
+    broadcastDeviceSync('playlist-updated');
     res.json(playlist);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {

@@ -64,10 +64,15 @@ function getMediaUrl(apiBaseUrl: string, pathOrUrl: string): string {
   return `${apiBaseUrl}${pathOrUrl}`;
 }
 
+function getVideoPreviewUrl(apiBaseUrl: string, pathOrUrl: string): string {
+  return `${getMediaUrl(apiBaseUrl, pathOrUrl)}#t=0.1`;
+}
+
 export function MediaDashboard() {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [media, setMedia] = useState<MediaItem[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [lastUploadedMedia, setLastUploadedMedia] = useState<MediaItem | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
@@ -154,7 +159,7 @@ export function MediaDashboard() {
       const formData = new FormData();
       formData.append('file', selectedFile);
 
-      await new Promise<void>((resolve, reject) => {
+      const uploaded = await new Promise<MediaItem>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${apiBaseUrl}/api/media/upload`);
 
@@ -166,7 +171,7 @@ export function MediaDashboard() {
 
         xhr.onload = () => {
           if (xhr.status >= 200 && xhr.status < 300) {
-            resolve();
+            resolve(JSON.parse(xhr.responseText) as MediaItem);
             return;
           }
 
@@ -183,6 +188,7 @@ export function MediaDashboard() {
       });
 
       setSelectedFile(null);
+      setLastUploadedMedia(uploaded);
       setUploadProgress(100);
       if (inputRef.current) {
         inputRef.current.value = '';
@@ -307,7 +313,7 @@ export function MediaDashboard() {
               {selectedFile.type.startsWith('image/') ? (
                 <img alt="" src={selectedPreviewUrl} />
               ) : (
-                <video muted playsInline preload="metadata" src={selectedPreviewUrl} />
+                <video controls muted playsInline preload="metadata" src={selectedPreviewUrl} />
               )}
             </div>
             <div>
@@ -321,6 +327,34 @@ export function MediaDashboard() {
                   <span style={{ width: `${uploadProgress}%` }} />
                 </div>
               ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {!selectedFile && lastUploadedMedia ? (
+          <section className="selected-media-preview">
+            <div className="selected-media-frame">
+              {lastUploadedMedia.mimetype.startsWith('image/') ? (
+                <img alt="" src={getMediaUrl(apiBaseUrl, lastUploadedMedia.url)} />
+              ) : (
+                <video
+                  controls
+                  muted
+                  playsInline
+                  preload="metadata"
+                  src={getVideoPreviewUrl(apiBaseUrl, lastUploadedMedia.url)}
+                />
+              )}
+            </div>
+            <div>
+              <p className="eyebrow">Enviada agora</p>
+              <strong>{lastUploadedMedia.filename}</strong>
+              <span>
+                {lastUploadedMedia.mimetype} · {formatBytes(lastUploadedMedia.sizeBytes)}
+              </span>
+              <a className="inline-action" href="/playlists">
+                Adicionar em uma playlist
+              </a>
             </div>
           </section>
         ) : null}
@@ -339,10 +373,11 @@ export function MediaDashboard() {
                   <img alt="" src={getMediaUrl(apiBaseUrl, item.url)} />
                 ) : (
                   <video
+                    controls
                     muted
                     playsInline
                     preload="metadata"
-                    src={getMediaUrl(apiBaseUrl, item.url)}
+                    src={getVideoPreviewUrl(apiBaseUrl, item.url)}
                   />
                 )}
               </div>

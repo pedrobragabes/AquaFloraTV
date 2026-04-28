@@ -82,6 +82,10 @@ function getMediaUrl(apiBaseUrl: string, pathOrUrl: string): string {
   return `${apiBaseUrl}${pathOrUrl}`;
 }
 
+function getVideoPreviewUrl(apiBaseUrl: string, pathOrUrl: string): string {
+  return `${getMediaUrl(apiBaseUrl, pathOrUrl)}#t=0.1`;
+}
+
 function normalizeDraftItems(detail: PlaylistDetail): DraftItem[] {
   return detail.items.map((item) => ({
     key: item.id,
@@ -318,9 +322,13 @@ export function PlaylistDashboard() {
   }
 
   async function savePlaylist(): Promise<void> {
+    await savePlaylistToServer();
+  }
+
+  async function savePlaylistToServer(): Promise<PlaylistDetail | null> {
     if (!selectedPlaylist) {
       setError('Selecione uma playlist antes de salvar.');
-      return;
+      return null;
     }
 
     setIsSaving(true);
@@ -349,16 +357,23 @@ export function PlaylistDashboard() {
       setDraftItems(normalizeDraftItems(updated));
       await loadPlaylists();
       setNotice('Playlist salva.');
+      return updated;
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'Falha ao salvar playlist';
       setError(message);
+      return null;
     } finally {
       setIsSaving(false);
     }
   }
 
-  async function setAsDefault(): Promise<void> {
+  async function playSelectedPlaylist(): Promise<void> {
     if (!selectedPlaylist) {
+      return;
+    }
+
+    const savedPlaylist = await savePlaylistToServer();
+    if (!savedPlaylist) {
       return;
     }
 
@@ -370,18 +385,44 @@ export function PlaylistDashboard() {
       const response = await fetch(`${apiBaseUrl}/api/playlists/default`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playlistId: selectedPlaylist.id }),
+        body: JSON.stringify({ playlistId: savedPlaylist.id }),
       });
 
       if (!response.ok) {
         throw new Error(`Ativar falhou (${response.status})`);
       }
 
-      setDefaultPlaylistId(selectedPlaylist.id);
-      setNotice('Playlist definida como padrao da TV.');
+      setDefaultPlaylistId(savedPlaylist.id);
+      setNotice('Playlist salva e tocando na TV.');
     } catch (defaultError) {
       const message =
         defaultError instanceof Error ? defaultError.message : 'Falha ao ativar playlist';
+      setError(message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function stopPlayback(): Promise<void> {
+    setIsSaving(true);
+    setError(null);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/playlists/default`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playlistId: null }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Parar falhou (${response.status})`);
+      }
+
+      setDefaultPlaylistId(null);
+      setNotice('TV parada. Nenhuma playlist padrao ativa.');
+    } catch (stopError) {
+      const message = stopError instanceof Error ? stopError.message : 'Falha ao parar TV';
       setError(message);
     } finally {
       setIsSaving(false);
@@ -419,12 +460,28 @@ export function PlaylistDashboard() {
               Atualizar
             </button>
             <button
-              className="primary-button"
+              className="secondary-button"
               type="button"
               disabled={isSaving || !selectedPlaylist}
               onClick={() => void savePlaylist()}
             >
-              {isSaving ? 'Salvando...' : 'Salvar ordem'}
+              Salvar edicao
+            </button>
+            <button
+              className="primary-button"
+              type="button"
+              disabled={isSaving || !selectedPlaylist || draftItems.length === 0}
+              onClick={() => void playSelectedPlaylist()}
+            >
+              {isSaving ? 'Aplicando...' : 'Dar play na TV'}
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              disabled={isSaving || !defaultPlaylistId}
+              onClick={() => void stopPlayback()}
+            >
+              Parar TV
             </button>
           </div>
         </header>
@@ -477,14 +534,12 @@ export function PlaylistDashboard() {
                 </h2>
               </div>
               <button
-                className="secondary-button"
+                className="primary-button compact-action"
                 type="button"
-                disabled={
-                  !selectedPlaylist || selectedPlaylist.id === defaultPlaylistId || isSaving
-                }
-                onClick={() => void setAsDefault()}
+                disabled={!selectedPlaylist || draftItems.length === 0 || isSaving}
+                onClick={() => void playSelectedPlaylist()}
               >
-                Usar na TV
+                Dar play na TV
               </button>
               <button
                 className="danger-button"
@@ -512,7 +567,7 @@ export function PlaylistDashboard() {
                         muted
                         playsInline
                         preload="metadata"
-                        src={getMediaUrl(apiBaseUrl, item.media.url)}
+                        src={getVideoPreviewUrl(apiBaseUrl, item.media.url)}
                       />
                     )}
                   </div>
@@ -590,7 +645,7 @@ export function PlaylistDashboard() {
                         muted
                         playsInline
                         preload="metadata"
-                        src={getMediaUrl(apiBaseUrl, item.url)}
+                        src={getVideoPreviewUrl(apiBaseUrl, item.url)}
                       />
                     )}
                   </div>
