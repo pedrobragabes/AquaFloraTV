@@ -10,7 +10,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Registrando AquaTV para iniciar com o Windows...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\register-startup-task.ps1" -ProjectPath "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\register-startup-task.ps1" -ProjectPath "%~dp0."
 
 if errorlevel 1 (
   echo.

@@ -10,7 +10,7 @@ if %errorlevel% neq 0 (
 )
 
 echo Registrando backup diario do AquaTV...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\register-backup-task.ps1" -ProjectPath "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\register-backup-task.ps1" -ProjectPath "%~dp0."
 
 if errorlevel 1 (
   echo.
