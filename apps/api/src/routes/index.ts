@@ -1,5 +1,7 @@
 import { Router } from 'express';
 
+import { requireAdmin } from '../middlewares/require-admin.js';
+
 import { appReleasesRouter } from './app-releases.js';
 import { authRouter } from './auth.js';
 import { devicesRouter } from './devices.js';
@@ -19,8 +21,8 @@ apiRouter.get('/', (_req, res) => {
 
 apiRouter.use('/health', healthRouter);
 apiRouter.use('/auth', authRouter);
-apiRouter.use('/media', mediaRouter);
-apiRouter.use('/playlists', playlistsRouter);
-apiRouter.use('/schedules', schedulesRouter);
+apiRouter.use('/media', requireAdmin, mediaRouter);
+apiRouter.use('/playlists', requireAdmin, playlistsRouter);
+apiRouter.use('/schedules', requireAdmin, schedulesRouter);
 apiRouter.use('/devices', devicesRouter);
 apiRouter.use('/app', appReleasesRouter);

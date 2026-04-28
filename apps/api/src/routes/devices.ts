@@ -1,11 +1,10 @@
 import { createHash, randomUUID } from 'node:crypto';
 
 import { Router } from 'express';
-import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 
-import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
+import { requireAdmin } from '../middlewares/require-admin.js';
 import { resolveCurrentPlayback } from '../services/schedule-resolution.js';
 import {
   addDeviceListener,
@@ -35,7 +34,6 @@ const heartbeatSchema = z.object({
   appVersion: z.string().trim().optional(),
   currentMediaId: z.string().trim().optional(),
   networkType: z.string().trim().optional(),
-  ipAddress: z.string().trim().optional(),
 });
 
 const deviceLogsQuerySchema = z.object({
@@ -92,39 +90,32 @@ async function assertDeviceTokenFromRequest(
   }
 }
 
-devicesRouter.post('/', async (req, res, next) => {
+devicesRouter.post('/', requireAdmin, async (req, res, next) => {
   try {
     const payload = createDeviceSchema.parse(req.body);
+
+    const token = `dev_${randomUUID().replace(/-/g, '')}${randomUUID().replace(/-/g, '')}`;
 
     const created = await prisma.device.create({
       data: {
         name: payload.name,
-        token: `pending-${randomUUID()}`,
+        token,
         ...(payload.deviceModel !== undefined ? { deviceModel: payload.deviceModel } : {}),
         ...(payload.androidVersion !== undefined ? { androidVersion: payload.androidVersion } : {}),
       },
     });
 
-    const signedToken = jwt.sign({ deviceId: created.id }, env.JWT_SECRET, {
-      expiresIn: '365d',
-    });
-
-    await prisma.device.update({
-      where: { id: created.id },
-      data: { token: signedToken },
-    });
-
     res.status(201).json({
       id: created.id,
       name: created.name,
-      token: signedToken,
+      token,
     });
   } catch (error) {
     next(error);
   }
 });
 
-devicesRouter.get('/', async (_req, res, next) => {
+devicesRouter.get('/', requireAdmin, async (_req, res, next) => {
   try {
     const devices = await prisma.device.findMany({
       orderBy: [{ lastSeenAt: 'desc' }, { createdAt: 'desc' }],
@@ -136,7 +127,7 @@ devicesRouter.get('/', async (_req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id', async (req, res, next) => {
+devicesRouter.get('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
 
@@ -171,6 +162,7 @@ devicesRouter.post('/:id/heartbeat', async (req, res, next) => {
 
     const payload = heartbeatSchema.parse(req.body);
     const now = new Date();
+    const ipAddress = req.ip ?? null;
 
     await prisma.$transaction([
       prisma.deviceHeartbeat.create({
@@ -197,7 +189,7 @@ devicesRouter.post('/:id/heartbeat', async (req, res, next) => {
             ? { currentMediaId: payload.currentMediaId }
             : {}),
           ...(payload.networkType !== undefined ? { networkType: payload.networkType } : {}),
-          ...(payload.ipAddress !== undefined ? { ipAddress: payload.ipAddress } : {}),
+          ...(ipAddress !== null ? { ipAddress } : {}),
         },
       }),
     ]);
@@ -279,7 +271,7 @@ devicesRouter.get('/:id/stream', async (req, res, next) => {
   }
 });
 
-devicesRouter.post('/:id/force-sync', async (req, res, next) => {
+devicesRouter.post('/:id/force-sync', requireAdmin, async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const listeners = broadcastDeviceSync('manual', id);
@@ -317,7 +309,7 @@ devicesRouter.post('/:id/logs', async (req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id/logs', async (req, res, next) => {
+devicesRouter.get('/:id/logs', requireAdmin, async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const query = deviceLogsQuerySchema.parse(req.query);
@@ -346,7 +338,7 @@ devicesRouter.get('/:id/logs', async (req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id/heartbeats', async (req, res, next) => {
+devicesRouter.get('/:id/heartbeats', requireAdmin, async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const query = heartbeatsQuerySchema.parse(req.query);

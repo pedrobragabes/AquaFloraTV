@@ -12,14 +12,15 @@ import { startMediaCleanupJob } from './services/media-cleanup.js';
 
 export const app = express();
 
-const corsOptions: CorsOptions = env.ALLOWED_ORIGINS.includes('*')
-  ? {
-      origin: true,
-    }
-  : {
-      origin: env.ALLOWED_ORIGINS,
-      credentials: true,
-    };
+const corsOptions: CorsOptions =
+  env.NODE_ENV !== 'production' && env.ALLOWED_ORIGINS.includes('*')
+    ? {
+        origin: true,
+      }
+    : {
+        origin: env.ALLOWED_ORIGINS,
+        credentials: true,
+      };
 
 app.disable('x-powered-by');
 app.set('trust proxy', 1);
@@ -43,7 +44,21 @@ app.use(
 
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false }));
-app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+
+morgan.token('safe-url', (req) => {
+  const url =
+    (req as { originalUrl?: string; url?: string }).originalUrl ??
+    (req as { url?: string }).url ??
+    '';
+  return url.replace(/([?&]token=)[^&]+/gi, '$1[REDACTED]');
+});
+
+const morganFormat =
+  env.NODE_ENV === 'production'
+    ? ':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
+    : ':method :safe-url :status :response-time ms - :res[content-length]';
+
+app.use(morgan(morganFormat));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'api', timestamp: new Date().toISOString() });

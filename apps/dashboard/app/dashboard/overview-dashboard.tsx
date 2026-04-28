@@ -34,19 +34,10 @@ type PlaylistDetail = {
   }>;
 };
 
-const fallbackApiUrl = 'http://localhost:7741';
 const onlineThresholdMs = 90_000;
 
 function resolveApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
-
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:7741`;
-  }
-
-  return fallbackApiUrl;
+  return '/api/proxy';
 }
 
 function isOnline(lastSeenAt: string | null): boolean {

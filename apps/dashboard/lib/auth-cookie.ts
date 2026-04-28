@@ -56,9 +56,16 @@ function decodeJson(value: string): AdminSession | null {
 }
 
 function getSessionSecret(): string {
-  return (
-    process.env.DASHBOARD_SESSION_SECRET ?? process.env.NEXTAUTH_SECRET ?? 'dev-session-secret'
-  );
+  const configured = process.env.DASHBOARD_SESSION_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (configured && configured.length >= 16) {
+    return configured;
+  }
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'DASHBOARD_SESSION_SECRET (ou NEXTAUTH_SECRET) precisa ter pelo menos 16 caracteres em produção',
+    );
+  }
+  return 'dev-session-secret-change-me-please';
 }
 
 async function sign(value: string): Promise<string> {
