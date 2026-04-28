@@ -10,6 +10,7 @@ import { z } from 'zod';
 
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
+import { requireAdmin } from '../middlewares/require-admin.js';
 import { HttpError } from '../utils/http-error.js';
 
 export const appReleasesRouter = Router();
@@ -32,18 +33,6 @@ const formBooleanSchema = z.preprocess((value) => {
 
 const latestQuerySchema = z.object({
   channel: channelSchema.optional(),
-});
-
-const createReleaseSchema = z.object({
-  versionCode: z.coerce.number().int().positive(),
-  versionName: z.string().trim().min(1),
-  apkUrl: z.string().url(),
-  apkSizeBytes: z.coerce.number().int().positive(),
-  apkMd5: z.string().trim().min(1),
-  releaseNotes: z.string().trim().optional(),
-  channel: channelSchema.default('STABLE'),
-  mandatory: z.boolean().default(false),
-  active: z.boolean().default(true),
 });
 
 const uploadReleaseSchema = z.object({
@@ -93,8 +82,8 @@ function isAllowedApkUpload(filename: string, mimetype: string): boolean {
   return hasApkExtension && allowedMimeTypes.has(mimetype);
 }
 
-async function calculateMd5(filePath: string): Promise<string> {
-  const hash = createHash('md5');
+async function calculateSha256(filePath: string): Promise<string> {
+  const hash = createHash('sha256');
   const stream = createReadStream(filePath);
 
   await new Promise<void>((resolve, reject) => {
@@ -171,17 +160,15 @@ appReleasesRouter.get('/download/:version', async (req, res, next) => {
       throw new HttpError(404, 'RELEASE_NOT_FOUND', 'Release not found');
     }
 
-    if (release.apkUrl.startsWith('http://') || release.apkUrl.startsWith('https://')) {
-      res.redirect(release.apkUrl);
-      return;
-    }
-
     if (!release.apkUrl.startsWith('/storage/apks/')) {
       throw new HttpError(409, 'INVALID_RELEASE_URL', 'Release APK URL is not downloadable');
     }
 
     const filename = path.basename(release.apkUrl);
     const filePath = path.resolve(apksStoragePath, filename);
+    if (path.relative(apksStoragePath, filePath).startsWith('..')) {
+      throw new HttpError(400, 'INVALID_RELEASE_PATH', 'Invalid APK file path');
+    }
     const fileExists = await access(filePath)
       .then(() => true)
       .catch(() => false);
@@ -196,7 +183,7 @@ appReleasesRouter.get('/download/:version', async (req, res, next) => {
   }
 });
 
-appReleasesRouter.get('/releases', async (_req, res, next) => {
+appReleasesRouter.get('/releases', requireAdmin, async (_req, res, next) => {
   try {
     const releases = await prisma.appRelease.findMany({
       orderBy: [{ channel: 'asc' }, { versionCode: 'desc' }],
@@ -208,75 +195,51 @@ appReleasesRouter.get('/releases', async (_req, res, next) => {
   }
 });
 
-appReleasesRouter.post('/releases/upload', upload.single('apk'), async (req, res, next) => {
-  const file = req.file;
+appReleasesRouter.post(
+  '/releases/upload',
+  requireAdmin,
+  upload.single('apk'),
+  async (req, res, next) => {
+    const file = req.file;
 
-  if (!file) {
-    next(new HttpError(400, 'APK_REQUIRED', 'Multipart field "apk" is required'));
-    return;
-  }
-
-  try {
-    const payload = uploadReleaseSchema.parse(req.body);
-    const md5 = await calculateMd5(file.path);
-
-    const release = await prisma.appRelease.create({
-      data: {
-        versionCode: payload.versionCode,
-        versionName: payload.versionName,
-        apkUrl: `/storage/apks/${file.filename}`,
-        apkSizeBytes: file.size,
-        apkMd5: md5,
-        channel: payload.channel,
-        mandatory: payload.mandatory,
-        active: payload.active,
-        ...(payload.releaseNotes !== undefined ? { releaseNotes: payload.releaseNotes } : {}),
-      },
-    });
-
-    res.status(201).json(release);
-  } catch (error) {
-    await unlink(file.path).catch(() => undefined);
-
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      next(new HttpError(409, 'VERSION_CONFLICT', 'versionCode must be unique'));
+    if (!file) {
+      next(new HttpError(400, 'APK_REQUIRED', 'Multipart field "apk" is required'));
       return;
     }
 
-    next(error);
-  }
-});
+    try {
+      const payload = uploadReleaseSchema.parse(req.body);
+      const sha256 = await calculateSha256(file.path);
 
-appReleasesRouter.post('/releases', async (req, res, next) => {
-  try {
-    const payload = createReleaseSchema.parse(req.body);
+      const release = await prisma.appRelease.create({
+        data: {
+          versionCode: payload.versionCode,
+          versionName: payload.versionName,
+          apkUrl: `/storage/apks/${file.filename}`,
+          apkSizeBytes: file.size,
+          apkMd5: sha256,
+          channel: payload.channel,
+          mandatory: payload.mandatory,
+          active: payload.active,
+          ...(payload.releaseNotes !== undefined ? { releaseNotes: payload.releaseNotes } : {}),
+        },
+      });
 
-    const release = await prisma.appRelease.create({
-      data: {
-        versionCode: payload.versionCode,
-        versionName: payload.versionName,
-        apkUrl: payload.apkUrl,
-        apkSizeBytes: payload.apkSizeBytes,
-        apkMd5: payload.apkMd5,
-        channel: payload.channel,
-        mandatory: payload.mandatory,
-        active: payload.active,
-        ...(payload.releaseNotes !== undefined ? { releaseNotes: payload.releaseNotes } : {}),
-      },
-    });
+      res.status(201).json(release);
+    } catch (error) {
+      await unlink(file.path).catch(() => undefined);
 
-    res.status(201).json(release);
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-      next(new HttpError(409, 'VERSION_CONFLICT', 'versionCode must be unique'));
-      return;
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        next(new HttpError(409, 'VERSION_CONFLICT', 'versionCode must be unique'));
+        return;
+      }
+
+      next(error);
     }
+  },
+);
 
-    next(error);
-  }
-});
-
-appReleasesRouter.put('/releases/:id/latest', async (req, res, next) => {
+appReleasesRouter.put('/releases/:id/latest', requireAdmin, async (req, res, next) => {
   try {
     const { id } = releaseIdParamSchema.parse(req.params);
 
@@ -308,7 +271,7 @@ appReleasesRouter.put('/releases/:id/latest', async (req, res, next) => {
   }
 });
 
-appReleasesRouter.put('/releases/:id', async (req, res, next) => {
+appReleasesRouter.put('/releases/:id', requireAdmin, async (req, res, next) => {
   try {
     const { id } = releaseIdParamSchema.parse(req.params);
     const payload = updateReleaseSchema.parse(req.body);

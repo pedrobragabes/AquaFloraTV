@@ -43,22 +43,13 @@ type CachedMediaUrls = Record<string, string>;
 
 const credentialsStorageKey = 'aquatv.player.credentials.v1';
 const playerStartedAt = Date.now();
-const fallbackApiUrl = 'http://localhost:7741';
 const imageFallbackDurationMs = 10_000;
 const playlistPollMs = 60_000;
 const heartbeatMs = 30_000;
 const playerMediaCacheName = 'aquatv-player-media-v1';
 
 function resolveApiBaseUrl(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
-
-  if (typeof window !== 'undefined' && window.location.hostname) {
-    return `${window.location.protocol}//${window.location.hostname}:7741`;
-  }
-
-  return fallbackApiUrl;
+  return '/api/proxy';
 }
 
 function getMediaUrl(apiBaseUrl: string, pathOrUrl: string): string {

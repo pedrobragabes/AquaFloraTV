@@ -12,23 +12,41 @@ const scheduleIdParamSchema = z.object({
   id: z.string().min(1),
 });
 
+const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
+
 const scheduleBaseSchema = z.object({
   name: z.string().trim().min(1),
   playlistId: z.string().min(1),
   active: z.boolean().optional(),
   priority: z.coerce.number().int().default(0),
   daysOfWeek: z.array(z.coerce.number().int().min(0).max(6)).optional(),
-  startTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
-  endTime: z
-    .string()
-    .regex(/^\d{2}:\d{2}$/)
-    .optional(),
+  startTime: z.string().regex(timeRegex, 'Formato esperado HH:MM (24h)').optional(),
+  endTime: z.string().regex(timeRegex, 'Formato esperado HH:MM (24h)').optional(),
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
 });
+
+type ScheduleRecord = {
+  daysOfWeek: string | null;
+  [key: string]: unknown;
+};
+
+function deserializeSchedule<T extends ScheduleRecord>(schedule: T): T & { daysOfWeek: number[] } {
+  let daysOfWeek: number[] = [];
+  if (schedule.daysOfWeek) {
+    try {
+      const parsed = JSON.parse(schedule.daysOfWeek);
+      if (Array.isArray(parsed)) {
+        daysOfWeek = parsed.filter(
+          (d): d is number => typeof d === 'number' && Number.isInteger(d) && d >= 0 && d <= 6,
+        );
+      }
+    } catch {
+      daysOfWeek = [];
+    }
+  }
+  return { ...schedule, daysOfWeek };
+}
 
 const createScheduleSchema = scheduleBaseSchema;
 
@@ -60,7 +78,7 @@ schedulesRouter.get('/', async (req, res, next) => {
       orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     });
 
-    res.json({ data: schedules });
+    res.json({ data: schedules.map((s) => deserializeSchedule(s)) });
   } catch (error) {
     next(error);
   }
@@ -104,7 +122,7 @@ schedulesRouter.get('/:id', async (req, res, next) => {
       throw new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found');
     }
 
-    res.json(schedule);
+    res.json(deserializeSchedule(schedule));
   } catch (error) {
     next(error);
   }
@@ -130,7 +148,7 @@ schedulesRouter.post('/', async (req, res, next) => {
       },
     });
 
-    res.status(201).json(schedule);
+    res.status(201).json(deserializeSchedule(schedule));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
       next(new HttpError(409, 'PLAYLIST_NOT_FOUND', 'playlistId does not exist'));
@@ -165,7 +183,7 @@ schedulesRouter.put('/:id', async (req, res, next) => {
       },
     });
 
-    res.json(schedule);
+    res.json(deserializeSchedule(schedule));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
       next(new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found'));
