@@ -1,4 +1,4 @@
 @echo off
 setlocal
 
-start "" "http://localhost:7740/player"
+start "" "http://192.168.0.114:7740/player?rotation=90"

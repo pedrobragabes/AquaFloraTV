@@ -40,8 +40,10 @@ type PlayerStatus =
   | 'offline';
 
 type CachedMediaUrls = Record<string, string>;
+type PlayerRotation = 0 | 90 | 180 | 270;
 
 const credentialsStorageKey = 'aquatv.player.credentials.v1';
+const rotationStorageKey = 'aquatv.player.rotation.v1';
 const playerStartedAt = Date.now();
 const imageFallbackDurationMs = 10_000;
 const playlistPollMs = 60_000;
@@ -88,6 +90,35 @@ function getDeviceName(): string {
   }
 
   return `AquaTV Web Player - ${window.location.hostname}`;
+}
+
+function parseRotation(value: string | null): PlayerRotation | null {
+  if (value === '0' || value === '90' || value === '180' || value === '270') {
+    return Number(value) as PlayerRotation;
+  }
+
+  return null;
+}
+
+function readInitialRotation(): PlayerRotation {
+  if (typeof window === 'undefined') {
+    return 0;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return (
+    parseRotation(params.get('rotation')) ??
+    parseRotation(params.get('rotate')) ??
+    parseRotation(window.localStorage.getItem(rotationStorageKey)) ??
+    0
+  );
+}
+
+function getNextRotation(rotation: PlayerRotation): PlayerRotation {
+  if (rotation === 0) return 90;
+  if (rotation === 90) return 180;
+  if (rotation === 180) return 270;
+  return 0;
 }
 
 async function cacheMediaItem(
@@ -160,6 +191,7 @@ export function TvPlayer() {
   const [cacheProgress, setCacheProgress] = useState(0);
   const [cacheTotal, setCacheTotal] = useState(0);
   const [cacheDone, setCacheDone] = useState(0);
+  const [rotation, setRotation] = useState<PlayerRotation>(readInitialRotation);
 
   const currentItem = playlist?.items[currentIndex] ?? null;
   const currentMediaUrl = currentItem
@@ -170,6 +202,21 @@ export function TvPlayer() {
     Object.values(cachedMediaUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
     cachedMediaUrlsRef.current = nextUrls;
     setCachedMediaUrls(nextUrls);
+  }, []);
+
+  const changeRotation = useCallback((nextRotation: PlayerRotation): void => {
+    setRotation(nextRotation);
+    window.localStorage.setItem(rotationStorageKey, String(nextRotation));
+
+    const url = new URL(window.location.href);
+    if (nextRotation === 0) {
+      url.searchParams.delete('rotation');
+      url.searchParams.delete('rotate');
+    } else {
+      url.searchParams.set('rotation', String(nextRotation));
+      url.searchParams.delete('rotate');
+    }
+    window.history.replaceState(null, '', url);
   }, []);
 
   const registerDevice = useCallback(async (): Promise<DeviceCredentials> => {
@@ -448,22 +495,24 @@ export function TvPlayer() {
   }, [currentItem, currentMediaUrl]);
 
   return (
-    <main className="tv-player-screen">
+    <main className="tv-player-screen" data-rotation={rotation}>
       {currentItem ? (
         <section className="tv-stage" aria-label="Midia em reproducao">
-          {currentItem.media.mimetype.startsWith('image/') ? (
-            <img alt="" src={currentMediaUrl ?? getMediaUrl(apiBaseUrl, currentItem.media.url)} />
-          ) : (
-            <video
-              autoPlay
-              muted
-              playsInline
-              ref={videoRef}
-              src={currentMediaUrl ?? getMediaUrl(apiBaseUrl, currentItem.media.url)}
-              onEnded={advance}
-              onError={advance}
-            />
-          )}
+          <div className="tv-stage-frame">
+            {currentItem.media.mimetype.startsWith('image/') ? (
+              <img alt="" src={currentMediaUrl ?? getMediaUrl(apiBaseUrl, currentItem.media.url)} />
+            ) : (
+              <video
+                autoPlay
+                muted
+                playsInline
+                ref={videoRef}
+                src={currentMediaUrl ?? getMediaUrl(apiBaseUrl, currentItem.media.url)}
+                onEnded={advance}
+                onError={advance}
+              />
+            )}
+          </div>
         </section>
       ) : (
         <section className="tv-empty-state">
@@ -480,6 +529,19 @@ export function TvPlayer() {
         <span>
           {lastSyncAt ? `sync ${lastSyncAt.toLocaleTimeString('pt-BR')}` : 'sync pendente'}
         </span>
+        <span>{`api ${apiBaseUrl}`}</span>
+        <span>{`rotacao ${rotation}deg`}</span>
+      </aside>
+
+      <aside className="tv-orientation-controls" aria-label="Orientacao do player">
+        <button type="button" onClick={() => changeRotation(getNextRotation(rotation))}>
+          Girar
+        </button>
+        {rotation !== 0 ? (
+          <button type="button" onClick={() => changeRotation(0)}>
+            Reset
+          </button>
+        ) : null}
       </aside>
 
       {status === 'caching' ? (

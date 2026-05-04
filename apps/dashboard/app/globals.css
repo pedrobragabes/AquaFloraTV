@@ -687,10 +687,36 @@ h1 {
   background: #050806;
 }
 
-.tv-stage img,
-.tv-stage video {
+.tv-stage-frame {
+  display: grid;
   width: 100vw;
   height: 100vh;
+  place-items: center;
+  transform-origin: center;
+}
+
+.tv-player-screen[data-rotation='90'] .tv-stage-frame,
+.tv-player-screen[data-rotation='270'] .tv-stage-frame {
+  width: 100vh;
+  height: 100vw;
+}
+
+.tv-player-screen[data-rotation='90'] .tv-stage-frame {
+  transform: rotate(90deg);
+}
+
+.tv-player-screen[data-rotation='180'] .tv-stage-frame {
+  transform: rotate(180deg);
+}
+
+.tv-player-screen[data-rotation='270'] .tv-stage-frame {
+  transform: rotate(270deg);
+}
+
+.tv-stage-frame img,
+.tv-stage-frame video {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   background: #050806;
 }
@@ -736,6 +762,30 @@ h1 {
   color: #ffffff;
   font-size: 13px;
   text-transform: uppercase;
+}
+
+.tv-orientation-controls {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  display: flex;
+  gap: 8px;
+}
+
+.tv-orientation-controls button {
+  min-height: 40px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 7px;
+  background: rgba(5, 8, 6, 0.68);
+  color: #ffffff;
+  font-weight: 850;
+  padding: 0 12px;
+  backdrop-filter: blur(12px);
+}
+
+.tv-orientation-controls button:hover {
+  background: rgba(31, 122, 79, 0.78);
 }
 
 .tv-cache-panel {
