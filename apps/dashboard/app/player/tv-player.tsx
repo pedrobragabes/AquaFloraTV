@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type DeviceCredentials = {
   id: string;
   token: string;
@@ -30,16 +32,8 @@ type CurrentPlaylistResponse = {
   items: PlaylistItem[];
 };
 
-type PlayerStatus =
-  | 'starting'
-  | 'registering'
-  | 'syncing'
-  | 'caching'
-  | 'playing'
-  | 'empty'
-  | 'offline';
+type PlayerStatus = 'starting' | 'registering' | 'syncing' | 'playing' | 'empty' | 'offline';
 
-type CachedMediaUrls = Record<string, string>;
 type PlayerRotation = 0 | 90 | 180 | 270;
 
 const credentialsStorageKey = 'aquatv.player.credentials.v1';
@@ -48,38 +42,6 @@ const playerStartedAt = Date.now();
 const imageFallbackDurationMs = 10_000;
 const playlistPollMs = 60_000;
 const heartbeatMs = 30_000;
-const playerMediaCacheName = 'aquatv-player-media-v1';
-
-function isLoopbackHost(hostname: string): boolean {
-  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
-}
-
-function resolveApiBaseUrl(): string {
-  const browserApiUrl =
-    typeof window !== 'undefined' && window.location.hostname
-      ? `${window.location.protocol}//${window.location.hostname}:7741`
-      : null;
-
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    const configured = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-    if (!browserApiUrl || typeof window === 'undefined') {
-      return configured;
-    }
-
-    try {
-      const configuredUrl = new URL(configured);
-      if (isLoopbackHost(configuredUrl.hostname) && !isLoopbackHost(window.location.hostname)) {
-        return browserApiUrl;
-      }
-    } catch {
-      return browserApiUrl;
-    }
-
-    return configured;
-  }
-
-  return browserApiUrl ?? 'http://192.168.0.114:7741';
-}
 
 function getMediaUrl(apiBaseUrl: string, pathOrUrl: string): string {
   if (pathOrUrl.startsWith('http://') || pathOrUrl.startsWith('https://')) {
@@ -148,88 +110,19 @@ function getNextRotation(rotation: PlayerRotation): PlayerRotation {
   return 0;
 }
 
-async function cacheMediaItem(
-  apiBaseUrl: string,
-  item: PlaylistItem,
-  signal: AbortSignal,
-): Promise<string> {
-  const mediaUrl = getMediaUrl(apiBaseUrl, item.media.url);
-
-  if (!('caches' in window)) {
-    const response = await fetch(mediaUrl, { signal });
-    if (!response.ok) {
-      throw new Error(`Download falhou (${response.status})`);
-    }
-
-    return URL.createObjectURL(await response.blob());
-  }
-
-  const cache = await window.caches.open(playerMediaCacheName);
-  const cachedResponse = await cache.match(mediaUrl);
-  const response =
-    cachedResponse ??
-    (await fetch(mediaUrl, {
-      cache: 'reload',
-      signal,
-    }));
-
-  if (!response.ok) {
-    throw new Error(`Download falhou (${response.status})`);
-  }
-
-  if (!cachedResponse) {
-    await cache.put(mediaUrl, response.clone());
-  }
-
-  return URL.createObjectURL(await response.blob());
-}
-
-async function deleteStaleCachedMedia(apiBaseUrl: string, items: PlaylistItem[]): Promise<void> {
-  if (!('caches' in window)) {
-    return;
-  }
-
-  const activeUrls = new Set(items.map((item) => getMediaUrl(apiBaseUrl, item.media.url)));
-  const cache = await window.caches.open(playerMediaCacheName);
-  const requests = await cache.keys();
-
-  await Promise.all(
-    requests.map((request) => {
-      if (activeUrls.has(request.url)) {
-        return Promise.resolve(false);
-      }
-
-      return cache.delete(request);
-    }),
-  );
-}
-
 export function TvPlayer() {
   const apiBaseUrl = useMemo(resolveApiBaseUrl, []);
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const cachedMediaUrlsRef = useRef<CachedMediaUrls>({});
   const [credentials, setCredentials] = useState<DeviceCredentials | null>(null);
   const [playlist, setPlaylist] = useState<CurrentPlaylistResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [status, setStatus] = useState<PlayerStatus>('starting');
   const [message, setMessage] = useState('Inicializando player');
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
-  const [cachedMediaUrls, setCachedMediaUrls] = useState<CachedMediaUrls>({});
-  const [cacheProgress, setCacheProgress] = useState(0);
-  const [cacheTotal, setCacheTotal] = useState(0);
-  const [cacheDone, setCacheDone] = useState(0);
   const [rotation, setRotation] = useState<PlayerRotation>(readInitialRotation);
 
   const currentItem = playlist?.items[currentIndex] ?? null;
-  const currentMediaUrl = currentItem
-    ? (cachedMediaUrls[currentItem.media.id] ?? getMediaUrl(apiBaseUrl, currentItem.media.url))
-    : null;
-
-  const replaceCachedMediaUrls = useCallback((nextUrls: CachedMediaUrls): void => {
-    Object.values(cachedMediaUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
-    cachedMediaUrlsRef.current = nextUrls;
-    setCachedMediaUrls(nextUrls);
-  }, []);
+  const currentMediaUrl = currentItem ? getMediaUrl(apiBaseUrl, currentItem.media.url) : null;
 
   const changeRotation = useCallback((nextRotation: PlayerRotation): void => {
     setRotation(nextRotation);
@@ -307,7 +200,6 @@ export function TvPlayer() {
       setPlaylist((currentPlaylist) => {
         if (currentPlaylist?.playlist.hash !== payload.playlist.hash) {
           setCurrentIndex(0);
-          replaceCachedMediaUrls({});
         }
 
         return payload;
@@ -316,7 +208,7 @@ export function TvPlayer() {
       setStatus(payload.items.length > 0 ? 'playing' : 'empty');
       setMessage(payload.items.length > 0 ? payload.playlist.name : 'Playlist sem midias');
     },
-    [apiBaseUrl, replaceCachedMediaUrls],
+    [apiBaseUrl],
   );
 
   const sendHeartbeat = useCallback(
@@ -396,70 +288,6 @@ export function TvPlayer() {
 
     return () => window.clearInterval(timer);
   }, [credentials, syncPlaylist]);
-
-  useEffect(() => {
-    if (!playlist || playlist.items.length === 0) {
-      setCacheProgress(0);
-      setCacheTotal(0);
-      setCacheDone(0);
-      replaceCachedMediaUrls({});
-      return undefined;
-    }
-
-    const abortController = new AbortController();
-    const activePlaylist = playlist;
-    const totalItems = activePlaylist.items.length;
-    setStatus('caching');
-    setMessage('Preparando midias no player');
-    setCacheTotal(totalItems);
-    setCacheDone(0);
-    setCacheProgress(0);
-
-    async function cachePlaylist(): Promise<void> {
-      const nextUrls: CachedMediaUrls = {};
-
-      try {
-        await deleteStaleCachedMedia(apiBaseUrl, activePlaylist.items);
-
-        for (const [index, item] of activePlaylist.items.entries()) {
-          if (abortController.signal.aborted) {
-            return;
-          }
-
-          nextUrls[item.media.id] = await cacheMediaItem(apiBaseUrl, item, abortController.signal);
-          const done = index + 1;
-          setCacheDone(done);
-          setCacheProgress(Math.round((done / totalItems) * 100));
-        }
-
-        replaceCachedMediaUrls(nextUrls);
-        setStatus('playing');
-        setMessage(activePlaylist.playlist.name);
-      } catch (error) {
-        Object.values(nextUrls).forEach((url) => URL.revokeObjectURL(url));
-        if (abortController.signal.aborted) {
-          return;
-        }
-
-        const errorMessage = error instanceof Error ? error.message : 'Falha ao preparar midias';
-        setStatus('playing');
-        setMessage(`${activePlaylist.playlist.name} - streaming sem cache (${errorMessage})`);
-      }
-    }
-
-    void cachePlaylist();
-
-    return () => {
-      abortController.abort();
-    };
-  }, [apiBaseUrl, playlist, replaceCachedMediaUrls]);
-
-  useEffect(() => {
-    return () => {
-      Object.values(cachedMediaUrlsRef.current).forEach((url) => URL.revokeObjectURL(url));
-      cachedMediaUrlsRef.current = {};
-    };
-  }, []);
 
   useEffect(() => {
     if (!credentials) {
@@ -570,18 +398,6 @@ export function TvPlayer() {
           </button>
         ) : null}
       </aside>
-
-      {status === 'caching' ? (
-        <section className="tv-cache-panel" aria-label="Preparando midias">
-          <strong>Preparando midias</strong>
-          <span>
-            {cacheDone}/{cacheTotal} arquivos no cache local
-          </span>
-          <div className="tv-cache-track">
-            <span style={{ width: `${cacheProgress}%` }} />
-          </div>
-        </section>
-      ) : null}
     </main>
   );
 }

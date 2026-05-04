@@ -4,7 +4,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../middlewares/require-admin.js';
 import { resolveCurrentPlayback } from '../services/schedule-resolution.js';
 import {
   addDeviceListener,
@@ -115,7 +114,7 @@ devicesRouter.post('/', async (req, res, next) => {
   }
 });
 
-devicesRouter.get('/', requireAdmin, async (_req, res, next) => {
+devicesRouter.get('/', async (_req, res, next) => {
   try {
     const devices = await prisma.device.findMany({
       orderBy: [{ lastSeenAt: 'desc' }, { createdAt: 'desc' }],
@@ -127,7 +126,7 @@ devicesRouter.get('/', requireAdmin, async (_req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id', requireAdmin, async (req, res, next) => {
+devicesRouter.get('/:id', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
 
@@ -271,7 +270,7 @@ devicesRouter.get('/:id/stream', async (req, res, next) => {
   }
 });
 
-devicesRouter.post('/:id/force-sync', requireAdmin, async (req, res, next) => {
+devicesRouter.post('/:id/force-sync', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const listeners = broadcastDeviceSync('manual', id);
@@ -309,7 +308,7 @@ devicesRouter.post('/:id/logs', async (req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id/logs', requireAdmin, async (req, res, next) => {
+devicesRouter.get('/:id/logs', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const query = deviceLogsQuerySchema.parse(req.query);
@@ -338,7 +337,7 @@ devicesRouter.get('/:id/logs', requireAdmin, async (req, res, next) => {
   }
 });
 
-devicesRouter.get('/:id/heartbeats', requireAdmin, async (req, res, next) => {
+devicesRouter.get('/:id/heartbeats', async (req, res, next) => {
   try {
     const { id } = deviceIdParamSchema.parse(req.params);
     const query = heartbeatsQuerySchema.parse(req.query);

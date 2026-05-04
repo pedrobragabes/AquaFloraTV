@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type MediaItem = {
   id: string;
   filename: string;
@@ -20,10 +22,6 @@ type MediaListResponse = {
     total: number;
   };
 };
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
-}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) {
@@ -206,10 +204,8 @@ export function MediaDashboard() {
             Mídias
           </a>
           <a href="/playlists">Playlists</a>
-          <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
           <a href="/releases">APKs</a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 

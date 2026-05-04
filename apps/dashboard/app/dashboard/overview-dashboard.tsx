@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type MediaResponse = { pagination: { total: number } };
 type PlaylistResponse = {
   data: Array<{
@@ -13,10 +15,8 @@ type PlaylistResponse = {
   }>;
   defaultPlaylistId: string | null;
 };
-type ScheduleResponse = { data: Array<{ id: string; active: boolean }> };
 type DeviceResponse = { data: Array<{ id: string; lastSeenAt: string | null }> };
 type CurrentPlayback = {
-  activeSchedule: { id: string; name: string } | null;
   playlist: { id: string; name: string; itemCount: number } | null;
 };
 type PlaylistDetail = {
@@ -35,10 +35,6 @@ type PlaylistDetail = {
 };
 
 const onlineThresholdMs = 90_000;
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
-}
 
 function isOnline(lastSeenAt: string | null): boolean {
   return lastSeenAt !== null && Date.now() - new Date(lastSeenAt).getTime() <= onlineThresholdMs;
@@ -64,8 +60,6 @@ export function OverviewDashboard() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState('');
   const [defaultPlaylistId, setDefaultPlaylistId] = useState<string | null>(null);
   const [defaultPlaylistName, setDefaultPlaylistName] = useState<string | null>(null);
-  const [scheduleCount, setScheduleCount] = useState(0);
-  const [activeScheduleCount, setActiveScheduleCount] = useState(0);
   const [deviceCount, setDeviceCount] = useState(0);
   const [onlineDeviceCount, setOnlineDeviceCount] = useState(0);
   const [currentPlayback, setCurrentPlayback] = useState<CurrentPlayback | null>(null);
@@ -78,32 +72,20 @@ export function OverviewDashboard() {
     setError(null);
 
     try {
-      const [
-        mediaResponse,
-        playlistsResponse,
-        schedulesResponse,
-        devicesResponse,
-        currentResponse,
-      ] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/media?pageSize=1`, { cache: 'no-store' }),
-        fetch(`${apiBaseUrl}/api/playlists`, { cache: 'no-store' }),
-        fetch(`${apiBaseUrl}/api/schedules`, { cache: 'no-store' }),
-        fetch(`${apiBaseUrl}/api/devices`, { cache: 'no-store' }),
-        fetch(`${apiBaseUrl}/api/schedules/current`, { cache: 'no-store' }),
-      ]);
+      const [mediaResponse, playlistsResponse, devicesResponse, currentResponse] =
+        await Promise.all([
+          fetch(`${apiBaseUrl}/api/media?pageSize=1`, { cache: 'no-store' }),
+          fetch(`${apiBaseUrl}/api/playlists`, { cache: 'no-store' }),
+          fetch(`${apiBaseUrl}/api/devices`, { cache: 'no-store' }),
+          fetch(`${apiBaseUrl}/api/schedules/current`, { cache: 'no-store' }),
+        ]);
 
-      if (
-        !mediaResponse.ok ||
-        !playlistsResponse.ok ||
-        !schedulesResponse.ok ||
-        !devicesResponse.ok
-      ) {
+      if (!mediaResponse.ok || !playlistsResponse.ok || !devicesResponse.ok) {
         throw new Error('Falha ao carregar resumo');
       }
 
       const media = (await mediaResponse.json()) as MediaResponse;
       const playlists = (await playlistsResponse.json()) as PlaylistResponse;
-      const schedules = (await schedulesResponse.json()) as ScheduleResponse;
       const devices = (await devicesResponse.json()) as DeviceResponse;
       const current = currentResponse.ok
         ? ((await currentResponse.json()) as CurrentPlayback)
@@ -132,8 +114,6 @@ export function OverviewDashboard() {
         playlists.data.find((playlist) => playlist.id === playlists.defaultPlaylistId)?.name ??
           null,
       );
-      setScheduleCount(schedules.data.length);
-      setActiveScheduleCount(schedules.data.filter((schedule) => schedule.active).length);
       setDeviceCount(devices.data.length);
       setOnlineDeviceCount(devices.data.filter((device) => isOnline(device.lastSeenAt)).length);
       setCurrentPlayback(current);
@@ -222,10 +202,8 @@ export function OverviewDashboard() {
           </a>
           <a href="/media">Midias</a>
           <a href="/playlists">Playlists</a>
-          <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
           <a href="/releases">APKs</a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 
@@ -271,10 +249,8 @@ export function OverviewDashboard() {
             <span>playlists</span>
           </div>
           <div>
-            <strong>
-              {activeScheduleCount}/{scheduleCount}
-            </strong>
-            <span>regras ativas</span>
+            <strong>{currentPlayback?.playlist?.itemCount ?? 0}</strong>
+            <span>itens tocando</span>
           </div>
           <div>
             <strong>
@@ -292,11 +268,7 @@ export function OverviewDashboard() {
               {currentPlayback?.playlist
                 ? `${currentPlayback.playlist.itemCount} itens`
                 : 'player fica sem midias ate uma playlist ser ativada'}
-              {currentPlayback?.activeSchedule
-                ? ` - via ${currentPlayback.activeSchedule.name}`
-                : currentPlayback?.playlist
-                  ? ' - fallback/default'
-                  : ''}
+              {currentPlayback?.playlist ? ' - playlist ativa' : ''}
             </span>
             {currentPlayback?.playlist ? (
               <div className="overview-actions">

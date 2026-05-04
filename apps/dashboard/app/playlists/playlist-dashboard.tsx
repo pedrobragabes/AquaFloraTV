@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type MediaItem = {
   id: string;
   filename: string;
@@ -50,10 +52,6 @@ type DraftItem = {
   media: MediaItem;
   durationOverrideMs: number | null;
 };
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
-}
 
 function formatDate(value: string): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -210,17 +208,29 @@ export function PlaylistDashboard() {
     }
   }
 
-  function addMediaToDraft(mediaItem: MediaItem): void {
+  function createDraftItem(mediaItem: MediaItem): DraftItem {
     const randomId = typeof crypto !== 'undefined' ? crypto.randomUUID() : String(Date.now());
-    setDraftItems((current) => [
-      ...current,
-      {
-        key: `${mediaItem.id}-${randomId}`,
-        media: mediaItem,
-        durationOverrideMs: null,
-      },
-    ]);
-    setNotice(null);
+
+    return {
+      key: `${mediaItem.id}-${randomId}`,
+      media: mediaItem,
+      durationOverrideMs: null,
+    };
+  }
+
+  async function addMediaToPlaylist(mediaItem: MediaItem): Promise<void> {
+    if (!selectedPlaylist) {
+      setError('Selecione uma playlist antes de adicionar midia.');
+      return;
+    }
+
+    const nextDraftItems = [...draftItems, createDraftItem(mediaItem)];
+    setDraftItems(nextDraftItems);
+
+    const saved = await savePlaylistToServer(nextDraftItems, 'Midia adicionada na playlist.');
+    if (!saved) {
+      setDraftItems(draftItems);
+    }
   }
 
   function moveDraftItem(index: number, direction: -1 | 1): void {
@@ -312,10 +322,13 @@ export function PlaylistDashboard() {
   }
 
   async function savePlaylist(): Promise<void> {
-    await savePlaylistToServer();
+    await savePlaylistToServer(draftItems, 'Playlist salva.');
   }
 
-  async function savePlaylistToServer(): Promise<PlaylistDetail | null> {
+  async function savePlaylistToServer(
+    itemsToSave: DraftItem[] = draftItems,
+    successMessage = 'Playlist salva.',
+  ): Promise<PlaylistDetail | null> {
     if (!selectedPlaylist) {
       setError('Selecione uma playlist antes de salvar.');
       return null;
@@ -330,7 +343,7 @@ export function PlaylistDashboard() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          items: draftItems.map((item, index) => ({
+          items: itemsToSave.map((item, index) => ({
             mediaId: item.media.id,
             order: index,
             durationOverrideMs: item.durationOverrideMs,
@@ -346,7 +359,7 @@ export function PlaylistDashboard() {
       setSelectedPlaylist(updated);
       setDraftItems(normalizeDraftItems(updated));
       await loadPlaylists();
-      setNotice('Playlist salva.');
+      setNotice(successMessage);
       return updated;
     } catch (saveError) {
       const message = saveError instanceof Error ? saveError.message : 'Falha ao salvar playlist';
@@ -362,7 +375,7 @@ export function PlaylistDashboard() {
       return;
     }
 
-    const savedPlaylist = await savePlaylistToServer();
+    const savedPlaylist = await savePlaylistToServer(draftItems, 'Playlist salva.');
     if (!savedPlaylist) {
       return;
     }
@@ -432,10 +445,8 @@ export function PlaylistDashboard() {
           <a aria-current="page" href="/playlists">
             Playlists
           </a>
-          <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
           <a href="/releases">APKs</a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 
@@ -625,7 +636,8 @@ export function PlaylistDashboard() {
                   className="library-row"
                   key={item.id}
                   type="button"
-                  onClick={() => addMediaToDraft(item)}
+                  disabled={!selectedPlaylist || isSaving || isLoading}
+                  onClick={() => void addMediaToPlaylist(item)}
                 >
                   <div className="library-thumb">
                     {item.mimetype.startsWith('image/') ? (

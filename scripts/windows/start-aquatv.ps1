@@ -36,6 +36,8 @@ try {
   $pnpm = Get-Command pnpm -ErrorAction Stop
 
   Stop-ExistingListeners -Ports @(7740, 7741)
+  $env:PORT = "7741"
+  $env:STORAGE_PATH = $storagePath
 
   if (-not (Test-Path $dbPath)) {
     & $pnpm.Source --filter "@aquatv/api" exec prisma db execute --schema prisma/schema.prisma --file $migrationPath

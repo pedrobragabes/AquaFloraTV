@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type Device = {
   id: string;
   name: string;
@@ -25,10 +27,6 @@ type DeviceListResponse = {
 };
 
 const onlineThresholdMs = 90_000;
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
-}
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -182,12 +180,10 @@ export function DevicesDashboard() {
           <a href="/dashboard">Resumo</a>
           <a href="/media">Midias</a>
           <a href="/playlists">Playlists</a>
-          <a href="/schedule">Agenda</a>
           <a aria-current="page" href="/devices">
             TV Box
           </a>
           <a href="/releases">APKs</a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 

@@ -10,7 +10,6 @@ import { z } from 'zod';
 
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
-import { requireAdmin } from '../middlewares/require-admin.js';
 import { HttpError } from '../utils/http-error.js';
 
 export const appReleasesRouter = Router();
@@ -183,7 +182,7 @@ appReleasesRouter.get('/download/:version', async (req, res, next) => {
   }
 });
 
-appReleasesRouter.get('/releases', requireAdmin, async (_req, res, next) => {
+appReleasesRouter.get('/releases', async (_req, res, next) => {
   try {
     const releases = await prisma.appRelease.findMany({
       orderBy: [{ channel: 'asc' }, { versionCode: 'desc' }],
@@ -195,51 +194,46 @@ appReleasesRouter.get('/releases', requireAdmin, async (_req, res, next) => {
   }
 });
 
-appReleasesRouter.post(
-  '/releases/upload',
-  requireAdmin,
-  upload.single('apk'),
-  async (req, res, next) => {
-    const file = req.file;
+appReleasesRouter.post('/releases/upload', upload.single('apk'), async (req, res, next) => {
+  const file = req.file;
 
-    if (!file) {
-      next(new HttpError(400, 'APK_REQUIRED', 'Multipart field "apk" is required'));
+  if (!file) {
+    next(new HttpError(400, 'APK_REQUIRED', 'Multipart field "apk" is required'));
+    return;
+  }
+
+  try {
+    const payload = uploadReleaseSchema.parse(req.body);
+    const sha256 = await calculateSha256(file.path);
+
+    const release = await prisma.appRelease.create({
+      data: {
+        versionCode: payload.versionCode,
+        versionName: payload.versionName,
+        apkUrl: `/storage/apks/${file.filename}`,
+        apkSizeBytes: file.size,
+        apkMd5: sha256,
+        channel: payload.channel,
+        mandatory: payload.mandatory,
+        active: payload.active,
+        ...(payload.releaseNotes !== undefined ? { releaseNotes: payload.releaseNotes } : {}),
+      },
+    });
+
+    res.status(201).json(release);
+  } catch (error) {
+    await unlink(file.path).catch(() => undefined);
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      next(new HttpError(409, 'VERSION_CONFLICT', 'versionCode must be unique'));
       return;
     }
 
-    try {
-      const payload = uploadReleaseSchema.parse(req.body);
-      const sha256 = await calculateSha256(file.path);
+    next(error);
+  }
+});
 
-      const release = await prisma.appRelease.create({
-        data: {
-          versionCode: payload.versionCode,
-          versionName: payload.versionName,
-          apkUrl: `/storage/apks/${file.filename}`,
-          apkSizeBytes: file.size,
-          apkMd5: sha256,
-          channel: payload.channel,
-          mandatory: payload.mandatory,
-          active: payload.active,
-          ...(payload.releaseNotes !== undefined ? { releaseNotes: payload.releaseNotes } : {}),
-        },
-      });
-
-      res.status(201).json(release);
-    } catch (error) {
-      await unlink(file.path).catch(() => undefined);
-
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        next(new HttpError(409, 'VERSION_CONFLICT', 'versionCode must be unique'));
-        return;
-      }
-
-      next(error);
-    }
-  },
-);
-
-appReleasesRouter.put('/releases/:id/latest', requireAdmin, async (req, res, next) => {
+appReleasesRouter.put('/releases/:id/latest', async (req, res, next) => {
   try {
     const { id } = releaseIdParamSchema.parse(req.params);
 
@@ -271,7 +265,7 @@ appReleasesRouter.put('/releases/:id/latest', requireAdmin, async (req, res, nex
   }
 });
 
-appReleasesRouter.put('/releases/:id', requireAdmin, async (req, res, next) => {
+appReleasesRouter.put('/releases/:id', async (req, res, next) => {
   try {
     const { id } = releaseIdParamSchema.parse(req.params);
     const payload = updateReleaseSchema.parse(req.body);

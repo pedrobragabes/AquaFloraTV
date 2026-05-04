@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type ReleaseChannel = 'STABLE' | 'BETA';
 
 type AppRelease = {
@@ -23,10 +25,6 @@ type ReleaseListResponse = {
 };
 
 const releaseChannels: ReleaseChannel[] = ['STABLE', 'BETA'];
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
-}
 
 function formatBytes(bytes: number): string {
   if (bytes === 0) {
@@ -293,12 +291,10 @@ export function ReleasesDashboard() {
           <a href="/dashboard">Resumo</a>
           <a href="/media">Midias</a>
           <a href="/playlists">Playlists</a>
-          <a href="/schedule">Agenda</a>
           <a href="/devices">TV Box</a>
           <a aria-current="page" href="/releases">
             APKs
           </a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { resolveApiBaseUrl } from '../../lib/api-base';
+
 type PlaylistSummary = { id: string; name: string };
 
 type Schedule = {
@@ -48,10 +50,6 @@ function formatDays(value: string | null): string {
   if (days.length === 0) return 'Todos os dias';
   if (days.length === 7) return 'Todos os dias';
   return days.map((d) => DAY_LABELS[d]).join(', ');
-}
-
-function resolveApiBaseUrl(): string {
-  return '/api/proxy';
 }
 
 function colorForSchedule(schedules: Schedule[], id: string): string {
@@ -250,12 +248,8 @@ export function ScheduleDashboard() {
           <a href="/dashboard">Resumo</a>
           <a href="/media">Mídias</a>
           <a href="/playlists">Playlists</a>
-          <a aria-current="page" href="/schedule">
-            Agenda
-          </a>
           <a href="/devices">TV Box</a>
           <a href="/releases">APKs</a>
-          <a href="/api/auth/logout">Sair</a>
         </nav>
       </aside>
 

@@ -90,12 +90,7 @@ schedulesRouter.get('/current', async (_req, res, next) => {
 
     res.json({
       now: new Date().toISOString(),
-      activeSchedule: resolved.activeSchedule
-        ? {
-            id: resolved.activeSchedule.id,
-            name: resolved.activeSchedule.name,
-          }
-        : null,
+      activeSchedule: null,
       playlist: resolved.playlist
         ? {
             id: resolved.playlist.id,
