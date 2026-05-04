@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 
 import { getAdminSessionFromRequest, isAuthEnabled } from './lib/auth-cookie';
 
-const publicPrefixes = ['/login', '/api/auth', '/_next', '/favicon.ico'];
+const publicPrefixes = ['/login', '/player', '/api/auth', '/_next', '/favicon.ico'];
 
 function isPublicPath(pathname: string): boolean {
   return publicPrefixes.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

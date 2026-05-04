@@ -50,8 +50,35 @@ const playlistPollMs = 60_000;
 const heartbeatMs = 30_000;
 const playerMediaCacheName = 'aquatv-player-media-v1';
 
+function isLoopbackHost(hostname: string): boolean {
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+}
+
 function resolveApiBaseUrl(): string {
-  return '/api/proxy';
+  const browserApiUrl =
+    typeof window !== 'undefined' && window.location.hostname
+      ? `${window.location.protocol}//${window.location.hostname}:7741`
+      : null;
+
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    const configured = process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+    if (!browserApiUrl || typeof window === 'undefined') {
+      return configured;
+    }
+
+    try {
+      const configuredUrl = new URL(configured);
+      if (isLoopbackHost(configuredUrl.hostname) && !isLoopbackHost(window.location.hostname)) {
+        return browserApiUrl;
+      }
+    } catch {
+      return browserApiUrl;
+    }
+
+    return configured;
+  }
+
+  return browserApiUrl ?? 'http://192.168.0.114:7741';
 }
 
 function getMediaUrl(apiBaseUrl: string, pathOrUrl: string): string {

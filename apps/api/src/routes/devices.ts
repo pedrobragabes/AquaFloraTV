@@ -90,7 +90,7 @@ async function assertDeviceTokenFromRequest(
   }
 }
 
-devicesRouter.post('/', requireAdmin, async (req, res, next) => {
+devicesRouter.post('/', async (req, res, next) => {
   try {
     const payload = createDeviceSchema.parse(req.body);
 

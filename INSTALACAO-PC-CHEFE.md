@@ -40,12 +40,13 @@ Objetivo:
 3. Criar apps/api/.env, apps/dashboard/.env e apps/dashboard/.env.local.
 4. Liberar firewall nas portas 7740 e 7741.
 5. Subir o sistema com scripts Windows.
-6. Validar:
+6. Instalar a APK `aquatv-player-v0.2.0.apk` na TV, se for usar app em vez de navegador.
+7. Validar:
    - http://192.168.0.114:7741/health responde 200
    - http://192.168.0.114:7740/dashboard abre
    - http://192.168.0.114:7740/player?rotation=90 abre na TV
    - a pagina /devices mostra heartbeat do player
-7. Se aparecer 502/503, rodar diagnostico-aquatv.bat e ler logs/.
+8. Se aparecer 502/503, rodar diagnostico-aquatv.bat e ler logs/.
 
 Nao trocar o IP para localhost. Nao usar portas 3000/3001. Nao fazer force push.
 ```
@@ -192,7 +193,49 @@ O diagnostico deve mostrar:
 - Player pelo IP fixo OK
 - portas `7740` e `7741` OK
 
-## 8. Abrir dashboard e player
+## 8. APK da TV
+
+A APK nova fica configurada para:
+
+- pacote Android: `com.aquatv.player`
+- URL interna: `http://192.168.0.114:7740/player?rotation=90`
+- API: `http://192.168.0.114:7741/api`
+- versao: `0.2.0`
+- versionCode: `2`
+
+Ela e um app Android TV nativo simples com WebView em tela cheia. O player visual continua vindo do dashboard local, entao futuras correcoes de playlist/rotacao podem chegar pelo servidor sem trocar APK toda vez.
+
+### Como baixar a APK
+
+Depois que o workflow `Build TV APK` rodar no GitHub, baixar o artifact:
+
+```text
+aquatv-player-v0.2.0.apk
+```
+
+Instalar na TV pelo navegador, pendrive ou gerenciador de arquivos.
+
+Se o Android recusar com erro de assinatura ou "app nao instalado", desinstalar a APK antiga primeiro e instalar esta nova. Isso pode apagar dados locais do app antigo, mas esta versao registra o device de novo automaticamente.
+
+### Auto-update incluido
+
+Esta versao checa:
+
+```text
+http://192.168.0.114:7741/api/app/latest?channel=STABLE
+```
+
+Se existir release com `versionCode` maior, ela baixa:
+
+```text
+http://192.168.0.114:7741/api/app/download/VERSION_CODE
+```
+
+Depois abre o instalador do Android para confirmar a instalacao. Android TV normalmente nao permite instalacao silenciosa total sem permissao/device-owner, entao o update e semi-automatico: baixa sozinho, mas pode pedir confirmacao.
+
+Para as proximas atualizacoes instalarem por cima, elas precisam ser geradas pelo mesmo workflow deste repo, porque ele usa a mesma chave local em `apps/tv-apk/aquatv-local-release.jks`.
+
+## 9. Abrir dashboard e player
 
 No PC:
 
@@ -213,7 +256,7 @@ Se ficar virado para o lado errado:
 
 A rotacao fica salva no navegador da TV.
 
-## 9. Registrar para iniciar com Windows
+## 10. Registrar para iniciar com Windows
 
 Quando tudo estiver validado:
 
@@ -227,7 +270,7 @@ Depois reiniciar o PC e validar de novo:
 .\diagnostico-aquatv.bat
 ```
 
-## 10. Backup
+## 11. Backup
 
 Backup manual:
 
@@ -243,7 +286,7 @@ Registrar backup diario:
 
 Os backups ficam na pasta `backups/`.
 
-## 11. Checklist final na loja
+## 12. Checklist final na loja
 
 - [ ] PC esta no IP `192.168.0.114`
 - [ ] `http://192.168.0.114:7741/health` responde `200`
@@ -252,14 +295,16 @@ Os backups ficam na pasta `backups/`.
 - [ ] upload de midia funciona
 - [ ] playlist default esta configurada
 - [ ] `http://192.168.0.114:7740/player?rotation=90` abre na TV
+- [ ] APK `aquatv-player-v0.2.0.apk` instalado se a TV usar app
 - [ ] TV aparece em `/devices`
 - [ ] heartbeat atualiza em `/devices`
 - [ ] orientacao esta vertical correta
 - [ ] firewall liberado
 - [ ] inicializacao no Windows registrada
 - [ ] backup diario registrado
+- [ ] app abre sozinho depois de reiniciar a TV
 
-## 12. Troubleshooting rapido
+## 13. Troubleshooting rapido
 
 ### 502 ou 503 no dashboard
 
@@ -285,23 +330,24 @@ Os backups ficam na pasta `backups/`.
    .\iniciar-aquatv-segundo-plano.bat
    ```
 
-### TV nao conecta no servidor
+### APK da TV nao conecta no servidor
 
-1. Na TV, nao usar `localhost`.
-2. Usar:
-
-   ```text
-   http://192.168.0.114:7740/player?rotation=90
-   ```
-
-3. No PC, testar:
+1. Confirmar que o PC esta no IP `192.168.0.114`.
+2. No PC, testar:
 
    ```text
    http://192.168.0.114:7741/health
    ```
 
+3. No PC, testar o player:
+
+   ```text
+   http://192.168.0.114:7740/player?rotation=90
+   ```
+
 4. Se falhar, firewall ou IP estao errados.
 5. Rodar `.\liberar-firewall.bat` como admin.
+6. Reabrir a APK da TV.
 
 ### Player abre, mas nao aparece em devices
 
@@ -340,7 +386,7 @@ http://192.168.0.114:7740/player?rotation=0
 
 3. Na TV, limpar cache do navegador ou abrir a URL com `?rotation=90`.
 
-## 13. Comandos de validacao tecnica
+## 14. Comandos de validacao tecnica
 
 Na raiz do repo:
 
@@ -358,7 +404,7 @@ Se Prisma reclamar depois do clone:
 pnpm --filter @aquatv/api exec prisma generate --schema prisma/schema.prisma
 ```
 
-## 14. Estado esperado apos tudo pronto
+## 15. Estado esperado apos tudo pronto
 
 ```text
 PC da loja 192.168.0.114
