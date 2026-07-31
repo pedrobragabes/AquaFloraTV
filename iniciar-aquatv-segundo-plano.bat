@@ -14,6 +14,6 @@ if errorlevel 1 (
 
 echo.
 echo AquaTV iniciado em segundo plano.
-echo Abra o dashboard em http://192.168.0.114:7740/dashboard
-echo Abra o player em http://192.168.0.114:7740/player?rotation=90
+echo Dashboard local: http://localhost:7740/dashboard
+echo Para descobrir o endereco da rede, execute diagnostico-aquatv.bat.
 timeout /t 3 >nul

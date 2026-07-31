@@ -10,14 +10,15 @@ import { apiRouter } from './routes/index.js';
 
 export const app = express();
 
-const corsOptions: CorsOptions = env.ALLOWED_ORIGINS.includes('*')
-  ? {
-      origin: true,
-    }
-  : {
-      origin: env.ALLOWED_ORIGINS,
-      credentials: true,
-    };
+const corsOptions: CorsOptions =
+  env.NODE_ENV !== 'production' && env.ALLOWED_ORIGINS.includes('*')
+    ? {
+        origin: true,
+      }
+    : {
+        origin: env.ALLOWED_ORIGINS,
+        credentials: true,
+      };
 
 app.disable('x-powered-by');
 

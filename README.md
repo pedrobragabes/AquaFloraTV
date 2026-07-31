@@ -205,14 +205,11 @@ docs/             arquitetura, operação e decisões
 ## Planejamento e documentação
 
 - [Milestones e issues do GitHub](docs/14-GITHUB-MILESTONES.md)
-- [Arquitetura](docs/02-ARQUITETURA.md)
-- [Stack e decisões técnicas](docs/03-STACK.md)
-- [Roadmap](docs/05-ROADMAP.md)
-- [Configuração do dispositivo](docs/06-DEVICE-SETUP.md)
-- [Deploy e operação](docs/07-DEPLOY.md)
-- [Modelo de dados](docs/08-DATA-MODEL.md)
-- [API](docs/09-API.md)
-- [Decisões](docs/11-DECISOES.md)
+- [Instalação no PC da loja](INSTALACAO-PC-CHEFE.md)
+- [Contexto atual para agentes](AGENTS.md)
+- [CI no GitHub](.github/workflows/ci.yml)
+
+Os documentos numerados de `docs/01` a `docs/13` preservam decisões e planos anteriores; alguns descrevem a arquitetura WebView/Hostinger abandonada e devem ser lidos como histórico. O estado executável atual está neste README, no `AGENTS.md` e no guia de milestones.
 
 ## Licença e autoria
 
