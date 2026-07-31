@@ -4,9 +4,9 @@ import type { NextRequest } from 'next/server';
 import { getAdminSessionFromRequest, isAuthEnabled } from '../../../../lib/auth-cookie';
 
 function getApiBaseUrl(): string {
-  const internal = process.env.API_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL;
+  const internal = process.env.API_INTERNAL_URL;
   if (!internal) {
-    throw new Error('API_INTERNAL_URL ou NEXT_PUBLIC_API_URL precisa ser configurado');
+    throw new Error('API_INTERNAL_URL precisa ser configurado');
   }
   return internal.replace(/\/$/, '');
 }

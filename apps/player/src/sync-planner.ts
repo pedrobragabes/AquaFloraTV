@@ -2,9 +2,10 @@ import type { CurrentPlaylistResponse } from '@aquatv/types';
 
 import type { CachedMedia, PlayerManifest, SyncPlan } from './types.js';
 
-export function createEmptyManifest(): PlayerManifest {
+export function createEmptyManifest(sourceApiUrl: string | null = null): PlayerManifest {
   return {
     version: 1,
+    sourceApiUrl,
     activePlaylistHash: null,
     activePlaylist: null,
     cachedMedia: {},
@@ -30,16 +31,26 @@ export function createSyncPlan(
   manifest: PlayerManifest,
   nextPlaylist: CurrentPlaylistResponse,
 ): SyncPlan {
-  const requiredMediaIds = new Set(nextPlaylist.items.map((item) => item.media.id));
-  const downloads = nextPlaylist.items
-    .filter((item) => !isCachedMediaValid(manifest.cachedMedia[item.media.id], item.media.md5))
-    .map((item) => ({
-      media: item.media,
-      remoteUrl: resolveRemoteMediaUrl(apiUrl, item.media.url),
+  const requiredMedia = new Map<string, CurrentPlaylistResponse['items'][number]['media']>();
+
+  for (const item of nextPlaylist.items) {
+    const existing = requiredMedia.get(item.media.id);
+    if (existing && existing.md5 !== item.media.md5) {
+      throw new Error(`Midia ${item.media.id} possui hashes diferentes na mesma playlist`);
+    }
+
+    requiredMedia.set(item.media.id, item.media);
+  }
+
+  const downloads = Array.from(requiredMedia.values())
+    .filter((media) => !isCachedMediaValid(manifest.cachedMedia[media.id], media.md5))
+    .map((media) => ({
+      media,
+      remoteUrl: resolveRemoteMediaUrl(apiUrl, media.url),
     }));
 
   const evictions = Object.values(manifest.cachedMedia)
-    .filter((cached) => !requiredMediaIds.has(cached.mediaId))
+    .filter((cached) => requiredMedia.get(cached.mediaId)?.md5 !== cached.md5)
     .map((cached) => ({
       mediaId: cached.mediaId,
       localUri: cached.localUri,
@@ -57,6 +68,7 @@ export function applyCompletedSyncPlan(
   manifest: PlayerManifest,
   plan: SyncPlan,
   downloadedMedia: CachedMedia[],
+  sourceApiUrl: string | null = manifest.sourceApiUrl,
 ): PlayerManifest {
   const cachedMedia = { ...manifest.cachedMedia };
 
@@ -70,9 +82,25 @@ export function applyCompletedSyncPlan(
 
   return {
     version: 1,
+    sourceApiUrl,
     activePlaylistHash: plan.nextPlaylist.playlist.hash,
     activePlaylist: plan.nextPlaylist,
     cachedMedia,
     lastSyncAt: new Date().toISOString(),
+  };
+}
+
+export function applyNoPlaybackState(
+  manifest: PlayerManifest,
+  sourceApiUrl: string,
+  syncedAt: string = new Date().toISOString(),
+): PlayerManifest {
+  return {
+    version: 1,
+    sourceApiUrl,
+    activePlaylistHash: null,
+    activePlaylist: null,
+    cachedMedia: { ...manifest.cachedMedia },
+    lastSyncAt: syncedAt,
   };
 }

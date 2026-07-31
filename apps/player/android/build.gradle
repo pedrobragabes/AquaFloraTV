@@ -1,0 +1,48 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
+}
+
+allprojects {
+  repositories {
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+}
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"
+
+subprojects {
+  tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    doFirst {
+      def generatedExpoPackageList = project.file("${project.buildDir}/generated/expo/src/main/java/expo/modules/ExpoModulesPackageList.kt")
+      if (generatedExpoPackageList.exists()) {
+        def source = generatedExpoPackageList.getText("UTF-8")
+        if (!source.contains("@OptIn(com.facebook.react.common.annotations.UnstableReactNativeAPI::class")) {
+          generatedExpoPackageList.setText(
+            source.replace(
+              "class ExpoModulesPackageList : ModulesProvider",
+              "@OptIn(com.facebook.react.common.annotations.UnstableReactNativeAPI::class, kotlin.ExperimentalStdlibApi::class)\nclass ExpoModulesPackageList : ModulesProvider"
+            ),
+            "UTF-8"
+          )
+        }
+      }
+    }
+    compilerOptions {
+      freeCompilerArgs.add("-opt-in=kotlin.ExperimentalStdlibApi")
+      freeCompilerArgs.add("-opt-in=com.facebook.react.common.annotations.UnstableReactNativeAPI")
+    }
+  }
+}

@@ -1,29 +1,12 @@
 param(
   [string]$ProjectPath = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path,
-  [string]$ServerIp = "192.168.0.114"
+  [string]$ServerIp = ""
 )
 
 $ErrorActionPreference = "Continue"
 
 $projectRoot = (Resolve-Path $ProjectPath).Path
 Set-Location $projectRoot
-
-function Get-PrimaryLocalIp() {
-  $ip = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
-    Where-Object {
-      $_.IPAddress -notlike "127.*" -and
-      $_.IPAddress -notlike "169.254.*" -and
-      $_.PrefixOrigin -ne "WellKnown"
-    } |
-    Sort-Object InterfaceMetric, InterfaceIndex |
-    Select-Object -First 1 -ExpandProperty IPAddress
-
-  if ($ip) {
-    return $ip
-  }
-
-  return "127.0.0.1"
-}
 
 function Test-Url([string]$Label, [string]$Url) {
   Write-Host ""
@@ -40,25 +23,78 @@ function Test-Url([string]$Label, [string]$Url) {
   }
 }
 
-function Test-Port([string]$Label, [string]$HostName, [int]$Port) {
-  Write-Host ""
-  Write-Host $Label
-  $result = Test-NetConnection -ComputerName $HostName -Port $Port -WarningAction SilentlyContinue
-  if ($result.TcpTestSucceeded) {
-    Write-Host "OK TCP: $HostName`:$Port"
-  } else {
-    Write-Host "FALHOU TCP: $HostName`:$Port"
-  }
+function Get-ActiveIpv4Addresses {
+  $configurations = @(
+    Get-NetIPConfiguration -ErrorAction SilentlyContinue |
+      Where-Object {
+        $_.NetAdapter.Status -eq "Up" -and
+        $null -ne $_.IPv4Address
+      }
+  )
+  $orderedConfigurations = @(
+    $configurations | Where-Object { $null -ne $_.IPv4DefaultGateway }
+  ) + @(
+    $configurations | Where-Object { $null -eq $_.IPv4DefaultGateway }
+  )
+
+  return @(
+    $orderedConfigurations |
+      ForEach-Object { $_.IPv4Address } |
+      ForEach-Object { $_.IPAddress } |
+      Where-Object {
+        -not [string]::IsNullOrWhiteSpace($_) -and
+        $_ -notlike "127.*" -and
+        $_ -notlike "169.254.*"
+      } |
+      Select-Object -Unique
+  )
 }
 
-if (-not $ServerIp) {
-  $ServerIp = Get-PrimaryLocalIp
+function Get-DotEnvValue([string]$Path, [string]$Name) {
+  if (-not (Test-Path -LiteralPath $Path)) {
+    return $null
+  }
+
+  $prefix = "$Name="
+  $line = Get-Content -LiteralPath $Path |
+    Where-Object { $_.StartsWith($prefix, [System.StringComparison]::Ordinal) } |
+    Select-Object -First 1
+  if ($null -eq $line) {
+    return $null
+  }
+
+  return $line.Substring($prefix.Length).Trim().Trim('"').Trim("'")
 }
+
+$detectedIps = @(Get-ActiveIpv4Addresses)
+$networkProfiles = @(
+  Get-NetConnectionProfile -ErrorAction SilentlyContinue |
+    Where-Object {
+      $_.IPv4Connectivity -notin @("Disconnected", "NoTraffic") -or
+      $_.IPv6Connectivity -notin @("Disconnected", "NoTraffic")
+    }
+)
 
 Write-Host "Diagnostico AquaTV"
 Write-Host "=================="
 Write-Host "Pasta: $projectRoot"
-Write-Host "IP testado: $ServerIp"
+if ($detectedIps.Count -gt 0) {
+  Write-Host "IPv4 ativo detectado: $($detectedIps -join ', ')"
+} else {
+  Write-Warning "Nenhum IPv4 ativo foi detectado."
+}
+if (-not [string]::IsNullOrWhiteSpace($ServerIp)) {
+  Write-Host "IPv4 esperado informado: $ServerIp"
+  if ($detectedIps -notcontains $ServerIp) {
+    Write-Warning "O IPv4 esperado $ServerIp nao pertence a uma interface ativa. O endereco da loja pode ter mudado."
+  }
+}
+if ($networkProfiles.Count -gt 0) {
+  Write-Host "Perfis de rede ativos:"
+  $networkProfiles |
+    Select-Object Name, InterfaceAlias, NetworkCategory, IPv4Connectivity |
+    Format-Table -AutoSize
+}
 Write-Host ""
 
 Write-Host "Processos ouvindo nas portas 7740/7741:"
@@ -73,71 +109,62 @@ if ($listeners) {
 }
 
 Test-Url "API local" "http://localhost:7741/health"
-Test-Url "API pelo IP fixo" "http://$ServerIp`:7741/health"
 Test-Url "Dashboard local" "http://localhost:7740/dashboard"
-Test-Url "Dashboard pelo IP fixo" "http://$ServerIp`:7740/dashboard"
-Test-Url "Player pelo IP fixo" "http://$ServerIp`:7740/player"
 
-Test-Port "Porta API pelo IP" $ServerIp 7741
-Test-Port "Porta Dashboard pelo IP" $ServerIp 7740
-
-Write-Host ""
-Write-Host "Ambiente da API em apps/api/.env:"
-if (Test-Path ".\apps\api\.env") {
-  foreach ($key in @("JWT_SECRET", "SESSION_SECRET", "API_ADMIN_TOKEN", "ALLOWED_ORIGINS")) {
-    if (Select-String -Path ".\apps\api\.env" -Pattern "^$key=.+") {
-      Write-Host "$key configurado"
-    } else {
-      Write-Host "AVISO: $key nao encontrado em apps/api/.env"
-    }
-  }
-} else {
-  Write-Host "AVISO: apps/api/.env nao encontrado. Em producao a API pode cair antes de abrir porta."
+$networkTestIps = @($detectedIps)
+if (-not [string]::IsNullOrWhiteSpace($ServerIp) -and $networkTestIps -notcontains $ServerIp) {
+  $networkTestIps += $ServerIp
+}
+foreach ($ipAddress in $networkTestIps) {
+  Test-Url "API pela rede ($ipAddress)" "http://$ipAddress`:7741/health"
+  Test-Url "Dashboard pela rede ($ipAddress)" "http://$ipAddress`:7740/dashboard"
 }
 
 Write-Host ""
-Write-Host "Ambiente do dashboard em apps/dashboard/.env:"
-if (Test-Path ".\apps\dashboard\.env") {
-  $apiEnv = Select-String -Path ".\apps\dashboard\.env" -Pattern "^NEXT_PUBLIC_API_URL="
-  $internalApiEnv = Select-String -Path ".\apps\dashboard\.env" -Pattern "^API_INTERNAL_URL="
-  $adminTokenEnv = Select-String -Path ".\apps\dashboard\.env" -Pattern "^API_ADMIN_TOKEN="
-  if ($apiEnv) {
-    $apiEnv
-    if ($apiEnv.Line -match "localhost|127\.0\.0\.1") {
-      Write-Host "AVISO: localhost em NEXT_PUBLIC_API_URL quebra acesso da TV/telefone. O player agora corrige isso no browser, mas vale remover ou trocar pelo IP do PC."
-    }
-  } else {
-    Write-Host "NEXT_PUBLIC_API_URL nao definido; browser usa o host atual e porta 7741."
-  }
-  if ($internalApiEnv) {
-    $internalApiEnv
-  } else {
-    Write-Host "AVISO: API_INTERNAL_URL nao definido em apps/dashboard/.env"
-  }
-  if ($adminTokenEnv) {
-    Write-Host "API_ADMIN_TOKEN configurado no dashboard"
-  } else {
-    Write-Host "AVISO: API_ADMIN_TOKEN nao encontrado em apps/dashboard/.env"
-  }
+Write-Host "Configuracao de URLs:"
+$dashboardEnvPath = Join-Path $projectRoot "apps\dashboard\.env"
+$internalApiUrl = Get-DotEnvValue -Path $dashboardEnvPath -Name "API_INTERNAL_URL"
+if ([string]::IsNullOrWhiteSpace($internalApiUrl)) {
+  Write-Warning "API_INTERNAL_URL nao esta configurada em apps/dashboard/.env."
 } else {
-  Write-Host "apps/dashboard/.env nao encontrado"
+  Write-Host "API_INTERNAL_URL=$internalApiUrl"
+  [System.Uri]$parsedInternalApiUrl = $null
+  if (-not [System.Uri]::TryCreate($internalApiUrl, [System.UriKind]::Absolute, [ref]$parsedInternalApiUrl)) {
+    Write-Warning "API_INTERNAL_URL nao e uma URL absoluta valida."
+  } else {
+    if ($parsedInternalApiUrl.Host -notin @("localhost", "127.0.0.1", "::1")) {
+      Write-Warning "API_INTERNAL_URL deveria usar localhost, pois dashboard e API rodam no mesmo PC."
+    }
+    if ($parsedInternalApiUrl.Port -ne 7741) {
+      Write-Warning "API_INTERNAL_URL usa a porta $($parsedInternalApiUrl.Port), mas a API do AquaTV usa 7741."
+    }
+  }
 }
 
-Write-Host ""
-Write-Host "DASHBOARD_ADMIN_PASSWORD:"
-if (Test-Path ".\apps\dashboard\.env.local") {
-  if (Select-String -Path ".\apps\dashboard\.env.local" -Pattern "^DASHBOARD_ADMIN_PASSWORD=.+") {
-    Write-Host "Configurado em apps/dashboard/.env.local"
-  } else {
-    Write-Host "AVISO: apps/dashboard/.env.local existe, mas DASHBOARD_ADMIN_PASSWORD nao foi encontrado."
-  }
+$playerEnvPath = Join-Path $projectRoot "apps\player\.env"
+$playerApiUrl = Get-DotEnvValue -Path $playerEnvPath -Name "API_URL"
+if ([string]::IsNullOrWhiteSpace($playerApiUrl)) {
+  Write-Warning "API_URL nao esta configurada em apps/player/.env."
 } else {
-  Write-Host "AVISO: apps/dashboard/.env.local nao encontrado. Em producao isso pode causar 503 no login."
+  Write-Host "API_URL (player)=$playerApiUrl"
+  [System.Uri]$parsedPlayerApiUrl = $null
+  if (-not [System.Uri]::TryCreate($playerApiUrl, [System.UriKind]::Absolute, [ref]$parsedPlayerApiUrl)) {
+    Write-Warning "API_URL do player nao e uma URL absoluta valida."
+  } else {
+    if ($parsedPlayerApiUrl.Host -in @("localhost", "127.0.0.1", "::1")) {
+      Write-Warning "API_URL do player usa localhost; na TV isso aponta para a propria TV, nao para o PC da loja."
+    } elseif ($detectedIps.Count -gt 0 -and $detectedIps -notcontains $parsedPlayerApiUrl.Host) {
+      Write-Warning "API_URL do player aponta para $($parsedPlayerApiUrl.Host), diferente dos IPv4 ativos: $($detectedIps -join ', ')."
+    }
+    if ($parsedPlayerApiUrl.Port -ne 7741) {
+      Write-Warning "API_URL do player usa a porta $($parsedPlayerApiUrl.Port), mas a API do AquaTV usa 7741."
+    }
+  }
 }
 
 Write-Host ""
 Write-Host "Ultimas linhas dos logs de erro:"
-$errLogs = Get-ChildItem ".\logs" -Filter "*.err.log" -ErrorAction SilentlyContinue
+$errLogs = Get-ChildItem ".\logs" -Filter "*.err*.log" -ErrorAction SilentlyContinue
 if ($errLogs) {
   foreach ($log in $errLogs) {
     Write-Host "--- $($log.Name)"

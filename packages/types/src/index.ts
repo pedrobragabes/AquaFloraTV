@@ -1,22 +1,6 @@
-export type MediaKind = 'video' | 'image';
-
-export interface DeviceStatus {
-  id: string;
-  name: string;
-  online: boolean;
-  freeDiskMb?: number;
-  appVersion?: string;
-}
-
 export interface HealthResponse {
   status: 'ok';
   service: string;
-}
-
-export interface RegisterDeviceRequest {
-  name: string;
-  deviceModel?: string;
-  androidVersion?: string;
 }
 
 export interface RegisterDeviceResponse {
@@ -30,16 +14,8 @@ export interface DeviceHeartbeatRequest {
   freeDiskMb?: number;
   totalDiskMb?: number;
   appVersion?: string;
-  currentMediaId?: string;
+  currentMediaId?: string | null;
   networkType?: string;
-  ipAddress?: string;
-}
-
-export interface DeviceLogRequest {
-  level?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
-  event: string;
-  message?: string;
-  payload?: unknown;
 }
 
 export interface PlaybackMedia {
@@ -65,18 +41,4 @@ export interface CurrentPlaylistResponse {
     hash: string;
   };
   items: CurrentPlaylistItem[];
-}
-
-export interface AppRelease {
-  id: string;
-  versionCode: number;
-  versionName: string;
-  apkUrl: string;
-  apkSizeBytes: number;
-  apkMd5: string;
-  releaseNotes: string | null;
-  channel: 'STABLE' | 'BETA';
-  mandatory: boolean;
-  active: boolean;
-  createdAt: string;
 }

@@ -3,12 +3,10 @@ import type { CorsOptions } from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import morgan from 'morgan';
 
 import { env } from './config/env.js';
 import { errorHandler, notFoundHandler } from './middlewares/error-handler.js';
 import { apiRouter } from './routes/index.js';
-import { startMediaCleanupJob } from './services/media-cleanup.js';
 
 export const app = express();
 
@@ -22,7 +20,6 @@ const corsOptions: CorsOptions = env.ALLOWED_ORIGINS.includes('*')
     };
 
 app.disable('x-powered-by');
-app.set('trust proxy', 1);
 
 app.use(
   helmet({
@@ -44,20 +41,39 @@ app.use(
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: false }));
 
-morgan.token('safe-url', (req) => {
-  const url =
-    (req as { originalUrl?: string; url?: string }).originalUrl ??
-    (req as { url?: string }).url ??
-    '';
-  return url.replace(/([?&]token=)[^&]+/gi, '$1[REDACTED]');
+app.use((req, res, next) => {
+  const startedAt = process.hrtime.bigint();
+  let logged = false;
+
+  const logRequest = () => {
+    if (logged) {
+      return;
+    }
+    logged = true;
+
+    const durationMs = Number(process.hrtime.bigint() - startedAt) / 1_000_000;
+    const url = (req.originalUrl || req.url).replace(
+      /([?&](?:token|authorization)=)[^&]+/gi,
+      '$1[REDACTED]',
+    );
+
+    process.stdout.write(
+      `${JSON.stringify({
+        timestamp: new Date().toISOString(),
+        method: req.method,
+        url,
+        status: res.statusCode,
+        durationMs: Number(durationMs.toFixed(1)),
+        remoteAddress: req.ip,
+        userAgent: req.header('user-agent') ?? null,
+      })}\n`,
+    );
+  };
+
+  res.once('finish', logRequest);
+  res.once('close', logRequest);
+  next();
 });
-
-const morganFormat =
-  env.NODE_ENV === 'production'
-    ? ':remote-addr - :remote-user [:date[clf]] ":method :safe-url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"'
-    : ':method :safe-url :status :response-time ms - :res[content-length]';
-
-app.use(morgan(morganFormat));
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'api', timestamp: new Date().toISOString() });
@@ -68,7 +84,3 @@ app.use('/api', apiRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
-
-if (env.NODE_ENV !== 'test') {
-  startMediaCleanupJob();
-}

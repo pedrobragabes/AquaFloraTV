@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { mkdir, unlink } from 'node:fs/promises';
+import { mkdir, open, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
 import { Prisma } from '@prisma/client';
@@ -17,17 +17,70 @@ export const mediaRouter = Router();
 const mediaStoragePath = path.resolve(env.STORAGE_PATH, 'media');
 const maxUploadBytes = env.MAX_UPLOAD_MB * 1024 * 1024;
 
-function sanitizeFilename(filename: string): string {
-  return filename
-    .normalize('NFKD')
-    .replace(/[^\w.-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase();
+function displayFilename(filename: string): string {
+  return Array.from(path.basename(filename))
+    .filter((character) => {
+      const codePoint = character.codePointAt(0);
+      return codePoint !== undefined && codePoint >= 0x20 && codePoint !== 0x7f;
+    })
+    .slice(0, 255)
+    .join('')
+    .trim();
 }
 
-function isAllowedMediaMime(mimetype: string): boolean {
-  return mimetype.startsWith('image/') || mimetype.startsWith('video/');
+const supportedMedia = {
+  'image/jpeg': ['.jpg', '.jpeg'],
+  'image/png': ['.png'],
+  'image/webp': ['.webp'],
+  'video/mp4': ['.mp4'],
+} as const;
+
+type SupportedMediaMime = keyof typeof supportedMedia;
+
+function isSupportedMediaMime(mimetype: string): mimetype is SupportedMediaMime {
+  return Object.prototype.hasOwnProperty.call(supportedMedia, mimetype);
+}
+
+function isAllowedUpload(filename: string, mimetype: string): boolean {
+  if (!isSupportedMediaMime(mimetype)) {
+    return false;
+  }
+
+  return (supportedMedia[mimetype] as readonly string[]).includes(
+    path.extname(filename).toLowerCase(),
+  );
+}
+
+async function hasExpectedFileSignature(
+  filePath: string,
+  mimetype: SupportedMediaMime,
+): Promise<boolean> {
+  const handle = await open(filePath, 'r');
+  try {
+    const header = Buffer.alloc(16);
+    const { bytesRead } = await handle.read(header, 0, header.length, 0);
+    if (bytesRead < 12) {
+      return false;
+    }
+
+    if (mimetype === 'image/jpeg') {
+      return header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff;
+    }
+    if (mimetype === 'image/png') {
+      return header
+        .subarray(0, 8)
+        .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    }
+    if (mimetype === 'image/webp') {
+      return (
+        header.toString('ascii', 0, 4) === 'RIFF' && header.toString('ascii', 8, 12) === 'WEBP'
+      );
+    }
+
+    return header.toString('ascii', 4, 8) === 'ftyp';
+  } finally {
+    await handle.close();
+  }
 }
 
 async function calculateMd5(filePath: string): Promise<string> {
@@ -60,9 +113,9 @@ const upload = multer({
     files: 1,
   },
   fileFilter: (_req, file, callback) => {
-    if (!isAllowedMediaMime(file.mimetype)) {
+    if (!isAllowedUpload(file.originalname, file.mimetype)) {
       callback(
-        new HttpError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Only image and video uploads are allowed'),
+        new HttpError(415, 'UNSUPPORTED_MEDIA_TYPE', 'Formatos aceitos: MP4, JPG, PNG e WebP'),
       );
       return;
     }
@@ -121,16 +174,27 @@ mediaRouter.post('/upload', upload.single('file'), async (req, res, next) => {
   const file = req.file;
 
   if (!file) {
-    next(new HttpError(400, 'FILE_REQUIRED', 'Multipart field "file" is required'));
+    next(new HttpError(400, 'FILE_REQUIRED', 'Selecione um arquivo para enviar'));
     return;
   }
 
   try {
+    if (
+      !isSupportedMediaMime(file.mimetype) ||
+      !(await hasExpectedFileSignature(file.path, file.mimetype))
+    ) {
+      throw new HttpError(
+        415,
+        'INVALID_MEDIA_FILE',
+        'O conteúdo do arquivo não corresponde ao formato informado',
+      );
+    }
+
     const md5 = await calculateMd5(file.path);
     const uploadedBy = req.header('x-uploaded-by');
     const media = await prisma.media.create({
       data: {
-        filename: sanitizeFilename(file.originalname) || file.originalname,
+        filename: displayFilename(file.originalname) || 'midia',
         storedName: file.filename,
         url: `/storage/media/${file.filename}`,
         mimetype: file.mimetype,
@@ -159,17 +223,13 @@ mediaRouter.delete('/:id', async (req, res, next) => {
     res.status(204).send();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      next(new HttpError(404, 'MEDIA_NOT_FOUND', 'Media not found'));
+      next(new HttpError(404, 'MEDIA_NOT_FOUND', 'Mídia não encontrada'));
       return;
     }
 
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
       next(
-        new HttpError(
-          409,
-          'MEDIA_IN_USE',
-          'Media cannot be removed while it is linked to a playlist',
-        ),
+        new HttpError(409, 'MEDIA_IN_USE', 'Remova esta mídia das playlists antes de excluí-la'),
       );
       return;
     }

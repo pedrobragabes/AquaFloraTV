@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   if (!isAuthEnabled()) {
-    redirect('/media');
+    redirect('/dashboard');
   }
 
   return <LoginForm />;

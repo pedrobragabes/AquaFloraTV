@@ -1,22 +1,73 @@
-node_modules
-dist
-.next
-coverage
-.turbo
+# Dependências e caches de ferramentas
+node_modules/
+.pnpm/
+.pnpm-store/
+.p/
+.turbo/
+.next/
+.expo/
+.cache/
+.parcel-cache/
+
+# Builds, bundles e relatórios
+dist/
+build/
+out/
+coverage/
+*.tsbuildinfo
+*.jsbundle
+*.map
+
+# Configuração local e segredos
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+!apps/player/android/app/debug.keystore
+
+# Artefatos Android que não pertencem ao código-fonte
+*.apk
+*.aab
+**/.gradle/
+**/.cxx/
+**/local.properties
+**/*.hprof
+
+# Dados de execução do AquaTV
+storage/
+backups/
+logs/
 *.log
-*.tsbuildinfo
+*.pid
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
+*.sqlite
+*.sqlite3
+
+# Temporários e substituições atômicas
+*.tmp
+*.temp
+*.partial
+*.replace-backup
+*.bak
+*.swp
+*~
+
+# IDE, sistema operacional e agentes locais
+.idea/
+.vscode/
 .DS_Store
-logs
-storage
-backups
-.claude
+Thumbs.db
+Desktop.ini
+.claude/
+.codex/
 ANALISE-INTERNA.md
 apk
 .apk

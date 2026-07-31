@@ -7,7 +7,7 @@ echo ==================
 echo Pasta: %~dp0
 echo.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\diagnose-aquatv.ps1" -ProjectPath "%~dp0." -ServerIp "192.168.0.114"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\diagnose-aquatv.ps1" -ProjectPath "%~dp0."
 
 echo.
 pause

@@ -14,7 +14,7 @@ const scheduleIdParamSchema = z.object({
 
 const timeRegex = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-const scheduleBaseSchema = z.object({
+const scheduleFieldsSchema = z.object({
   name: z.string().trim().min(1),
   playlistId: z.string().min(1),
   active: z.boolean().optional(),
@@ -25,6 +25,13 @@ const scheduleBaseSchema = z.object({
   startDate: z.coerce.date().optional(),
   endDate: z.coerce.date().optional(),
 });
+
+function hasCompleteTimeRange(payload: {
+  startTime?: string | undefined;
+  endTime?: string | undefined;
+}): boolean {
+  return (payload.startTime === undefined) === (payload.endTime === undefined);
+}
 
 type ScheduleRecord = {
   daysOfWeek: string | null;
@@ -48,12 +55,19 @@ function deserializeSchedule<T extends ScheduleRecord>(schedule: T): T & { daysO
   return { ...schedule, daysOfWeek };
 }
 
-const createScheduleSchema = scheduleBaseSchema;
+const createScheduleSchema = scheduleFieldsSchema.refine(hasCompleteTimeRange, {
+  message: 'Informe hora inicial e final juntas',
+  path: ['endTime'],
+});
 
-const updateScheduleSchema = scheduleBaseSchema
+const updateScheduleSchema = scheduleFieldsSchema
   .partial()
   .refine((payload) => Object.keys(payload).length > 0, {
-    message: 'At least one schedule field must be informed',
+    message: 'Informe ao menos um campo do agendamento',
+  })
+  .refine(hasCompleteTimeRange, {
+    message: 'Informe hora inicial e final juntas',
+    path: ['endTime'],
   });
 
 const listSchedulesQuerySchema = z.object({
@@ -114,7 +128,7 @@ schedulesRouter.get('/:id', async (req, res, next) => {
     });
 
     if (!schedule) {
-      throw new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found');
+      throw new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Agendamento não encontrado');
     }
 
     res.json(deserializeSchedule(schedule));
@@ -146,7 +160,7 @@ schedulesRouter.post('/', async (req, res, next) => {
     res.status(201).json(deserializeSchedule(schedule));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-      next(new HttpError(409, 'PLAYLIST_NOT_FOUND', 'playlistId does not exist'));
+      next(new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist não encontrada'));
       return;
     }
 
@@ -181,7 +195,7 @@ schedulesRouter.put('/:id', async (req, res, next) => {
     res.json(deserializeSchedule(schedule));
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      next(new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found'));
+      next(new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Agendamento ou playlist não encontrado'));
       return;
     }
 
@@ -200,7 +214,7 @@ schedulesRouter.delete('/:id', async (req, res, next) => {
     res.status(204).send();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      next(new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Schedule not found'));
+      next(new HttpError(404, 'SCHEDULE_NOT_FOUND', 'Agendamento não encontrado'));
       return;
     }
 

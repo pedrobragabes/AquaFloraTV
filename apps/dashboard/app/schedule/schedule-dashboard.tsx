@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { resolveApiBaseUrl } from '../../lib/api-base';
+import { DashboardShell } from '../components/dashboard-shell';
+import { PageHeader } from '../components/page-header';
 
 type PlaylistSummary = { id: string; name: string };
 
@@ -11,7 +13,7 @@ type Schedule = {
   name: string;
   active: boolean;
   priority: number;
-  daysOfWeek: string | null;
+  daysOfWeek: number[];
   startTime: string | null;
   endTime: string | null;
   startDate: string | null;
@@ -30,26 +32,18 @@ const DAY_LABELS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const PALETTE = ['#1f7a4f', '#2d6bbf', '#9b3fb5', '#c4612a', '#2aa39b', '#7a5c2a', '#a3303a'];
 
-function parseDaysOfWeek(value: string | null): number[] {
-  if (!value) return [];
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter((n): n is number => typeof n === 'number' && n >= 0 && n <= 6);
-  } catch {
-    return [];
-  }
-}
-
 function formatTime(time: string | null): string {
   return time ?? '—';
 }
 
-function formatDays(value: string | null): string {
-  const days = parseDaysOfWeek(value);
+function formatDays(days: number[]): string {
   if (days.length === 0) return 'Todos os dias';
   if (days.length === 7) return 'Todos os dias';
   return days.map((d) => DAY_LABELS[d]).join(', ');
+}
+
+function resolveApiBaseUrl(): string {
+  return '/api/proxy';
 }
 
 function colorForSchedule(schedules: Schedule[], id: string): string {
@@ -63,8 +57,7 @@ function WeeklyGrid({ schedules }: { schedules: Schedule[] }) {
       {DAY_LABELS.map((label, dayIndex) => {
         const daySchedules = schedules.filter((s) => {
           if (!s.active) return false;
-          const days = parseDaysOfWeek(s.daysOfWeek);
-          return days.length === 0 || days.includes(dayIndex);
+          return s.daysOfWeek.length === 0 || s.daysOfWeek.includes(dayIndex);
         });
 
         return (
@@ -171,6 +164,10 @@ export function ScheduleDashboard() {
       setError('Selecione uma playlist.');
       return;
     }
+    if (Boolean(form.startTime) !== Boolean(form.endTime)) {
+      setError('Informe a hora inicial e a hora final.');
+      return;
+    }
 
     setIsSaving(true);
     setError(null);
@@ -223,6 +220,11 @@ export function ScheduleDashboard() {
   }
 
   async function deleteSchedule(id: string): Promise<void> {
+    const schedule = schedules.find((item) => item.id === id);
+    if (!window.confirm(`Excluir a regra "${schedule?.name ?? 'selecionada'}"?`)) {
+      return;
+    }
+
     setError(null);
     setNotice(null);
     try {
@@ -238,28 +240,16 @@ export function ScheduleDashboard() {
   const activeCount = schedules.filter((s) => s.active).length;
 
   return (
-    <main className="dashboard-shell">
-      <aside className="sidebar" aria-label="Navegação principal">
-        <div className="brand-mark">
-          <span>AquaTV</span>
-          <small>Loja local</small>
-        </div>
-        <nav className="nav-list">
-          <a href="/dashboard">Resumo</a>
-          <a href="/media">Mídias</a>
-          <a href="/playlists">Playlists</a>
-          <a href="/devices">TV Box</a>
-          <a href="/releases">APKs</a>
-        </nav>
-      </aside>
-
-      <section className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">Programação</p>
-            <h1>Agenda</h1>
-          </div>
-          <div className="header-actions">
+    <DashboardShell>
+      <PageHeader
+        eyebrow="Área administrativa"
+        title="Agenda"
+        description="Configure regras opcionais de horário. Quando ativas, elas têm prioridade sobre a playlist padrão."
+        actions={
+          <>
+            <Link className="secondary-button button-link" href="/playlists">
+              Voltar à programação
+            </Link>
             <button className="secondary-button" type="button" onClick={() => void refreshAll()}>
               Atualizar
             </button>
@@ -273,214 +263,212 @@ export function ScheduleDashboard() {
             >
               {showForm ? 'Cancelar' : '+ Nova regra'}
             </button>
-          </div>
-        </header>
+          </>
+        }
+      />
 
-        {error ? <p className="error-banner">{error}</p> : null}
-        {notice ? <p className="success-banner">{notice}</p> : null}
+      {error ? <p className="error-banner">{error}</p> : null}
+      {notice ? <p className="success-banner">{notice}</p> : null}
 
-        {currentPlayback ? (
-          <div className="now-playing-banner">
-            <span className="eyebrow">Tocando agora</span>
-            {currentPlayback.playlist ? (
-              <strong>
-                {currentPlayback.playlist.name}
-                {currentPlayback.activeSchedule ? (
-                  <em> via {currentPlayback.activeSchedule.name}</em>
-                ) : (
-                  <em> (playlist padrão)</em>
-                )}
-              </strong>
-            ) : (
-              <strong>Nenhuma playlist ativa</strong>
-            )}
-          </div>
-        ) : null}
-
-        <div className="metrics-grid">
-          <div>
-            <strong>{schedules.length}</strong>
-            <span>Regras cadastradas</span>
-          </div>
-          <div>
-            <strong>{activeCount}</strong>
-            <span>Regras ativas</span>
-          </div>
-          <div>
-            <strong>{schedules.length - activeCount}</strong>
-            <span>Regras inativas</span>
-          </div>
-          <div>
-            <strong>{playlists.length}</strong>
-            <span>Playlists disponíveis</span>
-          </div>
-        </div>
-
-        {showForm ? (
-          <div className="schedule-form-panel">
-            <p className="eyebrow">Nova regra</p>
-            <div className="schedule-form-grid">
-              <div className="form-field">
-                <label htmlFor="sch-name">Nome da regra</label>
-                <input
-                  id="sch-name"
-                  placeholder="ex: Promoção de fim de semana"
-                  value={form.name}
-                  onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="sch-playlist">Playlist</label>
-                <select
-                  id="sch-playlist"
-                  value={form.playlistId}
-                  onChange={(e) => setForm((prev) => ({ ...prev, playlistId: e.target.value }))}
-                >
-                  <option value="">Selecione...</option>
-                  {playlists.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="sch-priority">Prioridade (maior = preferência)</label>
-                <input
-                  id="sch-priority"
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={form.priority}
-                  onChange={(e) =>
-                    setForm((prev) => ({ ...prev, priority: Number(e.target.value) }))
-                  }
-                />
-              </div>
-
-              <div className="form-field form-field-wide">
-                <label>Dias da semana (vazio = todos)</label>
-                <div className="day-picker">
-                  {DAY_LABELS.map((label, i) => (
-                    <button
-                      className={form.days.includes(i) ? 'day-btn is-selected' : 'day-btn'}
-                      key={i}
-                      type="button"
-                      onClick={() => toggleDay(i)}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="sch-start">Hora início (HH:MM)</label>
-                <input
-                  id="sch-start"
-                  type="time"
-                  value={form.startTime}
-                  onChange={(e) => setForm((prev) => ({ ...prev, startTime: e.target.value }))}
-                />
-              </div>
-
-              <div className="form-field">
-                <label htmlFor="sch-end">Hora fim (HH:MM)</label>
-                <input
-                  id="sch-end"
-                  type="time"
-                  value={form.endTime}
-                  onChange={(e) => setForm((prev) => ({ ...prev, endTime: e.target.value }))}
-                />
-              </div>
-            </div>
-
-            <button
-              className="primary-button"
-              type="button"
-              disabled={isSaving}
-              onClick={() => void createSchedule()}
-            >
-              {isSaving ? 'Salvando...' : 'Criar regra'}
-            </button>
-          </div>
-        ) : null}
-
-        {isLoading ? (
-          <p className="muted">Carregando...</p>
-        ) : (
-          <>
-            <div className="schedule-section">
-              <p className="eyebrow">Visão semanal</p>
-              <WeeklyGrid schedules={schedules} />
-            </div>
-
-            <div className="schedule-section">
-              <p className="eyebrow">Todas as regras</p>
-              {schedules.length === 0 ? (
-                <p className="muted">
-                  Nenhuma regra criada ainda. Use "+ Nova regra" para começar.
-                </p>
+      {currentPlayback ? (
+        <div className="now-playing-banner">
+          <span className="eyebrow">Tocando agora</span>
+          {currentPlayback.playlist ? (
+            <strong>
+              {currentPlayback.playlist.name}
+              {currentPlayback.activeSchedule ? (
+                <em> via {currentPlayback.activeSchedule.name}</em>
               ) : (
-                <div className="schedule-list">
-                  {schedules.map((schedule) => (
-                    <article
-                      className={`schedule-card${schedule.active ? '' : ' is-inactive'}`}
-                      key={schedule.id}
-                    >
-                      <div
-                        className="schedule-card-accent"
-                        style={{ background: colorForSchedule(schedules, schedule.id) }}
-                      />
-                      <div className="schedule-card-body">
-                        <div className="schedule-card-header">
-                          <div>
-                            <strong>{schedule.name}</strong>
-                            <span>{schedule.playlist.name}</span>
-                          </div>
-                          <div className="schedule-card-actions">
-                            <button
-                              className="secondary-button"
-                              type="button"
-                              onClick={() => void toggleActive(schedule)}
-                            >
-                              {schedule.active ? 'Desativar' : 'Ativar'}
-                            </button>
-                            <button
-                              className="danger-button"
-                              type="button"
-                              onClick={() => void deleteSchedule(schedule.id)}
-                            >
-                              Remover
-                            </button>
-                          </div>
+                <em> (playlist padrão)</em>
+              )}
+            </strong>
+          ) : (
+            <strong>Nenhuma playlist ativa</strong>
+          )}
+        </div>
+      ) : null}
+
+      <div className="metrics-grid">
+        <div>
+          <strong>{schedules.length}</strong>
+          <span>Regras cadastradas</span>
+        </div>
+        <div>
+          <strong>{activeCount}</strong>
+          <span>Regras ativas</span>
+        </div>
+        <div>
+          <strong>{schedules.length - activeCount}</strong>
+          <span>Regras inativas</span>
+        </div>
+        <div>
+          <strong>{playlists.length}</strong>
+          <span>Playlists disponíveis</span>
+        </div>
+      </div>
+
+      {showForm ? (
+        <div className="schedule-form-panel">
+          <p className="eyebrow">Nova regra</p>
+          <div className="schedule-form-grid">
+            <div className="form-field">
+              <label htmlFor="sch-name">Nome da regra</label>
+              <input
+                id="sch-name"
+                placeholder="ex: Promoção de fim de semana"
+                value={form.name}
+                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="sch-playlist">Playlist</label>
+              <select
+                id="sch-playlist"
+                value={form.playlistId}
+                onChange={(e) => setForm((prev) => ({ ...prev, playlistId: e.target.value }))}
+              >
+                <option value="">Selecione...</option>
+                {playlists.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="sch-priority">Prioridade (maior = preferência)</label>
+              <input
+                id="sch-priority"
+                type="number"
+                min={0}
+                max={100}
+                value={form.priority}
+                onChange={(e) => setForm((prev) => ({ ...prev, priority: Number(e.target.value) }))}
+              />
+            </div>
+
+            <div className="form-field form-field-wide">
+              <label>Dias da semana (vazio = todos)</label>
+              <div className="day-picker">
+                {DAY_LABELS.map((label, i) => (
+                  <button
+                    className={form.days.includes(i) ? 'day-btn is-selected' : 'day-btn'}
+                    key={i}
+                    type="button"
+                    onClick={() => toggleDay(i)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="sch-start">Hora início (HH:MM)</label>
+              <input
+                id="sch-start"
+                type="time"
+                value={form.startTime}
+                onChange={(e) => setForm((prev) => ({ ...prev, startTime: e.target.value }))}
+              />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="sch-end">Hora fim (HH:MM)</label>
+              <input
+                id="sch-end"
+                type="time"
+                value={form.endTime}
+                onChange={(e) => setForm((prev) => ({ ...prev, endTime: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <button
+            className="primary-button"
+            type="button"
+            disabled={isSaving}
+            onClick={() => void createSchedule()}
+          >
+            {isSaving ? 'Salvando...' : 'Criar regra'}
+          </button>
+        </div>
+      ) : null}
+
+      {isLoading ? (
+        <p className="muted">Carregando...</p>
+      ) : (
+        <>
+          <div className="schedule-section">
+            <p className="eyebrow">Visão semanal</p>
+            <WeeklyGrid schedules={schedules} />
+          </div>
+
+          <div className="schedule-section">
+            <p className="eyebrow">Todas as regras</p>
+            {schedules.length === 0 ? (
+              <p className="muted">
+                Nenhuma regra criada ainda. Use <strong>+ Nova regra</strong> para começar.
+              </p>
+            ) : (
+              <div className="schedule-list">
+                {schedules.map((schedule) => (
+                  <article
+                    className={`schedule-card${schedule.active ? '' : ' is-inactive'}`}
+                    key={schedule.id}
+                  >
+                    <div
+                      className="schedule-card-accent"
+                      style={{ background: colorForSchedule(schedules, schedule.id) }}
+                    />
+                    <div className="schedule-card-body">
+                      <div className="schedule-card-header">
+                        <div>
+                          <strong>{schedule.name}</strong>
+                          <span>{schedule.playlist.name}</span>
                         </div>
-                        <div className="schedule-card-meta">
-                          <span>
-                            <em>Dias:</em> {formatDays(schedule.daysOfWeek)}
-                          </span>
-                          <span>
-                            <em>Horário:</em> {formatTime(schedule.startTime)}–
-                            {formatTime(schedule.endTime)}
-                          </span>
-                          <span>
-                            <em>Prioridade:</em> {schedule.priority}
-                          </span>
-                          <span className={`status-pill${schedule.active ? ' is-online' : ''}`}>
-                            {schedule.active ? 'ativa' : 'inativa'}
-                          </span>
+                        <div className="schedule-card-actions">
+                          <button
+                            className="secondary-button"
+                            type="button"
+                            onClick={() => void toggleActive(schedule)}
+                          >
+                            {schedule.active ? 'Desativar' : 'Ativar'}
+                          </button>
+                          <button
+                            className="danger-button"
+                            type="button"
+                            onClick={() => void deleteSchedule(schedule.id)}
+                          >
+                            Remover
+                          </button>
                         </div>
                       </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </>
-        )}
-      </section>
-    </main>
+                      <div className="schedule-card-meta">
+                        <span>
+                          <em>Dias:</em> {formatDays(schedule.daysOfWeek)}
+                        </span>
+                        <span>
+                          <em>Horário:</em> {formatTime(schedule.startTime)}–
+                          {formatTime(schedule.endTime)}
+                        </span>
+                        <span>
+                          <em>Prioridade:</em> {schedule.priority}
+                        </span>
+                        <span className={`status-pill${schedule.active ? ' is-online' : ''}`}>
+                          {schedule.active ? 'ativa' : 'inativa'}
+                        </span>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </DashboardShell>
   );
 }
