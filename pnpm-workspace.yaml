@@ -1,3 +1,35 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
+
+overrides:
+  '@babel/core': 7.29.6
+  '@expo/dom-webview': 55.0.6
+  '@napi-rs/wasm-runtime': 1.2.1
+  'body-parser': 1.20.6
+  'minimatch@3.1.5>brace-expansion': 1.1.16
+  'minimatch@10.2.5>brace-expansion': 5.0.8
+  '@istanbuljs/load-nyc-config@1.1.0>js-yaml': 3.15.0
+  '@expo/xcpretty@4.4.3>js-yaml': 4.3.0
+  'postcss': 8.5.25
+  'qs': 6.15.2
+  'sharp': 0.35.0
+  'shell-quote': 1.9.0
+  'uuid': 11.1.1
+  'ws@7.5.10': 7.5.11
+  'ws@8.20.0': 8.21.0
+
+minimumReleaseAge: 1440
+minimumReleaseAgeExclude:
+  - '@napi-rs/wasm-runtime@1.2.1'
+engineStrict: true
+nodeLinker: hoisted
+virtualStoreDir: .pnpm
+
+allowBuilds:
+  '@prisma/client@6.19.3': true
+  '@prisma/engines@6.19.3': true
+  'esbuild@0.27.7': true
+  'prisma@6.19.3': true
+  'sharp@0.35.0': true
+  'unrs-resolver@1.12.2': true

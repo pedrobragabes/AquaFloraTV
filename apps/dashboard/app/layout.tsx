@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'AquaTV Dashboard',
-  description: 'Controle de playlists e devices da Aquaflora',
+  title: 'AquaFlora TV',
+  description: 'Controle de conteúdos e programação da TV da AquaFlora',
 };
 
 type RootLayoutProps = {

@@ -17,6 +17,7 @@ export interface CachedMedia {
 
 export interface PlayerManifest {
   version: 1;
+  sourceApiUrl: string | null;
   activePlaylistHash: string | null;
   activePlaylist: CurrentPlaylistResponse | null;
   cachedMedia: Record<string, CachedMedia>;

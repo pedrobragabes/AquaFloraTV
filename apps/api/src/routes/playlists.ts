@@ -3,7 +3,6 @@ import { Router } from 'express';
 import { z } from 'zod';
 
 import { prisma } from '../lib/prisma.js';
-import { broadcastDeviceSync } from '../services/device-sync.js';
 import { HttpError } from '../utils/http-error.js';
 
 export const playlistsRouter = Router();
@@ -19,7 +18,7 @@ const defaultPlaylistSchema = z.object({
 const playlistItemSchema = z.object({
   mediaId: z.string().min(1),
   order: z.coerce.number().int().min(0),
-  durationOverrideMs: z.coerce.number().int().positive().nullable().optional(),
+  durationOverrideMs: z.coerce.number().int().positive().max(86_400_000).nullable().optional(),
 });
 
 const createPlaylistSchema = z.object({
@@ -39,7 +38,7 @@ const updatePlaylistSchema = z
       payload.description !== undefined ||
       payload.items !== undefined,
     {
-      message: 'At least one field must be provided for update',
+      message: 'Informe ao menos um campo para atualizar',
     },
   );
 
@@ -60,7 +59,11 @@ playlistsRouter.get('/', async (_req, res, next) => {
       }),
     ]);
 
-    res.json({ data: playlists, defaultPlaylistId: config?.defaultPlaylistId ?? null });
+    res.json({
+      data: playlists,
+      defaultPlaylistId: config?.defaultPlaylistId ?? null,
+      playbackEnabled: config?.playbackEnabled ?? true,
+    });
   } catch (error) {
     next(error);
   }
@@ -69,7 +72,10 @@ playlistsRouter.get('/', async (_req, res, next) => {
 playlistsRouter.get('/default', async (_req, res, next) => {
   try {
     const config = await prisma.globalConfig.findUnique({ where: { id: 'singleton' } });
-    res.json({ playlistId: config?.defaultPlaylistId ?? null });
+    res.json({
+      playlistId: config?.defaultPlaylistId ?? null,
+      playbackEnabled: config?.playbackEnabled ?? true,
+    });
   } catch (error) {
     next(error);
   }
@@ -86,21 +92,27 @@ playlistsRouter.put('/default', async (req, res, next) => {
       });
 
       if (!playlist) {
-        throw new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist not found');
+        throw new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist não encontrada');
       }
     }
 
     const config = await prisma.globalConfig.upsert({
       where: { id: 'singleton' },
-      update: { defaultPlaylistId: payload.playlistId },
+      update:
+        payload.playlistId === null
+          ? { playbackEnabled: false }
+          : { defaultPlaylistId: payload.playlistId, playbackEnabled: true },
       create: {
         id: 'singleton',
         defaultPlaylistId: payload.playlistId,
+        playbackEnabled: payload.playlistId !== null,
       },
     });
 
-    broadcastDeviceSync(payload.playlistId ? 'playlist-default-changed' : 'playback-stopped');
-    res.json({ playlistId: config.defaultPlaylistId });
+    res.json({
+      playlistId: config.defaultPlaylistId,
+      playbackEnabled: config.playbackEnabled,
+    });
   } catch (error) {
     next(error);
   }
@@ -121,7 +133,7 @@ playlistsRouter.get('/:id', async (req, res, next) => {
     });
 
     if (!playlist) {
-      throw new HttpError(404, 'PLAYLIST_NOT_FOUND', `Playlist ${id} not found`);
+      throw new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist não encontrada');
     }
 
     res.json(playlist);
@@ -187,11 +199,14 @@ playlistsRouter.put('/:id', async (req, res, next) => {
       });
     });
 
-    broadcastDeviceSync('playlist-updated');
     res.json(playlist);
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      next(new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist not found'));
+      next(new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist não encontrada'));
+      return;
+    }
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+      next(new HttpError(404, 'MEDIA_NOT_FOUND', 'Uma das mídias selecionadas não existe mais'));
       return;
     }
 
@@ -203,6 +218,27 @@ playlistsRouter.delete('/:id', async (req, res, next) => {
   try {
     const { id } = playlistIdParamSchema.parse(req.params);
 
+    const [config, linkedSchedules] = await Promise.all([
+      prisma.globalConfig.findUnique({ where: { id: 'singleton' } }),
+      prisma.schedule.count({ where: { playlistId: id } }),
+    ]);
+
+    if (config?.defaultPlaylistId === id) {
+      throw new HttpError(
+        409,
+        'PLAYLIST_IS_DEFAULT',
+        'Escolha outra playlist padrão antes de excluir esta playlist',
+      );
+    }
+
+    if (linkedSchedules > 0) {
+      throw new HttpError(
+        409,
+        'PLAYLIST_HAS_SCHEDULES',
+        'Remova os agendamentos desta playlist antes de excluí-la',
+      );
+    }
+
     await prisma.playlist.delete({
       where: { id },
     });
@@ -210,7 +246,7 @@ playlistsRouter.delete('/:id', async (req, res, next) => {
     res.status(204).send();
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2025') {
-      next(new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist not found'));
+      next(new HttpError(404, 'PLAYLIST_NOT_FOUND', 'Playlist não encontrada'));
       return;
     }
 
@@ -219,7 +255,7 @@ playlistsRouter.delete('/:id', async (req, res, next) => {
         new HttpError(
           409,
           'PLAYLIST_CONFLICT',
-          'Playlist cannot be removed while linked to another resource',
+          'Esta playlist ainda está vinculada a outro recurso',
         ),
       );
       return;

@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { resolveApiBaseUrl } from '../../lib/api-base';
+import { DashboardShell } from '../components/dashboard-shell';
+import { PageHeader } from '../components/page-header';
 
 type MediaResponse = { pagination: { total: number } };
 type PlaylistResponse = {
@@ -14,9 +16,11 @@ type PlaylistResponse = {
     };
   }>;
   defaultPlaylistId: string | null;
+  playbackEnabled: boolean;
 };
 type DeviceResponse = { data: Array<{ id: string; lastSeenAt: string | null }> };
 type CurrentPlayback = {
+  activeSchedule: { id: string; name: string } | null;
   playlist: { id: string; name: string; itemCount: number } | null;
 };
 type PlaylistDetail = {
@@ -35,6 +39,10 @@ type PlaylistDetail = {
 };
 
 const onlineThresholdMs = 90_000;
+
+function resolveApiBaseUrl(): string {
+  return '/api/proxy';
+}
 
 function isOnline(lastSeenAt: string | null): boolean {
   return lastSeenAt !== null && Date.now() - new Date(lastSeenAt).getTime() <= onlineThresholdMs;
@@ -60,6 +68,7 @@ export function OverviewDashboard() {
   const [selectedPlaylistId, setSelectedPlaylistId] = useState('');
   const [defaultPlaylistId, setDefaultPlaylistId] = useState<string | null>(null);
   const [defaultPlaylistName, setDefaultPlaylistName] = useState<string | null>(null);
+  const [playbackEnabled, setPlaybackEnabled] = useState(true);
   const [deviceCount, setDeviceCount] = useState(0);
   const [onlineDeviceCount, setOnlineDeviceCount] = useState(0);
   const [currentPlayback, setCurrentPlayback] = useState<CurrentPlayback | null>(null);
@@ -107,9 +116,10 @@ export function OverviewDashboard() {
           return currentSelected;
         }
 
-        return current?.playlist?.id ?? playlists.defaultPlaylistId ?? playlists.data[0]?.id ?? '';
+        return playlists.defaultPlaylistId ?? current?.playlist?.id ?? playlists.data[0]?.id ?? '';
       });
       setDefaultPlaylistId(playlists.defaultPlaylistId);
+      setPlaybackEnabled(playlists.playbackEnabled);
       setDefaultPlaylistName(
         playlists.data.find((playlist) => playlist.id === playlists.defaultPlaylistId)?.name ??
           null,
@@ -129,7 +139,7 @@ export function OverviewDashboard() {
 
   const playDefaultPlaylist = useCallback(async () => {
     if (!defaultPlaylistId) {
-      setError('Nenhuma playlist padrao definida.');
+      setError('Nenhuma playlist padrão definida.');
       return;
     }
 
@@ -145,6 +155,7 @@ export function OverviewDashboard() {
       return;
     }
 
+    setPlaybackEnabled(true);
     await loadOverview();
   }, [apiBaseUrl, defaultPlaylistId, loadOverview]);
 
@@ -166,6 +177,7 @@ export function OverviewDashboard() {
       return;
     }
 
+    setPlaybackEnabled(true);
     await loadOverview();
   }, [apiBaseUrl, loadOverview, selectedPlaylistId]);
 
@@ -182,6 +194,7 @@ export function OverviewDashboard() {
       return;
     }
 
+    setPlaybackEnabled(false);
     await loadOverview();
   }, [apiBaseUrl, loadOverview]);
 
@@ -190,30 +203,13 @@ export function OverviewDashboard() {
   }, [loadOverview]);
 
   return (
-    <main className="dashboard-shell">
-      <aside className="sidebar" aria-label="Navegacao principal">
-        <div className="brand-mark">
-          <span>AquaTV</span>
-          <small>Loja local</small>
-        </div>
-        <nav className="nav-list">
-          <a aria-current="page" href="/dashboard">
-            Resumo
-          </a>
-          <a href="/media">Midias</a>
-          <a href="/playlists">Playlists</a>
-          <a href="/devices">TV Box</a>
-          <a href="/releases">APKs</a>
-        </nav>
-      </aside>
-
-      <section className="workspace">
-        <header className="workspace-header">
-          <div>
-            <p className="eyebrow">Operacao</p>
-            <h1>Resumo</h1>
-          </div>
-          <div className="header-actions">
+    <DashboardShell>
+      <PageHeader
+        eyebrow="Visão geral"
+        title="Início"
+        description="Acompanhe a TV e controle o conteúdo exibido na loja."
+        actions={
+          <>
             <button className="secondary-button" type="button" onClick={() => void loadOverview()}>
               Atualizar
             </button>
@@ -223,133 +219,137 @@ export function OverviewDashboard() {
               disabled={!defaultPlaylistId}
               onClick={() => void playDefaultPlaylist()}
             >
-              Dar play padrao
+              Retomar TV
             </button>
             <button
               className="danger-button"
               type="button"
-              disabled={!defaultPlaylistId}
+              disabled={!playbackEnabled}
               onClick={() => void stopPlayback()}
             >
               Parar TV
             </button>
-          </div>
-        </header>
+          </>
+        }
+      />
 
-        {error ? <p className="error-banner">{error}</p> : null}
-        {isLoading ? <p className="muted">Carregando resumo...</p> : null}
+      {error ? <p className="error-banner">{error}</p> : null}
+      {isLoading ? <p className="muted">Carregando resumo...</p> : null}
 
-        <section className="metrics-grid" aria-label="Resumo operacional">
-          <div>
-            <strong>{mediaCount}</strong>
-            <span>midias</span>
-          </div>
-          <div>
-            <strong>{playlistCount}</strong>
-            <span>playlists</span>
-          </div>
-          <div>
-            <strong>{currentPlayback?.playlist?.itemCount ?? 0}</strong>
-            <span>itens tocando</span>
-          </div>
-          <div>
-            <strong>
-              {onlineDeviceCount}/{deviceCount}
-            </strong>
-            <span>devices online</span>
-          </div>
-        </section>
-
-        <section className="overview-panels">
-          <article className="overview-now-playing">
-            <p className="eyebrow">Tocando agora</p>
-            <strong>{currentPlayback?.playlist?.name ?? 'Nenhuma playlist ativa'}</strong>
-            <span>
-              {currentPlayback?.playlist
-                ? `${currentPlayback.playlist.itemCount} itens`
-                : 'player fica sem midias ate uma playlist ser ativada'}
-              {currentPlayback?.playlist ? ' - playlist ativa' : ''}
-            </span>
-            {currentPlayback?.playlist ? (
-              <div className="overview-actions">
-                <a className="inline-action" href="/playlists">
-                  Ver playlist
-                </a>
-                <a className="inline-action is-quiet" href="/player" target="_blank">
-                  Abrir player
-                </a>
-              </div>
-            ) : null}
-          </article>
-          <article>
-            <p className="eyebrow">Controle rapido</p>
-            <strong>{defaultPlaylistName ?? 'Nenhuma playlist selecionada'}</strong>
-            <label className="overview-playlist-picker">
-              <span>Playlist para tocar agora</span>
-              <select
-                value={selectedPlaylistId}
-                onChange={(event) => setSelectedPlaylistId(event.target.value)}
-              >
-                <option value="">Selecione uma playlist</option>
-                {playlists.map((playlist) => (
-                  <option key={playlist.id} value={playlist.id}>
-                    {playlist.name} ({playlist._count?.items ?? 0} itens)
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="overview-actions">
-              <button
-                className="primary-button compact-action"
-                type="button"
-                disabled={!selectedPlaylistId}
-                onClick={() => void playSelectedPlaylist()}
-              >
-                Tocar selecionada
-              </button>
-              <a className="inline-action is-quiet" href="/playlists">
-                Editar playlists
-              </a>
-            </div>
-          </article>
-        </section>
-
-        <section className="overview-playlist-panel">
-          <div className="panel-heading compact">
-            <div>
-              <p className="eyebrow">Sequencia da TV</p>
-              <h2>{currentPlayback?.playlist?.name ?? 'Sem playlist ativa'}</h2>
-            </div>
-            <span>{currentPlaylistItems.length} itens</span>
-          </div>
-          <div className="overview-sequence-list">
-            {currentPlaylistItems.length === 0 ? (
-              <p className="muted">Ative uma playlist para ver o que vai aparecer na TV.</p>
-            ) : null}
-            {currentPlaylistItems.map((item, index) => (
-              <article className="overview-sequence-row" key={item.id}>
-                <span className="sequence-order">{index + 1}</span>
-                <div className="sequence-thumb">
-                  {item.media.mimetype.startsWith('image/') ? (
-                    <img alt="" src={getMediaUrl(apiBaseUrl, item.media.url)} />
-                  ) : (
-                    <video
-                      muted
-                      playsInline
-                      preload="metadata"
-                      src={getVideoPreviewUrl(apiBaseUrl, item.media.url)}
-                    />
-                  )}
-                </div>
-                <div>
-                  <strong>{item.media.filename}</strong>
-                  <span>{item.media.mimetype}</span>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
+      <section className="metrics-grid" aria-label="Resumo operacional">
+        <div>
+          <strong>{mediaCount}</strong>
+          <span>mídias</span>
+        </div>
+        <div>
+          <strong>{playlistCount}</strong>
+          <span>playlists</span>
+        </div>
+        <div>
+          <strong>{currentPlaylistItems.length}</strong>
+          <span>itens tocando</span>
+        </div>
+        <div>
+          <strong>
+            {onlineDeviceCount}/{deviceCount}
+          </strong>
+          <span>TVs online</span>
+        </div>
       </section>
-    </main>
+
+      <section className="overview-panels">
+        <article className="overview-now-playing">
+          <p className="eyebrow">Tocando agora</p>
+          <strong>
+            {currentPlayback?.playlist?.name ??
+              (playbackEnabled ? 'Nenhuma playlist ativa' : 'TV pausada')}
+          </strong>
+          <span>
+            {currentPlayback?.playlist
+              ? `${currentPlayback.playlist.itemCount} itens`
+              : 'a TV fica sem mídias até uma programação ser ativada'}
+            {currentPlayback?.activeSchedule
+              ? ` - via ${currentPlayback.activeSchedule.name}`
+              : currentPlayback?.playlist
+                ? ' - programação padrão'
+                : ''}
+          </span>
+          {currentPlayback?.playlist ? (
+            <div className="overview-actions">
+              <Link className="inline-action" href="/playlists">
+                Ver programação
+              </Link>
+            </div>
+          ) : null}
+        </article>
+        <article>
+          <p className="eyebrow">Controle rapido</p>
+          <strong>{defaultPlaylistName ?? 'Nenhuma playlist selecionada'}</strong>
+          <label className="overview-playlist-picker">
+            <span>Playlist padrão da TV</span>
+            <select
+              value={selectedPlaylistId}
+              onChange={(event) => setSelectedPlaylistId(event.target.value)}
+            >
+              <option value="">Selecione uma playlist</option>
+              {playlists.map((playlist) => (
+                <option key={playlist.id} value={playlist.id}>
+                  {playlist.name} ({playlist._count?.items ?? 0} itens)
+                </option>
+              ))}
+            </select>
+          </label>
+          <div className="overview-actions">
+            <button
+              className="primary-button compact-action"
+              type="button"
+              disabled={!selectedPlaylistId}
+              onClick={() => void playSelectedPlaylist()}
+            >
+              Definir padrão
+            </button>
+            <Link className="inline-action is-quiet" href="/playlists">
+              Editar programação
+            </Link>
+          </div>
+        </article>
+      </section>
+
+      <section className="overview-playlist-panel">
+        <div className="panel-heading compact">
+          <div>
+            <p className="eyebrow">Sequência da TV</p>
+            <h2>{currentPlayback?.playlist?.name ?? 'Sem playlist ativa'}</h2>
+          </div>
+          <span>{currentPlaylistItems.length} itens</span>
+        </div>
+        <div className="overview-sequence-list">
+          {currentPlaylistItems.length === 0 ? (
+            <p className="muted">Ative uma playlist para ver o que vai aparecer na TV.</p>
+          ) : null}
+          {currentPlaylistItems.map((item, index) => (
+            <article className="overview-sequence-row" key={item.id}>
+              <span className="sequence-order">{index + 1}</span>
+              <div className="sequence-thumb">
+                {item.media.mimetype.startsWith('image/') ? (
+                  <img alt="" src={getMediaUrl(apiBaseUrl, item.media.url)} />
+                ) : (
+                  <video
+                    muted
+                    playsInline
+                    preload="metadata"
+                    src={getVideoPreviewUrl(apiBaseUrl, item.media.url)}
+                  />
+                )}
+              </div>
+              <div>
+                <strong>{item.media.filename}</strong>
+                <span>{item.media.mimetype}</span>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </DashboardShell>
   );
 }

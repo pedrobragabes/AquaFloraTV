@@ -1,5 +1,7 @@
 # Revisão de Código — Problemas Encontrados
 
+> Documento histórico da revisão estática de 05/05/2026. A reescrita de 31/07/2026 corrigiu ou removeu a maior parte dos itens; consulte `README.md`, `AGENTS.md` e `docs/14-GITHUB-MILESTONES.md` para o estado atual. Exemplos de credenciais foram redigidos e qualquer chave antiga deve ser considerada exposta.
+
 **Data:** 2026-05-05  
 **Revisão:** estática (sem instalar dependências, sem executar runtime)  
 **Cobertura:** todos os pacotes do monorepo (`apps/api`, `apps/dashboard`, `apps/tv-apk`, `apps/player`, `packages/types`, `packages/api-client`, `scripts/`)
@@ -83,9 +85,9 @@ Além disso, a rota `GET /api/schedules` retorna `activeSchedule: null` hardcode
 signingConfigs {
   release {
     storeFile file("../aquatv-local-release.jks")
-    storePassword "aquatv-local-release"
+    storePassword "REDACTED"
     keyAlias "aquatv"
-    keyPassword "aquatv-local-release"
+    keyPassword "REDACTED"
   }
 }
 ```

@@ -1,176 +1,216 @@
 # AquaTV
 
-Digital signage customizado para a AquaFlora AgroShop. O objetivo e operar uma stack propria, com upload de midias, playlists, agendamento contextual e, em fase futura, app Android TV com auto-update de APK.
+Digital signage próprio para a **Aquaflora Grow Shop**. O AquaTV permite que a loja envie imagens e vídeos, organize playlists, programe conteúdos e acompanhe a TV sem depender de uma assinatura mensal.
 
-## Estado atual - 2026-04-28
+O MVP foi desenhado para operar na rede local: o dashboard, a API, o banco e os arquivos ficam no PC da loja; a STV-3000 Plus usa um app Android TV dedicado, com cache para continuar reproduzindo durante falhas de rede.
 
-Hoje o projeto esta funcional como MVP local no PC do escritorio:
+## Estado do projeto
 
-- API Express + Prisma + SQLite.
-- Dashboard Next.js com telas `/media`, `/playlists`, `/schedule`, `/devices`, `/releases` e `/player`.
-- Login local do dashboard com cookie assinado e senha de admin.
-- Upload de imagens/videos para `storage/media`.
-- Playlist default configuravel.
-- Resolucao de playlist atual por schedule ou fallback default.
-- Limpeza automatica diaria de midias sem uso apos `MEDIA_RETENTION_DAYS`.
-- Player web simulado em `/player`, com loop de midias, registro de device e heartbeat.
-- Painel de devices com status, metricas recebidas e botao de force-sync.
-- Pagina de detalhe de device com heartbeats/logs recentes.
-- Painel de APKs em `/releases`, com upload, MD5 calculado pela API, download e promocao de latest por canal.
-- Nucleo TypeScript do futuro app Android em `apps/player`, com cliente API, manifesto de cache e planner de sync.
-- Scripts Windows para rodar em producao local e registrar inicio automatico no logon.
-- Scripts Windows para backup local do SQLite e da pasta `storage/`.
+Em 31 de julho de 2026, a reescrita principal está concluída e validada:
 
-Hostinger deixou de ser o caminho primario imediato. A decisao atual e rodar no PC local do escritorio, porque o equipamento tem folga (i9 9900K) e reduz dependencias de deploy neste MVP. Hostinger fica como opcao futura se precisar acesso externo ou operacao fora da rede local.
+- dashboard responsivo com login, conteúdos, playlists, programação e TVs;
+- API protegida para operações administrativas;
+- upload validado de MP4, JPG, PNG e WebP, com limite configurável;
+- playlist padrão, pausa global e agendamentos, inclusive durante a madrugada;
+- player Expo/React Native TV com cache transacional e fallback offline;
+- polling com backoff, heartbeat e recuperação de travamentos de vídeo;
+- instalação, inicialização, diagnóstico, firewall, backup e smoke test para Windows;
+- 14 testes automatizados e 16 verificações no smoke de integração.
 
-## Arquitetura atual
+O código está pronto como candidato de go-live. A publicação definitiva depende da configuração do PC, do APK assinado e do teste físico na STV-3000 Plus. O acompanhamento está detalhado em [Milestones e issues](docs/14-GITHUB-MILESTONES.md).
+
+## Arquitetura
 
 ```text
-Diego no browser
-  -> http://localhost:7740 ou http://IP-DO-PC:7740
-     Next.js dashboard
-       -> http://localhost:7741/api
-          Express API + Prisma + SQLite
-          storage/media
-
-TV / player
-  -> por enquanto: /player no browser
-  -> proxima fase: app Android TV na STV-3000 Plus
+Operador no navegador
+        │
+        ▼
+PC Windows da loja
+├── Dashboard Next.js :7740
+├── API Express       :7741
+├── SQLite            apps/api/prisma/dev.db
+└── Arquivos          storage/media
+        │
+        │ rede local privada
+        ▼
+STV-3000 Plus
+└── App Android TV
+    ├── sincroniza a playlist
+    ├── mantém cache local
+    └── reproduz mesmo sem rede
 ```
 
-## Stack atual
+Manter a API separada do Next.js é intencional: o contrato consumido pela TV continua simples e o backend pode evoluir sem acoplar o runtime Android ao dashboard.
 
-- Monorepo: pnpm workspaces + turborepo.
-- Dashboard: Next.js 15, TypeScript, CSS global.
-- API: Node, Express, Prisma, SQLite, Multer, SSE.
-- Storage: pasta local `storage/`.
-- Runtime local: Windows + Task Scheduler.
-- Android TV: planejado, ainda nao implementado.
+## Stack
 
-## Quickstart local
+| Área          | Tecnologia                             |
+| ------------- | -------------------------------------- |
+| Monorepo      | pnpm 11, workspaces e Turborepo        |
+| Dashboard     | Next.js 15, React e TypeScript estrito |
+| API           | Node.js, Express, Prisma e SQLite      |
+| Player        | Expo 55, React Native TV e Hermes      |
+| Armazenamento | Disco local do PC e cache local na TV  |
+| Operação      | Windows PowerShell e Task Scheduler    |
 
-Pre-requisitos:
+## Instalação no PC da loja
 
-- Node.js 20+
-- pnpm 10+
+### Pré-requisitos
 
-Instalar dependencias:
+- Windows 10 ou 11;
+- Node.js 22.13 ou superior;
+- acesso de administrador para configurar firewall e tarefas automáticas;
+- PC e TV box na mesma rede local privada.
 
-```bash
-pnpm install
+### 1. Preparar o sistema
+
+Na raiz do projeto, execute:
+
+```bat
+instalar-dependencias.bat
 ```
 
-Desenvolvimento:
+O instalador fixa o pnpm 11.11.0, instala as dependências, solicita uma senha administrativa, gera os segredos locais, protege uma migração existente com backup e compila API e dashboard.
+
+Arquivos `.env` reais são locais e nunca devem ser enviados ao Git. Os modelos ficam em:
+
+- `apps/api/.env.example`;
+- `apps/dashboard/.env.example`;
+- `apps/player/.env.example`.
+
+### 2. Iniciar e verificar
+
+```bat
+iniciar-aquatv.bat
+diagnostico-aquatv.bat
+```
+
+Serviços locais:
+
+- dashboard: `http://localhost:7740`;
+- saúde da API: `http://localhost:7741/health`.
+
+Para encerrar com segurança:
+
+```bat
+parar-aquatv.bat
+```
+
+### 3. Liberar apenas a rede confiável
+
+Confirme primeiro que o perfil da rede do Windows está como **Privado**. Depois, abra como administrador:
+
+```bat
+liberar-firewall.bat
+```
+
+O script recusa redes públicas e limita as portas 7740 e 7741 à sub-rede local.
+
+### 4. Automatizar inicialização e backup
+
+Execute como administrador:
+
+```bat
+instalar-inicializacao.bat
+instalar-backup-diario.bat
+```
+
+Teste imediatamente:
+
+```bat
+backup-agora.bat
+```
+
+O backup contém um snapshot consistente do SQLite e do `storage/`. Para proteção contra perda do PC, copie os ZIPs também para outro equipamento ou mídia.
+
+## Desenvolvimento
 
 ```bash
+corepack pnpm@11.11.0 install --frozen-lockfile
 pnpm dev
 ```
 
-Producao local no Windows:
-
-```powershell
-.\scripts\windows\start-aquatv.ps1
-```
-
-Registrar para iniciar quando o Windows fizer logon:
-
-```powershell
-.\scripts\windows\register-startup-task.ps1
-```
-
-Backup manual:
-
-```powershell
-.\scripts\windows\backup-aquatv.ps1
-```
-
-Registrar backup diario as 03:00:
-
-```powershell
-.\scripts\windows\register-backup-task.ps1
-```
-
-Liberar acesso pela rede local (PowerShell como Administrador):
-
-```powershell
-.\scripts\windows\configure-firewall.ps1
-```
-
-URLs:
-
-- Dashboard: `http://localhost:7740`
-- Login: `http://localhost:7740/login`
-- API health: `http://localhost:7741/health`
-- Resumo: `http://localhost:7740/dashboard`
-- Midias: `http://localhost:7740/media`
-- Playlists: `http://localhost:7740/playlists`
-- Agenda: `http://localhost:7740/schedule`
-- Devices: `http://localhost:7740/devices`
-- APKs: `http://localhost:7740/releases`
-- Player web: `http://localhost:7740/player`
-
-Para acessar de outro aparelho na mesma rede, usar o IP do PC do escritorio no lugar de `localhost` e liberar as portas `7740` e `7741` no firewall do Windows.
-
-Em desenvolvimento, se `DASHBOARD_ADMIN_PASSWORD` nao estiver configurado, a senha local e `aquatv-local`. Para operar na loja, configurar `DASHBOARD_ADMIN_PASSWORD` em `apps/dashboard/.env.local`.
-
-## Comandos uteis
+Comandos de qualidade:
 
 ```bash
+pnpm peers check
 pnpm lint
 pnpm typecheck
+pnpm test
 pnpm build
+pnpm format
 ```
 
-## Estrutura
+Smoke completo no Windows, usando banco e portas isolados:
+
+```powershell
+.\scripts\windows\smoke-aquatv.ps1
+```
+
+Os logs do smoke são criados em `logs/integration-smoke-*` e permanecem fora do Git.
+
+## Player Android TV
+
+Configure `apps/player/.env` com o endereço real do PC da loja, nunca com `localhost`:
+
+```env
+API_URL=http://IP-DO-PC:7741/api
+```
+
+Para desenvolvimento:
+
+```bash
+pnpm --filter @aquatv/player dev
+```
+
+Para gerar um release é necessário instalar o Android SDK e fornecer as quatro credenciais de assinatura esperadas pelo Gradle:
+
+- `AQUATV_RELEASE_STORE_FILE`;
+- `AQUATV_RELEASE_STORE_PASSWORD`;
+- `AQUATV_RELEASE_KEY_ALIAS`;
+- `AQUATV_RELEASE_KEY_PASSWORD`.
+
+Depois:
+
+```powershell
+cd apps\player\android
+.\gradlew.bat assembleRelease
+```
+
+Keystores de release, APKs e AABs são artefatos privados e estão bloqueados pelo `.gitignore`.
+
+## Estrutura do repositório
 
 ```text
-aquatv/
-  apps/
-    api/             Express API, Prisma, storage routes
-    dashboard/       Next.js dashboard e player web simulado
-    player/          futuro app Android TV
-  packages/
-    types/
-    api-client/
-  scripts/windows/   start local, Task Scheduler e backup
-  docs/              documentacao do projeto
+apps/
+├── api/          API Express, Prisma e migrations
+├── dashboard/    painel administrativo Next.js
+└── player/       aplicativo Expo/React Native para Android TV
+packages/
+└── types/        contratos TypeScript compartilhados
+scripts/windows/  instalação, execução, backup e diagnóstico
+storage/          mídias locais; não versionado
+docs/             arquitetura, operação e decisões
 ```
 
-## O que foi validado hoje
+## Segurança e limites do MVP
 
-- `pnpm typecheck`, `pnpm lint` e `pnpm build` passaram durante a implementacao.
-- `GET /health` respondeu 200.
-- Upload smoke criou uma imagem em `storage/media`.
-- Playlist smoke criou playlist, adicionou midia e marcou como default.
-- `GET /api/schedules/current` retornou a playlist default com item.
-- Player web registrou device e heartbeat apareceu em `/api/devices`.
-- Login local protegeu `/releases` e liberou acesso apos senha.
-- Smoke de APK validou upload, `GET /api/app/latest`, download e dashboard `/releases`.
-- Smoke de backup criou ZIP em `backups/`.
+- O sistema usa HTTP porque opera somente na rede privada da loja.
+- O dashboard usa senha local e cookie assinado; placeholders fazem a produção falhar de forma segura.
+- A API exige um token administrativo nas rotas sensíveis.
+- Tokens, senhas, banco, mídias, logs, backups, APKs e chaves não devem ser versionados.
+- A TV recebe um token próprio no registro; listagens administrativas não expõem esse token.
+- Acesso externo requer HTTPS e uma revisão do modelo de autenticação.
 
-## Proximos passos se retomar depois
+## Planejamento e documentação
 
-1. Testar o start limpo: reiniciar o PC, confirmar se a task sobe API e dashboard sozinha.
-2. Abrir no browser do proprio PC: `http://localhost:7740/media`.
-3. Abrir de outro aparelho na rede usando `http://IP-DO-PC:7740`.
-4. Se nao abrir pela rede, rodar `.\scripts\windows\configure-firewall.ps1` em PowerShell como Administrador.
-5. Se a pagina aparecer sem estilo, matar processos antigos nas portas 7740/7741 e rodar `.\scripts\windows\start-aquatv.ps1` de novo.
-6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
-7. Comecar o app Android TV real, usando o `/player` web como referencia de comportamento.
+- [Milestones e issues do GitHub](docs/14-GITHUB-MILESTONES.md)
+- [Instalação no PC da loja](INSTALACAO-PC-CHEFE.md)
+- [Contexto atual para agentes](AGENTS.md)
+- [CI no GitHub](.github/workflows/ci.yml)
 
-## Documentacao
+Os documentos numerados de `docs/01` a `docs/13` preservam decisões e planos anteriores; alguns descrevem a arquitetura WebView/Hostinger abandonada e devem ser lidos como histórico. O estado executável atual está neste README, no `AGENTS.md` e no guia de milestones.
 
-| Arquivo                  | Conteudo                                        |
-| ------------------------ | ----------------------------------------------- |
-| `AGENTS.md`              | Contexto rapido para agentes Codex              |
-| `docs/02-ARQUITETURA.md` | Arquitetura e fluxos                            |
-| `docs/03-STACK.md`       | Stack e decisoes tecnicas                       |
-| `docs/05-ROADMAP.md`     | Roadmap atualizado                              |
-| `docs/07-DEPLOY.md`      | Deploy local Windows e plano Hostinger futuro   |
-| `docs/08-DATA-MODEL.md`  | Modelo de dados planejado e implementacao atual |
-| `docs/09-API.md`         | API REST/SSE                                    |
-| `docs/11-DECISOES.md`    | ADRs                                            |
+## Licença e autoria
 
-## Autor
-
-Pedro Braga - [pedrobraga855@gmail.com](mailto:pedrobraga855@gmail.com)
+Projeto privado da Aquaflora Grow Shop, mantido por Pedro Braga.

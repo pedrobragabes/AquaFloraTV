@@ -1,421 +1,211 @@
-# Instalacao do AquaTV no PC do chefe
+# Instalação do AquaTV no PC da loja
 
-Este guia e para clonar o repositorio no PC da loja e deixar o AquaTV rodando localmente no IP fixo:
+Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a API, o banco SQLite e as mídias da Aquaflora.
 
-```text
-192.168.0.114
-```
+## Antes de começar
 
-URLs finais esperadas:
+Confirme:
 
-- Dashboard: `http://192.168.0.114:7740/dashboard`
-- Player da TV: `http://192.168.0.114:7740/player?rotation=90`
-- API health: `http://192.168.0.114:7741/health`
+- Windows 10 ou 11 atualizado;
+- Node.js 22.13 ou superior instalado;
+- acesso de administrador ao Windows e ao roteador;
+- PC conectado à rede da loja por cabo, quando possível;
+- STV-3000 Plus na mesma rede;
+- uma pasta definitiva para o projeto, que não será movida depois.
 
-## 1. Premissas obrigatorias
+Não use o APK, o keystore ou o player WebView antigos. O player atual está em `apps/player` e precisa de um APK release assinado com uma chave nova.
 
-- O PC da loja precisa manter o IP `192.168.0.114`.
-- O PC e a TV Box precisam estar na mesma rede local.
-- O Windows precisa liberar as portas `7740` e `7741`.
-- Node.js LTS precisa estar instalado.
-- Git precisa estar instalado.
-- O repositorio oficial e `git@github.com:pedrobragabes/AquaFloraTV.git`.
+## 1. Preparar o projeto
 
-Se o IP do PC mudar, a TV pode abrir o dashboard mas nao conseguir falar com a API. Primeiro fixe o IP no roteador ou no Windows.
-
-## 2. Prompt para colar na IA do PC da loja
-
-Use este texto se for pedir para outra IA operar no PC do chefe:
+Na raiz, dê duplo clique em:
 
 ```text
-Voce esta no PC da loja. Configure o AquaTV local-first no Windows usando o IP fixo 192.168.0.114.
-
-Repositorio: git@github.com:pedrobragabes/AquaFloraTV.git
-Branch: main
-Pasta sugerida: C:\Users\pedro\Documents\Projetos\AquaFlora\AquaFloraTV
-
-Objetivo:
-1. Clonar ou atualizar o repo.
-2. Instalar dependencias com pnpm.
-3. Criar apps/api/.env, apps/dashboard/.env e apps/dashboard/.env.local.
-4. Liberar firewall nas portas 7740 e 7741.
-5. Subir o sistema com scripts Windows.
-6. Instalar a APK `aquatv-player-v0.2.0.apk` na TV, se for usar app em vez de navegador.
-7. Validar:
-   - http://192.168.0.114:7741/health responde 200
-   - http://192.168.0.114:7740/dashboard abre
-   - http://192.168.0.114:7740/player?rotation=90 abre na TV
-   - a pagina /devices mostra heartbeat do player
-8. Se aparecer 502/503, rodar diagnostico-aquatv.bat e ler logs/.
-
-Nao trocar o IP para localhost. Nao usar portas 3000/3001. Nao fazer force push.
+instalar-dependencias.bat
 ```
 
-## 3. Clone ou atualizacao
+O instalador:
 
-Abrir PowerShell normal:
+1. verifica Node.js e Corepack;
+2. usa pnpm 11.11.0;
+3. pede uma senha administrativa de pelo menos 12 caracteres;
+4. gera tokens e segredo de sessão sem exibi-los;
+5. cria backup antes de migrar um banco existente;
+6. aplica migrations e seed;
+7. compila API e dashboard.
 
-```powershell
-mkdir C:\Users\pedro\Documents\Projetos\AquaFlora -Force
-cd C:\Users\pedro\Documents\Projetos\AquaFlora
-git clone git@github.com:pedrobragabes/AquaFloraTV.git
-cd .\AquaFloraTV
-git switch main
-git pull origin main
+Os segredos ficam somente em `apps/api/.env` e `apps/dashboard/.env`. Nunca copie o conteúdo desses arquivos para issues, commits ou mensagens.
+
+## 2. Iniciar e diagnosticar
+
+Execute:
+
+```text
+iniciar-aquatv.bat
 ```
 
-Se o repo ja existir:
+Depois confira:
 
-```powershell
-cd C:\Users\pedro\Documents\Projetos\AquaFlora\AquaFloraTV
-git status --short
-git switch main
-git pull origin main
+- dashboard: `http://localhost:7740/dashboard`;
+- API: `http://localhost:7741/health`.
+
+Para conferir portas, processos, IP, perfil de rede e URLs configuradas:
+
+```text
+diagnostico-aquatv.bat
 ```
 
-Se `git pull` reclamar de arquivos modificados, nao apagar nada sem antes salvar ou perguntar.
+Para encerrar:
 
-## 4. Instalar dependencias
-
-Na raiz do repo:
-
-```powershell
-.\instalar-dependencias.bat
+```text
+parar-aquatv.bat
 ```
 
-Ou manual:
+## 3. Fixar o endereço do PC
 
-```powershell
-corepack enable
-corepack prepare pnpm@10.0.0 --activate
-pnpm install
-```
+A TV precisa encontrar sempre o mesmo IP. A opção preferida é criar uma **reserva DHCP** no roteador usando o endereço MAC do PC. IP estático no Windows também funciona, desde que fique fora da faixa distribuída automaticamente pelo roteador.
 
-## 5. Arquivos de ambiente
-
-Gerar um token compartilhado para API e dashboard. No PowerShell:
-
-```powershell
-$ApiAdminToken = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
-$JwtSecret = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
-$SessionSecret = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
-$DashboardSecret = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 64 | ForEach-Object {[char]$_})
-$ApiAdminToken
-```
-
-Criar `apps/api/.env` com o mesmo valor gerado em `$ApiAdminToken`:
+Depois, crie `apps/player/.env` a partir do exemplo:
 
 ```env
-PORT=7741
-DATABASE_URL=file:./dev.db
-JWT_SECRET=COLE_AQUI_O_JWT_SECRET_64_CHARS
-SESSION_SECRET=COLE_AQUI_O_SESSION_SECRET_64_CHARS
-API_ADMIN_TOKEN=COLE_AQUI_O_API_ADMIN_TOKEN_64_CHARS
-STORAGE_PATH=./storage
-MAX_UPLOAD_MB=300
-STORAGE_WARN_PCT=70
-STORAGE_CRITICAL_PCT=85
-MEDIA_RETENTION_DAYS=45
-ALLOWED_ORIGINS=http://192.168.0.114:7740,http://localhost:7740
-ADMIN_EMAILS=pedrobraga855@gmail.com
+API_URL=http://IP-DO-PC:7741/api
 ```
 
-Criar `apps/dashboard/.env` com:
+Substitua `IP-DO-PC` pelo endereço reservado. `localhost` não funciona na TV, pois apontaria para a própria TV box.
 
-```env
-API_INTERNAL_URL=http://192.168.0.114:7741
-NEXT_PUBLIC_API_URL=http://192.168.0.114:7741
-API_ADMIN_TOKEN=COLE_AQUI_O_MESMO_API_ADMIN_TOKEN_DA_API
-```
+## 4. Proteger e liberar a rede local
 
-Criar `apps/dashboard/.env.local` com:
+Abra as propriedades da conexão ativa no Windows e confirme que o perfil está como **Privado**. O script aborta se encontrar uma rede pública ativa.
 
-```env
-DASHBOARD_AUTH_ENABLED=true
-DASHBOARD_ADMIN_PASSWORD=TROCAR_POR_SENHA_FORTE
-DASHBOARD_SESSION_SECRET=COLE_AQUI_O_DASHBOARD_SECRET_64_CHARS
-DASHBOARD_COOKIE_SECURE=false
-```
-
-Importante:
-
-- `API_ADMIN_TOKEN` precisa ser identico em `apps/api/.env` e `apps/dashboard/.env`.
-- `ALLOWED_ORIGINS` nao deve ser `*` em producao, porque a API bloqueia isso.
-- `NEXT_PUBLIC_API_URL` e `API_INTERNAL_URL` nao devem ser `localhost` no PC da loja.
-- Se `DASHBOARD_ADMIN_PASSWORD` faltar em producao, o login pode responder `503`.
-- `DASHBOARD_COOKIE_SECURE=false` e correto para HTTP local sem HTTPS.
-
-## 6. Liberar firewall
-
-Abrir pelo arquivo:
-
-```powershell
-.\liberar-firewall.bat
-```
-
-Ele deve pedir permissao de administrador. Se preferir PowerShell como Administrador:
-
-```powershell
-.\scripts\windows\configure-firewall.ps1
-```
-
-Portas liberadas:
-
-- `7740`: dashboard/player Next.js
-- `7741`: API Express
-
-## 7. Subir o AquaTV
-
-Modo visivel, bom para debug:
-
-```powershell
-.\iniciar-aquatv.bat
-```
-
-Modo segundo plano:
-
-```powershell
-.\iniciar-aquatv-segundo-plano.bat
-```
-
-Depois testar:
-
-```powershell
-.\diagnostico-aquatv.bat
-```
-
-O diagnostico deve mostrar:
-
-- API local OK
-- API pelo IP fixo OK
-- Dashboard local OK
-- Dashboard pelo IP fixo OK
-- Player pelo IP fixo OK
-- portas `7740` e `7741` OK
-
-## 8. APK da TV
-
-A APK nova fica configurada para:
-
-- pacote Android: `com.aquatv.player`
-- URL interna: `http://192.168.0.114:7740/player?rotation=90`
-- API: `http://192.168.0.114:7741/api`
-- versao: `0.2.0`
-- versionCode: `2`
-
-Ela e um app Android TV nativo simples com WebView em tela cheia. O player visual continua vindo do dashboard local, entao futuras correcoes de playlist/rotacao podem chegar pelo servidor sem trocar APK toda vez.
-
-### Como baixar a APK
-
-Depois que o workflow `Build TV APK` rodar no GitHub, baixar o artifact:
+Depois execute como administrador:
 
 ```text
-aquatv-player-v0.2.0.apk
+liberar-firewall.bat
 ```
 
-Instalar na TV pelo navegador, pendrive ou gerenciador de arquivos.
+As regras liberam as portas 7740 e 7741 somente no perfil Privado e somente para `LocalSubnet`.
 
-Se o Android recusar com erro de assinatura ou "app nao instalado", desinstalar a APK antiga primeiro e instalar esta nova. Isso pode apagar dados locais do app antigo, mas esta versao registra o device de novo automaticamente.
-
-### Auto-update incluido
-
-Esta versao checa:
+Em outro aparelho da mesma rede, teste:
 
 ```text
-http://192.168.0.114:7741/api/app/latest?channel=STABLE
+http://IP-DO-PC:7740/dashboard
+http://IP-DO-PC:7741/health
 ```
 
-Se existir release com `versionCode` maior, ela baixa:
+## 5. Iniciar automaticamente com o Windows
+
+Execute como administrador:
 
 ```text
-http://192.168.0.114:7741/api/app/download/VERSION_CODE
+instalar-inicializacao.bat
 ```
 
-Depois abre o instalador do Android para confirmar a instalacao. Android TV normalmente nao permite instalacao silenciosa total sem permissao/device-owner, entao o update e semi-automatico: baixa sozinho, mas pode pedir confirmacao.
+A tarefa `AquaTV Local Server` roda no boot como `SYSTEM`, sem depender de login. Reinicie o PC e confirme que dashboard e health check voltam sozinhos.
 
-Para as proximas atualizacoes instalarem por cima, elas precisam ser geradas pelo mesmo workflow deste repo, porque ele usa a mesma chave local em `apps/tv-apk/aquatv-local-release.jks`.
-
-## 9. Abrir dashboard e player
-
-No PC:
-
-```powershell
-.\abrir-dashboard.bat
-```
-
-Na TV Box ou no navegador dela:
+Para remover a tarefa:
 
 ```text
-http://192.168.0.114:7740/player?rotation=90
+remover-inicializacao.bat
 ```
 
-Se ficar virado para o lado errado:
+## 6. Configurar e testar backup
 
-- testar `http://192.168.0.114:7740/player?rotation=270`
-- ou usar o botao `Girar` no canto superior direito do player
-
-A rotacao fica salva no navegador da TV.
-
-## 10. Registrar para iniciar com Windows
-
-Quando tudo estiver validado:
-
-```powershell
-.\instalar-inicializacao.bat
-```
-
-Depois reiniciar o PC e validar de novo:
-
-```powershell
-.\diagnostico-aquatv.bat
-```
-
-## 11. Backup
-
-Backup manual:
-
-```powershell
-.\backup-agora.bat
-```
-
-Registrar backup diario:
-
-```powershell
-.\instalar-backup-diario.bat
-```
-
-Os backups ficam na pasta `backups/`.
-
-## 12. Checklist final na loja
-
-- [ ] PC esta no IP `192.168.0.114`
-- [ ] `http://192.168.0.114:7741/health` responde `200`
-- [ ] `http://192.168.0.114:7740/dashboard` abre
-- [ ] login funciona com a senha configurada
-- [ ] upload de midia funciona
-- [ ] playlist default esta configurada
-- [ ] `http://192.168.0.114:7740/player?rotation=90` abre na TV
-- [ ] APK `aquatv-player-v0.2.0.apk` instalado se a TV usar app
-- [ ] TV aparece em `/devices`
-- [ ] heartbeat atualiza em `/devices`
-- [ ] orientacao esta vertical correta
-- [ ] firewall liberado
-- [ ] inicializacao no Windows registrada
-- [ ] backup diario registrado
-- [ ] app abre sozinho depois de reiniciar a TV
-
-## 13. Troubleshooting rapido
-
-### 502 ou 503 no dashboard
-
-1. Rodar:
-
-   ```powershell
-   .\diagnostico-aquatv.bat
-   ```
-
-2. Verificar se `apps/api/.env` existe e tem `JWT_SECRET`, `SESSION_SECRET`, `API_ADMIN_TOKEN` e `ALLOWED_ORIGINS`.
-3. Verificar se `apps/dashboard/.env` existe e tem `API_INTERNAL_URL`, `NEXT_PUBLIC_API_URL` e o mesmo `API_ADMIN_TOKEN`.
-4. Verificar se `apps/dashboard/.env.local` existe e tem `DASHBOARD_ADMIN_PASSWORD`.
-5. Verificar logs em `logs/` com:
-
-   ```powershell
-   .\abrir-logs.bat
-   ```
-
-6. Reiniciar tudo:
-
-   ```powershell
-   .\parar-aquatv.bat
-   .\iniciar-aquatv-segundo-plano.bat
-   ```
-
-### APK da TV nao conecta no servidor
-
-1. Confirmar que o PC esta no IP `192.168.0.114`.
-2. No PC, testar:
-
-   ```text
-   http://192.168.0.114:7741/health
-   ```
-
-3. No PC, testar o player:
-
-   ```text
-   http://192.168.0.114:7740/player?rotation=90
-   ```
-
-4. Se falhar, firewall ou IP estao errados.
-5. Rodar `.\liberar-firewall.bat` como admin.
-6. Reabrir a APK da TV.
-
-### Player abre, mas nao aparece em devices
-
-1. Abrir o player na TV.
-2. Esperar 30 segundos.
-3. Abrir `http://192.168.0.114:7740/devices`.
-4. Se nao aparecer, limpar dados/site storage do navegador da TV e abrir o player de novo.
-
-### Orientacao errada
-
-1. Testar `rotation=90`.
-2. Se ficar para o lado oposto, testar `rotation=270`.
-3. Se precisar voltar ao normal, usar `rotation=0`.
-
-URLs:
+Primeiro faça um backup manual:
 
 ```text
-http://192.168.0.114:7740/player?rotation=90
-http://192.168.0.114:7740/player?rotation=270
-http://192.168.0.114:7740/player?rotation=0
+backup-agora.bat
 ```
 
-### Pagina sem CSS ou comportamento antigo
+O ZIP é publicado em `backups/` somente depois de validar o snapshot do banco, as referências de mídia e a leitura do arquivo compactado.
 
-1. Parar processos antigos:
-
-   ```powershell
-   .\parar-aquatv.bat
-   ```
-
-2. Iniciar de novo:
-
-   ```powershell
-   .\iniciar-aquatv-segundo-plano.bat
-   ```
-
-3. Na TV, limpar cache do navegador ou abrir a URL com `?rotation=90`.
-
-## 14. Comandos de validacao tecnica
-
-Na raiz do repo:
-
-```powershell
-pnpm --filter @aquatv/dashboard typecheck
-pnpm --filter @aquatv/dashboard lint
-pnpm --filter @aquatv/dashboard build
-pnpm --filter @aquatv/api typecheck
-pnpm --filter @aquatv/api build
-```
-
-Se Prisma reclamar depois do clone:
-
-```powershell
-pnpm --filter @aquatv/api exec prisma generate --schema prisma/schema.prisma
-```
-
-## 15. Estado esperado apos tudo pronto
+Depois execute como administrador:
 
 ```text
-PC da loja 192.168.0.114
-  Dashboard Next.js: http://192.168.0.114:7740
-  API Express:       http://192.168.0.114:7741
-  SQLite:            apps/api/prisma/dev.db
-  Midias:            storage/media
-
-TV Box
-  Abre: http://192.168.0.114:7740/player?rotation=90
-  Registra device
-  Envia heartbeat
-  Toca playlist default
+instalar-backup-diario.bat
 ```
+
+A tarefa `AquaTV Local Backup` roda diariamente às 03:00 e mantém 14 dias por padrão.
+
+O diretório `backups/` ainda está no mesmo PC. Configure também uma cópia para outro computador, NAS ou mídia externa e faça uma restauração de teste antes de considerar o backup concluído.
+
+## 7. Gerar o APK nativo
+
+Instale Android Studio/SDK e configure `ANDROID_HOME` ou `apps/player/android/local.properties`.
+
+Crie um keystore novo e guarde-o fora do repositório. Configure no ambiente ou em `~/.gradle/gradle.properties`:
+
+```text
+AQUATV_RELEASE_STORE_FILE=C:\caminho\privado\aquatv-release.jks
+AQUATV_RELEASE_STORE_PASSWORD=SEGREDO
+AQUATV_RELEASE_KEY_ALIAS=aquatv
+AQUATV_RELEASE_KEY_PASSWORD=SEGREDO
+```
+
+Gere o release:
+
+```powershell
+cd apps\player\android
+.\gradlew.bat assembleRelease
+```
+
+Antes de instalar, calcule o hash:
+
+```powershell
+Get-FileHash .\app\build\outputs\apk\release\app-release.apk -Algorithm SHA256
+```
+
+APKs e keystores são ignorados pelo Git. A chave legada que já apareceu no histórico do repositório deve ser considerada exposta e nunca reutilizada.
+
+## 8. Aceite na STV-3000 Plus
+
+Na TV box:
+
+1. instale o APK por ADB ou pendrive;
+2. configure a URL do PC;
+3. registre o dispositivo;
+4. teste o controle remoto;
+5. reproduza MP4 H.264/AAC, JPG, PNG e WebP usados pela loja;
+6. teste landscape e portrait;
+7. pause e retome pelo dashboard;
+8. desligue a rede e confirme o cache offline;
+9. reinicie TV e PC;
+10. valide HOME/launcher/kiosk conforme o firmware permitir.
+
+O checklist completo está na [issue #11](https://github.com/pedrobragabes/AquaFloraTV/issues/11).
+
+## Solução rápida de problemas
+
+### Dashboard não abre
+
+1. Execute `diagnostico-aquatv.bat`.
+2. Confira se as portas 7740 e 7741 estão ouvindo.
+3. Pare e inicie novamente.
+4. Leia os arquivos em `logs/`.
+
+### Funciona no PC, mas não em outro aparelho
+
+1. Confirme o IP atual.
+2. Confirme que a rede está como Privada.
+3. Execute `liberar-firewall.bat` como administrador.
+4. Confirme que os aparelhos estão na mesma sub-rede e sem isolamento de clientes no Wi-Fi.
+
+### TV não sincroniza
+
+1. Confirme que `API_URL` usa o IP atual e termina em `/api`.
+2. Abra `http://IP-DO-PC:7741/health` em outro aparelho.
+3. Abra o menu administrativo do player e confira a URL.
+4. Exclua o dispositivo no dashboard e registre novamente somente se o token tiver sido perdido.
+
+### Atualização quebrou o banco
+
+Não use `prisma db push`. Pare os serviços, preserve o banco atual e restaure um backup validado. A preparação normal usa `prisma migrate deploy` e cria backup antes de alterar um banco existente.
+
+## Critério de instalação concluída
+
+- [ ] PC reinicia e os serviços sobem sem login.
+- [ ] Dashboard abre no PC e em outro aparelho da LAN.
+- [ ] Firewall está limitado a perfil Privado e sub-rede local.
+- [ ] Backup manual e tarefa diária foram testados.
+- [ ] Existe cópia do backup fora do PC.
+- [ ] APK release novo está assinado e seu SHA-256 foi registrado.
+- [ ] STV-3000 toca a playlist, funciona offline e se recupera após reboot.
+- [ ] Diego aprovou a operação e a aparência.

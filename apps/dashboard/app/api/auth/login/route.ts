@@ -4,7 +4,6 @@ import {
   adminSessionCookieName,
   adminSessionMaxAge,
   createAdminSessionCookie,
-  getAdminEmail,
   getConfiguredAdminPassword,
   isAuthEnabled,
   shouldUseSecureCookie,
@@ -34,15 +33,8 @@ function timingSafeEqualString(a: string, b: string): boolean {
   return result === 0;
 }
 
-function clientKey(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  if (forwarded) {
-    return forwarded.split(',')[0]?.trim() ?? 'unknown';
-  }
-  return request.headers.get('x-real-ip') ?? 'unknown';
-}
-
-function checkRateLimit(key: string): boolean {
+function checkRateLimit(): boolean {
+  const key = 'local-dashboard';
   const now = Date.now();
   const existing = attempts.get(key);
   if (!existing || existing.resetAt <= now) {
@@ -58,8 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const ip = clientKey(request);
-  if (!checkRateLimit(ip)) {
+  if (!checkRateLimit()) {
     return NextResponse.json(
       {
         error: {
@@ -99,12 +90,12 @@ export async function POST(request: Request) {
     );
   }
 
-  attempts.delete(ip);
+  attempts.delete('local-dashboard');
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set({
     name: adminSessionCookieName,
-    value: await createAdminSessionCookie(getAdminEmail()),
+    value: await createAdminSessionCookie(),
     httpOnly: true,
     sameSite: 'lax',
     secure: shouldUseSecureCookie(request),

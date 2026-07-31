@@ -6,7 +6,7 @@ import { ZodError } from 'zod';
 import { HttpError } from '../utils/http-error.js';
 
 export function notFoundHandler(_req: Request, _res: Response, next: NextFunction): void {
-  next(new HttpError(404, 'NOT_FOUND', 'Route not found'));
+  next(new HttpError(404, 'NOT_FOUND', 'Rota não encontrada'));
 }
 
 export function errorHandler(
@@ -32,7 +32,7 @@ export function errorHandler(
     res.status(400).json({
       error: {
         code: 'VALIDATION_ERROR',
-        message: 'Invalid request payload',
+        message: 'Verifique os dados informados',
         details: err.flatten(),
       },
     });
@@ -44,7 +44,10 @@ export function errorHandler(
     res.status(statusCode).json({
       error: {
         code: `UPLOAD_${err.code}`,
-        message: err.message,
+        message:
+          err.code === 'LIMIT_FILE_SIZE'
+            ? 'O arquivo é maior que o limite permitido'
+            : 'Não foi possível receber o arquivo',
         details: err.field ? { field: err.field } : {},
       },
     });
@@ -53,22 +56,23 @@ export function errorHandler(
 
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     const statusCode = err.code === 'P2025' ? 404 : err.code === 'P2003' ? 409 : 400;
+    console.error('Prisma request failed', { code: err.code, meta: err.meta });
     res.status(statusCode).json({
       error: {
         code: `PRISMA_${err.code}`,
-        message: err.message,
-        details: err.meta ?? {},
+        message: 'Não foi possível concluir a operação no banco de dados',
+        details: {},
       },
     });
     return;
   }
 
-  const message = err instanceof Error ? err.message : 'Unexpected internal error';
+  console.error('Unhandled request error', err);
 
   res.status(500).json({
     error: {
       code: 'INTERNAL_SERVER_ERROR',
-      message,
+      message: 'Erro interno inesperado',
       details: {},
     },
   });

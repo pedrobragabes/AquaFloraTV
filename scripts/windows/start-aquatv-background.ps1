@@ -11,18 +11,35 @@ if (-not (Test-Path $scriptPath)) {
   throw "Script nao encontrado: $scriptPath"
 }
 
-Start-Process `
+$arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$scriptPath`" -ProjectPath `"$projectRoot`""
+$supervisor = Start-Process `
   -FilePath "powershell.exe" `
   -WorkingDirectory $projectRoot `
-  -WindowStyle Minimized `
-  -ArgumentList @(
-    "-NoProfile",
-    "-ExecutionPolicy",
-    "Bypass",
-    "-File",
-    $scriptPath,
-    "-ProjectPath",
-    $projectRoot
-  ) | Out-Null
+  -WindowStyle Hidden `
+  -ArgumentList $arguments `
+  -PassThru
 
-Write-Host "AquaTV iniciado em segundo plano."
+function Test-Url([string]$Url) {
+  try {
+    $response = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 2
+    return [int]$response.StatusCode -ge 200 -and [int]$response.StatusCode -lt 400
+  } catch {
+    return $false
+  }
+}
+
+$deadline = (Get-Date).AddSeconds(70)
+while ((Get-Date) -lt $deadline) {
+  if ((Test-Url "http://localhost:7741/health") -and (Test-Url "http://localhost:7740/login")) {
+    Write-Host "AquaTV iniciado em segundo plano."
+    return
+  }
+
+  if ($supervisor.HasExited) {
+    throw "A inicializacao do AquaTV falhou (exit code $($supervisor.ExitCode)). Consulte logs\supervisor.log."
+  }
+
+  Start-Sleep -Seconds 1
+}
+
+throw "AquaTV nao ficou pronto dentro de 70 segundos. Consulte logs\supervisor.log."

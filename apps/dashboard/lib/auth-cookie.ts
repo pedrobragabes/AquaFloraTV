@@ -5,7 +5,6 @@ export const adminSessionCookieName = 'aquatv_admin_session';
 const sessionDurationSeconds = 12 * 60 * 60;
 
 type AdminSession = {
-  email: string;
   expiresAt: number;
 };
 
@@ -42,12 +41,11 @@ function decodeJson(value: string): AdminSession | null {
     const json = new TextDecoder().decode(base64UrlDecode(value));
     const parsed = JSON.parse(json) as Partial<AdminSession>;
 
-    if (typeof parsed.email !== 'string' || typeof parsed.expiresAt !== 'number') {
+    if (typeof parsed.expiresAt !== 'number') {
       return null;
     }
 
     return {
-      email: parsed.email,
       expiresAt: parsed.expiresAt,
     };
   } catch {
@@ -56,14 +54,12 @@ function decodeJson(value: string): AdminSession | null {
 }
 
 function getSessionSecret(): string {
-  const configured = process.env.DASHBOARD_SESSION_SECRET ?? process.env.NEXTAUTH_SECRET;
-  if (configured && configured.length >= 16) {
+  const configured = process.env.DASHBOARD_SESSION_SECRET;
+  if (configured && configured.length >= 32) {
     return configured;
   }
   if (process.env.NODE_ENV === 'production') {
-    throw new Error(
-      'DASHBOARD_SESSION_SECRET (ou NEXTAUTH_SECRET) precisa ter pelo menos 16 caracteres em produção',
-    );
+    throw new Error('DASHBOARD_SESSION_SECRET precisa ter pelo menos 32 caracteres em produção');
   }
   return 'dev-session-secret-change-me-please';
 }
@@ -92,15 +88,6 @@ function timingSafeEqual(left: string, right: string): boolean {
   }
 
   return result === 0;
-}
-
-export function getAdminEmail(): string {
-  const firstEmail =
-    process.env.ADMIN_EMAILS?.split(',')
-      .map((email) => email.trim())
-      .find((email) => email.length > 0) ?? 'admin@aquatv.local';
-
-  return firstEmail;
 }
 
 export function getConfiguredAdminPassword(): string | null {
@@ -137,9 +124,8 @@ export function shouldUseSecureCookie(request: Request): boolean {
   return new URL(request.url).protocol === 'https:';
 }
 
-export async function createAdminSessionCookie(email: string): Promise<string> {
+export async function createAdminSessionCookie(): Promise<string> {
   const payload = encodeJson({
-    email,
     expiresAt: Date.now() + sessionDurationSeconds * 1000,
   });
   const signature = await sign(payload);

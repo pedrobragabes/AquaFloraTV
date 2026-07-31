@@ -10,34 +10,30 @@ if errorlevel 1 (
   exit /b 1
 )
 
-where pnpm >nul 2>&1
+where corepack >nul 2>&1
 if errorlevel 1 (
-  echo pnpm nao encontrado. Tentando ativar via Corepack...
-  corepack enable
-  if errorlevel 1 (
-    echo Falha ao ativar Corepack.
-    pause
-    exit /b 1
-  )
-
-  corepack prepare pnpm@10.0.0 --activate
-  if errorlevel 1 (
-    echo Falha ao instalar pnpm via Corepack.
-    pause
-    exit /b 1
-  )
+  echo Corepack nao encontrado. Reinstale o Node.js LTS antes de continuar.
+  pause
+  exit /b 1
 )
 
-echo Instalando dependencias do AquaTV...
-pnpm install
+corepack pnpm@11.11.0 --version >nul 2>&1
+if errorlevel 1 (
+  echo Nao foi possivel preparar o pnpm 11.11.0 via Corepack.
+  pause
+  exit /b 1
+)
+
+echo Instalando e preparando o AquaTV...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\windows\prepare-aquatv.ps1" -ProjectPath "%~dp0."
 
 if errorlevel 1 (
   echo.
-  echo Falha no pnpm install.
+  echo Falha na preparacao do AquaTV.
   pause
   exit /b 1
 )
 
 echo.
-echo Dependencias instaladas.
+echo AquaTV instalado e compilado.
 pause

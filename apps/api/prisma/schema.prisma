@@ -4,87 +4,87 @@ generator client {
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
+  id        String   @id @default(cuid())
+  email     String   @unique
   name      String?
   image     String?
-  role      String    @default("ADMIN")
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  role      String   @default("ADMIN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  accounts  Account[]
-  sessions  Session[]
+  accounts Account[]
+  sessions Session[]
 }
 
 model Media {
-  id             String         @id @default(cuid())
-  filename       String
-  storedName     String         @unique
-  url            String
-  thumbnailUrl   String?
-  mimetype       String
-  sizeBytes      Int
-  durationMs     Int?
-  widthPx        Int?
-  heightPx       Int?
-  md5            String
-  uploadedBy     String?
-  createdAt      DateTime       @default(now())
+  id           String   @id @default(cuid())
+  filename     String
+  storedName   String   @unique
+  url          String
+  thumbnailUrl String?
+  mimetype     String
+  sizeBytes    Int
+  durationMs   Int?
+  widthPx      Int?
+  heightPx     Int?
+  md5          String
+  uploadedBy   String?
+  createdAt    DateTime @default(now())
 
-  playlistItems  PlaylistItem[]
+  playlistItems PlaylistItem[]
 
   @@index([createdAt])
 }
 
 model Playlist {
-  id          String         @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  items       PlaylistItem[]
-  schedules   Schedule[]
+  items     PlaylistItem[]
+  schedules Schedule[]
 
   @@index([name])
 }
 
 model PlaylistItem {
-  id                 String   @id @default(cuid())
+  id                 String @id @default(cuid())
   playlistId         String
   mediaId            String
   order              Int
   durationOverrideMs Int?
 
-  playlist           Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
-  media              Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  media    Media    @relation(fields: [mediaId], references: [id], onDelete: Restrict)
 
-  @@index([playlistId, order])
   @@unique([playlistId, order])
+  @@index([playlistId, order])
 }
 
 model Schedule {
-  id         String    @id @default(cuid())
+  id         String  @id @default(cuid())
   name       String
   playlistId String
-  active     Boolean   @default(true)
-  priority   Int       @default(0)
+  active     Boolean @default(true)
+  priority   Int     @default(0)
 
   daysOfWeek String?
   startTime  String?
   endTime    String?
 
-  startDate  DateTime?
-  endDate    DateTime?
+  startDate DateTime?
+  endDate   DateTime?
 
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  playlist   Playlist  @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  playlist Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
 
   @@index([active, priority])
 }
@@ -92,13 +92,14 @@ model Schedule {
 model GlobalConfig {
   id                String   @id @default("singleton")
   defaultPlaylistId String?
+  playbackEnabled   Boolean  @default(true)
   updatedAt         DateTime @updatedAt
 }
 
 model Device {
-  id                String            @id @default(cuid())
+  id                String    @id @default(cuid())
   name              String
-  token             String            @unique
+  token             String    @unique
   lastSeenAt        DateTime?
   appVersion        String?
   deviceModel       String?
@@ -110,11 +111,11 @@ model Device {
   currentPlaylistId String?
   networkType       String?
   ipAddress         String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  logs              DeviceLog[]
-  heartbeats        DeviceHeartbeat[]
+  logs       DeviceLog[]
+  heartbeats DeviceHeartbeat[]
 
   @@index([lastSeenAt])
 }
@@ -129,7 +130,7 @@ model DeviceHeartbeat {
   currentMediaId String?
   networkType    String?
 
-  device         Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([deviceId, timestamp])
 }
@@ -143,7 +144,7 @@ model DeviceLog {
   message   String?
   payload   String?
 
-  device    Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device Device @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   @@index([deviceId, timestamp])
   @@index([level])
@@ -166,7 +167,7 @@ model AppRelease {
 }
 
 model Account {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   userId            String
   type              String
   provider          String
@@ -179,7 +180,7 @@ model Account {
   id_token          String?
   session_state     String?
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
@@ -191,7 +192,7 @@ model Session {
   userId       String
   expires      DateTime
 
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }

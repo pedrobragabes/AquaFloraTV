@@ -1,99 +1,87 @@
-# AquaTV - Contexto para Codex
+# AquaTV — contexto para agentes Codex
 
-Este arquivo e lido automaticamente por agentes Codex ao abrir o projeto. Ele deve refletir o estado real do repositorio; detalhes ficam em `docs/`.
+Este arquivo deve refletir o estado real do repositório. Pedro fala português e prefere crítica construtiva, código simples e validações reproduzíveis.
 
-## O que e
+## Produto
 
-Digital signage customizado para a loja **Aquaflora Grow Shop** com stack propria para upload de midia, playlists, agendamento contextual e, depois, auto-update da APK.
+Digital signage da **Aquaflora Grow Shop**. O dashboard permite upload de mídia, playlists, programação e gestão das TVs. O player Android TV sincroniza a playlist, mantém cache local e continua reproduzindo durante falhas de rede.
 
-## Quem e quem
-
-- **Pedro**: dono da implementacao. Fala portugues.
-- **Diego**: cliente/chefe, dono da loja. Faz upload de midia e monta playlists. Sem pressa; prioridade e fazer certo.
-
-## Arquitetura atual em uma frase
-
-Dashboard Next.js + API Node/Express + Prisma/SQLite rodando no **PC local do escritorio**, com storage em disco local e player web simulado; app Android TV real fica para a proxima etapa.
+## Arquitetura atual
 
 ```text
-Diego (browser)
-  -> PC do escritorio
-     Next.js dashboard :7740
-     Express API       :7741
-     SQLite dev.db + storage/media
-  -> TV Box STV-3000 Plus futuramente via app Android TV
+Diego no navegador
+  -> PC Windows da loja
+     Dashboard Next.js :7740
+     API Express       :7741
+     Prisma + SQLite   apps/api/prisma/dev.db
+     Mídias            storage/media
+  -> STV-3000 Plus
+     App Expo/React Native TV em apps/player
 ```
 
-Hostinger nao e mais o caminho primario imediato. Fica como plano futuro/alternativo se precisar HTTPS publico ou acesso fora da rede local.
+O PC local com SQLite é o caminho primário do MVP. Hostinger e acesso externo são alternativas futuras, não requisitos do go-live.
 
-## Stack atual
+## Stack
 
-- **Monorepo**: pnpm workspaces + turborepo.
-- **Dashboard**: Next.js 15, TypeScript, CSS global.
-- **API**: Node + Express + Prisma + SQLite + Multer + SSE.
-- **Storage**: pasta local `storage/`.
-- **Runtime**: Windows, com script PowerShell e Task Scheduler.
-- **Android**: planejado em Expo bare para Android TV 11.
+- Monorepo: pnpm 11.11.0, workspaces e Turborepo.
+- Dashboard: Next.js 15, React e TypeScript estrito.
+- API: Node.js, Express, Prisma, SQLite e Multer.
+- Player: Expo 55, React Native TV e Hermes.
+- Operação: Windows PowerShell e Task Scheduler.
 
-## Estado atual - 2026-04-28
+## Estado em 2026-07-31
 
-Codigo implementado hoje:
+Implementado:
 
-- API Express com health, middlewares, CORS, rate-limit, storage estatico e error handler.
-- Prisma SQLite com migration inicial e seed.
-- CRUD base de midias, playlists, schedules, devices e app releases.
-- Upload de imagem/video em `/api/media/upload`.
-- Upload de APK em `/api/app/releases/upload`, download em `/api/app/download/:version` e promocao de latest por canal.
-- Playlist default via `GlobalConfig`.
-- Resolucao de playlist atual por schedule ou fallback default.
-- Auth local do dashboard com cookie assinado e `DASHBOARD_ADMIN_PASSWORD`.
-- Dashboard `/dashboard`, `/media`, `/playlists`, `/schedule`, `/devices`, `/devices/:id`, `/releases`.
-- Player web `/player` com loop, registro de device e heartbeat.
-- `apps/player` ja tem nucleo TypeScript do player Android: cliente API, manifesto de cache e planner de sync; camada Expo/Android ainda pendente.
-- Limpeza automatica diaria de midias sem uso apos `MEDIA_RETENTION_DAYS`.
-- Scripts:
-  - `scripts/windows/start-aquatv.ps1`
-  - `scripts/windows/register-startup-task.ps1`
-  - `scripts/windows/backup-aquatv.ps1`
-  - `scripts/windows/register-backup-task.ps1`
-  - `scripts/windows/configure-firewall.ps1`
+- dashboard responsivo com Início, Conteúdos, Programação e TV;
+- autenticação local por cookie assinado e proxy administrativo;
+- API protegida, uploads validados e logs estruturados;
+- playlists, pausa global e agendamentos, inclusive overnight;
+- cadastro, heartbeat e exclusão administrativa de TVs sem vazamento de token;
+- player nativo com configuração, cache transacional, fallback offline, backoff e watchdog;
+- manifest Android TV com HOME/LEANBACK e suporte a portrait;
+- scripts seguros de preparação, start/stop, diagnóstico, firewall, backup e smoke;
+- migration `20260730134500_playback_enabled`.
 
-Validacoes ja feitas durante a sessao:
+Removido por decisão de produto:
 
-- `pnpm typecheck`
-- `pnpm lint`
-- `pnpm build`
-- smoke de upload
-- smoke de playlist default
-- smoke de player registrando device
+- player web em `/player`;
+- gestão de releases/APKs no dashboard;
+- app WebView legado em `apps/tv-apk`;
+- SSE, force-sync e histórico ruidoso de heartbeats/logs;
+- pacote `packages/api-client` e rotas antigas de releases.
 
-## Decisoes importantes atualizadas
+Validações já concluídas:
 
-- **PC local do escritorio + SQLite agora e o primario do MVP**. Simples, barato, roda ao ligar Windows.
-- **Hostinger + MySQL esta pausado**. Ainda pode virar deploy publico depois.
-- **Portrait continua sendo responsabilidade do app Android futuro**.
-- **Poll + SSE hibrido continua valido**.
-- **App como launcher/kiosk continua meta para a TV Box**.
+- `pnpm peers check`;
+- `pnpm lint`;
+- `pnpm typecheck`;
+- `pnpm test`: 14 testes;
+- `pnpm build`;
+- export Android/Hermes;
+- smoke Windows: 16 verificações;
+- integridade e foreign keys do SQLite;
+- backups pré e pós-migração.
 
-## Proximos passos se a sessao cair
+## Pendências de go-live
 
-1. Rodar `git status --short` para ver o que ficou pendente.
-2. Verificar se API e dashboard sobem:
-   - `.\scripts\windows\start-aquatv.ps1`
-   - abrir `http://localhost:7740/media`
-   - abrir `http://localhost:7741/health`
-3. Se a UI aparecer sem CSS, encerrar processos antigos nas portas 7740/7741 e iniciar de novo pelo script Windows.
-4. Conferir acesso pela rede local usando o IP do PC do escritorio; se bloquear, rodar `scripts/windows/configure-firewall.ps1` como admin.
-5. Registrar/testar backup diario com `scripts/windows/register-backup-task.ps1`.
-6. Configurar `DASHBOARD_ADMIN_PASSWORD` real no PC do escritorio.
-7. Proxima feature de device: app Android TV real, reaproveitando o comportamento do `/player`.
+1. Configurar PC, IP reservado, rede Privada, firewall e tarefas automáticas.
+2. Instalar Android SDK e gerar um APK assinado com keystore novo.
+3. Testar o APK na STV-3000 Plus com controle, codecs, portrait, cache, reboot e launcher.
+4. Executar soak de 48 horas.
+5. Configurar cópia de backup fora do PC.
+6. Aplicar ícone, banner e splash finais.
 
-## Como agentes Codex devem operar neste projeto
+Fonte de verdade: `docs/14-GITHUB-MILESTONES.md` e as issues do repositório.
 
-- Sempre em portugues, exceto codigo.
-- Honestidade > validacao; Pedro quer critica construtiva.
-- Sem pressa artificial; Diego nao tem urgencia.
-- TypeScript estrito, sem `any`.
-- Comentarios so quando ajudam a entender logica nao obvia.
-- Ao sugerir dependencia nova, justificar alternativa e trade-off.
-- Nao criar arquivos `.md` sem Pedro pedir explicitamente. Atualizar docs existentes esta permitido quando a tarefa pedir documentacao.
+## Regras para trabalhar no projeto
+
+- Sempre responder em português, exceto código.
+- TypeScript estrito; não introduzir `any`.
+- Comentários somente quando explicam lógica não óbvia.
+- Justificar dependências novas e considerar o custo offline/local.
+- Não reintroduzir player web, auto-update de APK ou exposição pública sem decisão explícita.
+- Não versionar `.env`, banco, mídia, logs, backups, APK/AAB ou chaves de release.
+- Não usar `prisma db push` no ambiente da loja; usar migrations e backup.
+- Não marcar teste físico como concluído sem executar na STV-3000 Plus.
+- Não criar arquivos `.md` sem Pedro pedir; atualizar documentação existente é permitido quando a tarefa envolver docs.
