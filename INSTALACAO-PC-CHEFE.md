@@ -7,7 +7,7 @@ Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a
 Confirme:
 
 - Windows 10 ou 11 atualizado;
-- Node.js 20.9 ou superior instalado;
+- Node.js 22.13 ou superior instalado;
 - acesso de administrador ao Windows e ao roteador;
 - PC conectado à rede da loja por cabo, quando possível;
 - STV-3000 Plus na mesma rede;

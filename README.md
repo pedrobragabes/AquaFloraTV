@@ -58,7 +58,7 @@ Manter a API separada do Next.js é intencional: o contrato consumido pela TV co
 ### Pré-requisitos
 
 - Windows 10 ou 11;
-- Node.js 20.9 ou superior;
+- Node.js 22.13 ou superior;
 - acesso de administrador para configurar firewall e tarefas automáticas;
 - PC e TV box na mesma rede local privada.
 

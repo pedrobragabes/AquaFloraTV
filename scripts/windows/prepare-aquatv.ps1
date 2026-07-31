@@ -15,8 +15,8 @@ $nodeVersion = $null
 if (-not [System.Version]::TryParse($nodeVersionText.Split("-")[0], [ref]$nodeVersion)) {
   throw "Nao foi possivel interpretar a versao do Node.js: $nodeVersionText"
 }
-if ($nodeVersion -lt [System.Version]"20.9.0") {
-  throw "Node.js 20.9.0 ou superior e obrigatorio. Instalado: $nodeVersionText"
+if ($nodeVersion -lt [System.Version]"22.13.0") {
+  throw "Node.js 22.13.0 ou superior e obrigatorio para o pnpm 11.11.0. Instalado: $nodeVersionText"
 }
 
 $corepack = Get-Command corepack -ErrorAction Stop
