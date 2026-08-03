@@ -30,22 +30,24 @@ function Read-ProcessState {
 }
 
 function Test-AquaTvProcess([int]$ProcessId, [string]$Role, [object]$ExpectedStartTime) {
-  if ($ProcessId -le 0 -or $null -eq $ExpectedStartTime) {
+  if ($ProcessId -le 0) {
     return $false
   }
 
-  try {
-    $expected = [DateTime]::Parse(
-      [string]$ExpectedStartTime,
-      [Globalization.CultureInfo]::InvariantCulture,
-      [Globalization.DateTimeStyles]::RoundtripKind
-    ).ToUniversalTime()
-    $actual = (Get-Process -Id $ProcessId -ErrorAction Stop).StartTime.ToUniversalTime()
-    if ([Math]::Abs(($actual - $expected).TotalSeconds) -ge 1) {
+  if ($null -ne $ExpectedStartTime) {
+    try {
+      $expected = [DateTime]::Parse(
+        [string]$ExpectedStartTime,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::RoundtripKind
+      ).ToUniversalTime()
+      $actual = (Get-Process -Id $ProcessId -ErrorAction Stop).StartTime.ToUniversalTime()
+      if ([Math]::Abs(($actual - $expected).TotalSeconds) -ge 1) {
+        return $false
+      }
+    } catch {
       return $false
     }
-  } catch {
-    return $false
   }
 
   $process = Get-CimInstance Win32_Process -Filter "ProcessId = $ProcessId" -ErrorAction SilentlyContinue
@@ -93,7 +95,36 @@ function Stop-AquaTvProcess([object]$ProcessId, [object]$StartTime, [string]$Rol
 
 $state = Read-ProcessState
 if (-not $state) {
-  Write-Host "AquaTV nao possui supervisor registrado em execucao."
+  Write-Warning "Arquivo de estado ausente; procurando processos AquaTV gerenciados."
+  $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | ForEach-Object {
+      $commandLine = [string]$_.CommandLine
+      if ($_.Name -in @("powershell.exe", "pwsh.exe") -and
+        $commandLine.IndexOf($supervisorScriptPath, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+        [pscustomobject]@{ ProcessId = $_.ProcessId; Role = "supervisor" }
+      } elseif ($_.Name -eq "node.exe" -and
+        $commandLine.IndexOf($apiEntryPoint, [System.StringComparison]::OrdinalIgnoreCase) -ge 0) {
+        [pscustomobject]@{ ProcessId = $_.ProcessId; Role = "api" }
+      } elseif ($_.Name -eq "node.exe" -and
+        $commandLine.IndexOf($nextEntryPoint, [System.StringComparison]::OrdinalIgnoreCase) -ge 0 -and
+        $commandLine -match "(?:^|\s)-p\s+7740(?:\s|$)") {
+        [pscustomobject]@{ ProcessId = $_.ProcessId; Role = "dashboard" }
+      }
+    })
+
+  foreach ($process in $processes) {
+    Stop-AquaTvProcess -ProcessId $process.ProcessId -StartTime $null -Role $process.Role
+  }
+
+  if (Test-Path -LiteralPath $processStatePath) {
+    Remove-Item -LiteralPath $processStatePath -Force
+  }
+
+  $remainingListeners = Get-NetTCPConnection -LocalPort 7740, 7741 -State Listen -ErrorAction SilentlyContinue
+  if ($remainingListeners) {
+    Write-Warning "Ainda existem processos nas portas 7740/7741; eles nao foram encerrados."
+  } else {
+    Write-Host "AquaTV parado."
+  }
   return
 }
 
