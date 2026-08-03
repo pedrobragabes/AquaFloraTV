@@ -159,6 +159,13 @@ function Initialize-ProductionConfiguration {
 
   $apiToken = Get-DotEnvValue -Path $apiEnvPath -Name "API_ADMIN_TOKEN"
   $dashboardToken = Get-DotEnvValue -Path $dashboardEnvPath -Name "API_ADMIN_TOKEN"
+  $databaseUrl = Get-DotEnvValue -Path $apiEnvPath -Name "DATABASE_URL"
+  if ([string]::IsNullOrWhiteSpace($databaseUrl)) {
+    $databaseUrl = "file:./dev.db"
+  } elseif (-not $databaseUrl.StartsWith("file:", [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "DATABASE_URL invalida. Use SQLite no formato file:./dev.db em apps/api/.env."
+  }
+
   if (-not (Test-WeakSecret -Value $apiToken -MinimumLength 32)) {
     $sharedToken = $apiToken
   } elseif (-not (Test-WeakSecret -Value $dashboardToken -MinimumLength 32)) {
@@ -187,6 +194,7 @@ function Initialize-ProductionConfiguration {
   Set-DotEnvValues -Path $apiEnvPath -Values @{
     API_ADMIN_TOKEN = $sharedToken
     ALLOWED_ORIGINS = $allowedOrigins
+    DATABASE_URL = $databaseUrl
   }
 
   $dashboardValues = @{
