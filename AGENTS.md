@@ -4,7 +4,7 @@ Este arquivo deve refletir o estado real do repositório. Pedro fala português 
 
 ## Produto
 
-Digital signage da **Aquaflora Grow Shop**. O dashboard permite upload de mídia, playlists, programação e gestão das TVs. O player Android TV sincroniza a playlist, mantém cache local e continua reproduzindo durante falhas de rede.
+Digital signage da **AquaFlora Agroshop**. O dashboard permite upload de mídia, playlists, programação e gestão das TVs. O player Android TV sincroniza a playlist, mantém cache local e continua reproduzindo durante falhas de rede.
 
 ## Arquitetura atual
 
@@ -29,7 +29,7 @@ O PC local com SQLite é o caminho primário do MVP. Hostinger e acesso externo 
 - Player: Expo 55, React Native TV e Hermes.
 - Operação: Windows PowerShell e Task Scheduler.
 
-## Estado em 2026-07-31
+## Estado em 2026-08-04
 
 Implementado:
 
@@ -39,6 +39,8 @@ Implementado:
 - playlists, pausa global e agendamentos, inclusive overnight;
 - cadastro, heartbeat e exclusão administrativa de TVs sem vazamento de token;
 - player nativo com configuração, cache transacional, fallback offline, backoff e watchdog;
+- áudio configurável e rotação persistente no próprio player via controle remoto;
+- logo, splash/banner e nome AquaFlora Agroshop em finalização;
 - manifest Android TV com HOME/LEANBACK e suporte a portrait;
 - scripts seguros de preparação, start/stop, diagnóstico, firewall, backup e smoke;
 - migration `20260730134500_playback_enabled`.
@@ -56,7 +58,7 @@ Validações já concluídas:
 - `pnpm peers check`;
 - `pnpm lint`;
 - `pnpm typecheck`;
-- `pnpm test`: 14 testes;
+- `pnpm test`: 19 testes (4 da API e 15 do player);
 - `pnpm build`;
 - export Android/Hermes;
 - smoke Windows: 16 verificações;
@@ -65,12 +67,12 @@ Validações já concluídas:
 
 ## Pendências de go-live
 
-1. Configurar PC, IP reservado, rede Privada, firewall e tarefas automáticas.
-2. Instalar Android SDK e gerar um APK assinado com keystore novo.
-3. Testar o APK na STV-3000 Plus com controle, codecs, portrait, cache, reboot e launcher.
+1. Confirmar IP reservado, rede Privada, tarefas automáticas e backup atual.
+2. Validar os dois lados de portrait e a persistência da rotação na STV-3000 Plus.
+3. Completar codecs, cache, reboot, launcher e retorno da rede.
 4. Executar soak de 48 horas.
 5. Configurar cópia de backup fora do PC.
-6. Aplicar ícone, banner e splash finais.
+6. Gerar o APK final `1.0.0` com a mesma chave já usada no hardware.
 
 Fonte de verdade: `docs/14-GITHUB-MILESTONES.md` e as issues do repositório.
 
@@ -80,6 +82,7 @@ Fonte de verdade: `docs/14-GITHUB-MILESTONES.md` e as issues do repositório.
 - TypeScript estrito; não introduzir `any`.
 - Comentários somente quando explicam lógica não óbvia.
 - Justificar dependências novas e considerar o custo offline/local.
+- A dependência `expo-screen-orientation` é a exceção atual: controla a Activity sem transformar o `VideoView` por CSS.
 - Não reintroduzir player web, auto-update de APK ou exposição pública sem decisão explícita.
 - Não versionar `.env`, banco, mídia, logs, backups, APK/AAB ou chaves de release.
 - Não usar `prisma db push` no ambiente da loja; usar migrations e backup.

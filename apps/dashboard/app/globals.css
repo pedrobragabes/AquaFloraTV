@@ -11,6 +11,9 @@
   --sidebar: #10271f;
   --amber: #b56c1d;
   --danger: #a33b2f;
+  --brand-purple: #512a70;
+  --brand-orange: #ff5a12;
+  --brand-gold: #f6aa18;
   --shadow: 0 14px 34px rgba(16, 39, 31, 0.07);
 }
 
@@ -48,7 +51,10 @@ a {
   display: grid;
   min-height: 100vh;
   place-items: center;
-  background: linear-gradient(180deg, rgba(31, 122, 79, 0.08), transparent 38%), var(--paper);
+  background:
+    radial-gradient(circle at 14% 18%, rgba(81, 42, 112, 0.1), transparent 18rem),
+    radial-gradient(circle at 86% 78%, rgba(255, 90, 18, 0.09), transparent 20rem),
+    linear-gradient(180deg, rgba(31, 122, 79, 0.08), transparent 38%), var(--paper);
   padding: 20px;
 }
 
@@ -57,10 +63,28 @@ a {
   width: min(420px, 100%);
   gap: 22px;
   border: 1px solid var(--line);
+  border-top: 4px solid var(--brand-orange);
   border-radius: 8px;
   background: var(--panel);
   box-shadow: var(--shadow);
   padding: 28px;
+}
+
+.login-logo {
+  display: block;
+  width: min(190px, 62%);
+  height: auto;
+  margin: 0 auto 2px;
+  object-fit: contain;
+}
+
+.login-brand-name {
+  margin: 5px 0 0;
+  color: var(--brand-purple);
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .login-form {
@@ -117,6 +141,16 @@ a {
   padding: 5px 7px;
 }
 
+.brand-mark:focus-visible,
+.nav-link:focus-visible,
+.logout-link:focus-visible,
+.mobile-logout-link:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid rgba(246, 170, 24, 0.86);
+  outline-offset: 3px;
+}
+
 .brand-symbol {
   display: grid;
   width: 38px;
@@ -131,6 +165,14 @@ a {
   font-weight: 900;
 }
 
+.brand-image {
+  display: block;
+  width: 52px;
+  height: 52px;
+  flex: 0 0 auto;
+  object-fit: contain;
+}
+
 .brand-copy {
   display: grid;
   gap: 1px;
@@ -143,7 +185,7 @@ a {
 }
 
 .brand-copy small {
-  color: rgba(236, 249, 243, 0.66);
+  color: rgba(236, 249, 243, 0.74);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -405,7 +447,7 @@ h1 {
 .primary-button {
   min-width: 140px;
   align-self: stretch;
-  background: var(--leaf);
+  background: linear-gradient(135deg, var(--aqua), var(--leaf));
   color: #ffffff;
   padding: 0 20px;
 }
@@ -424,7 +466,7 @@ h1 {
 }
 
 .primary-button:hover:not(:disabled) {
-  background: var(--leaf-dark);
+  background: linear-gradient(135deg, var(--leaf), var(--leaf-dark));
 }
 
 .secondary-button:hover {

@@ -1,10 +1,16 @@
-# 01 — Contexto
+# 01 — Contexto histórico
+
+> **Histórico:** este documento registra a motivação original do projeto. Para
+> a arquitetura e a operação atuais, use `README.md`, `AGENTS.md`,
+> `docs/06-DEVICE-SETUP.md`, `docs/14-GITHUB-MILESTONES.md` e
+> `docs/15-PLANO-APK-ANDROID-TV.md`.
 
 ## O negócio
 
-**Aquaflora Grow Shop** é uma loja física que vende produtos pra aquarismo (peixes, rações, acessórios, plantas, equipamentos). A loja tem uma **TV vertical** posicionada no balcão / vitrine, que roda vídeos de marketing em loop contínuo durante o horário comercial.
+**AquaFlora Agroshop** é uma loja física que vende produtos pra aquarismo (peixes, rações, acessórios, plantas, equipamentos). A loja tem uma **TV vertical** posicionada no balcão / vitrine, que roda vídeos de marketing em loop contínuo durante o horário comercial.
 
 A TV tem dois papéis:
+
 1. **Entretenimento passivo** pro cliente enquanto espera atendimento
 2. **Marketing direcionado** mostrando promoções, produtos novos, reels institucionais
 
@@ -26,6 +32,7 @@ A plataforma atual funciona bem pro básico, mas tem teto baixo de customizaçã
 ## Quem é quem
 
 ### Pedro (desenvolvedor)
+
 - Full-stack TypeScript/React/Node
 - Dono da implementação
 - Tem Hostinger Business com 50GB (6GB usados por 10 sites existentes — 44GB livres)
@@ -34,7 +41,8 @@ A plataforma atual funciona bem pro básico, mas tem teto baixo de customizaçã
 - Objetivo pessoal: **aprendizado + portfólio**
 
 ### Diego (cliente / chefe)
-- Dono da Aquaflora Grow Shop
+
+- Dono da AquaFlora Agroshop
 - Faz upload do conteúdo, monta playlists
 - Hoje usa plataforma SaaS de signage
 - **Sem pressa** — prefere qualidade sobre velocidade
@@ -43,16 +51,20 @@ A plataforma atual funciona bem pro básico, mas tem teto baixo de customizaçã
 ## Motivação pra construir custom
 
 ### Econômica
+
 - R$35/mês × 12 = **R$420/ano** de economia direta
 - Custo incremental zero (Hostinger já pago, domínio já comprado)
 
 ### Estratégica
+
 - **Independência de vendor** — se o fornecedor subir preço / mudar políticas / sumir, loja não fica refém
 - **Features sob medida** — agendamento contextual não existe na solução atual; trivial no sistema próprio
 - **Escala** — infra suporta adicionar outras TVs em futuras lojas sem custo adicional
 
 ### Pedro (aprendizado)
+
 Este projeto é uma **peça de portfólio substantiva**:
+
 - Sistema distribuído real (web + API + mobile nativo + sync)
 - Cliente em produção física (não demo)
 - Tech stack moderna ponta a ponta
@@ -64,6 +76,7 @@ Vale muito mais no currículo que "mais um CRUD".
 ## Critérios de sucesso
 
 ### Paridade mínima com a solução atual
+
 - [ ] Diego faz upload de mídia via browser
 - [ ] Diego monta playlist com drag-and-drop
 - [ ] Diego vê status online/offline do device
@@ -71,6 +84,7 @@ Vale muito mais no currículo que "mais um CRUD".
 - [ ] Sincronização automática de novo conteúdo em ≤ 5 min
 
 ### Diferenciais
+
 - [ ] Agendamento por dia da semana e horário
 - [ ] Banners temporários ("HOJE TEM X")
 - [ ] Agendamento sazonal com semanas/meses de antecedência
@@ -78,6 +92,7 @@ Vale muito mais no currículo que "mais um CRUD".
 - [ ] Dashboard mostra uptime, espaço livre, mídia atual, histórico de sync
 
 ### Operacionais
+
 - [ ] Sistema roda estável ≥ 2 semanas antes de desativar a solução atual
 - [ ] Documentação suficiente pra Diego operar sozinho
 - [ ] Runbook de troubleshooting pra Pedro em caso de quebra
@@ -85,6 +100,7 @@ Vale muito mais no currículo que "mais um CRUD".
 ## O que NÃO está no escopo (pro MVP)
 
 Deixando explícito pra não escopocrescer:
+
 - Multi-tenant (várias lojas/clientes usando mesma infra)
 - Conteúdo gerado por IA / personalização por câmera
 - Integração com ERP da loja

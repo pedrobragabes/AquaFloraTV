@@ -158,6 +158,9 @@ importers:
       expo-network:
         specifier: ~55.0.16
         version: 55.0.16(expo@55.0.28)(react@19.2.0)
+      expo-screen-orientation:
+        specifier: ~55.0.18
+        version: 55.0.18(expo@55.0.28)(react-native-tvos@0.83.10-0)
       expo-secure-store:
         specifier: ~55.0.16
         version: 55.0.16(expo@55.0.28)
@@ -4513,6 +4516,15 @@ packages:
     peerDependencies:
       expo: '*'
       react: '*'
+
+  expo-screen-orientation@55.0.18:
+    resolution:
+      {
+        integrity: sha512-Y/u4rTUoxQVyW2kAgqljgxd1HmRvALhFZLMxcDvY1aclhh29PcA0JzvCXO1mVixidOv5WFDtOFROUkA6C7FhFA==,
+      }
+    peerDependencies:
+      expo: '*'
+      react-native: '*'
 
   expo-secure-store@55.0.16:
     resolution:
@@ -11360,6 +11372,11 @@ snapshots:
     dependencies:
       expo: 55.0.28(@babel/core@7.29.6)(@expo/dom-webview@55.0.6)(react-dom@19.2.0(react@19.2.0))(react-native-tvos@0.83.10-0)(react@19.2.0)(typescript@5.9.3)
       react: 19.2.0
+
+  expo-screen-orientation@55.0.18(expo@55.0.28)(react-native-tvos@0.83.10-0):
+    dependencies:
+      expo: 55.0.28(@babel/core@7.29.6)(@expo/dom-webview@55.0.6)(react-dom@19.2.0(react@19.2.0))(react-native-tvos@0.83.10-0)(react@19.2.0)(typescript@5.9.3)
+      react-native: react-native-tvos@0.83.10-0(@babel/core@7.29.6)(@types/react@19.2.14)(react-native-tvos@0.83.10-0)(react@19.2.0)
 
   expo-secure-store@55.0.16(expo@55.0.28):
     dependencies:

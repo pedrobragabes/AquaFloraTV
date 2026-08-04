@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -67,13 +68,22 @@ function NavigationIcon({ icon }: { icon: NavigationItem['icon'] }) {
 
 function Brand() {
   return (
-    <Link className="brand-mark" href="/dashboard" aria-label="AquaFlora TV — Início">
-      <span className="brand-symbol" aria-hidden="true">
-        A
-      </span>
+    <Link
+      className="brand-mark"
+      href="/dashboard"
+      aria-label="AquaTV — AquaFlora Agroshop — Início"
+    >
+      <Image
+        className="brand-image"
+        src="/brand/aquaflora-logo.webp"
+        alt="AquaFlora Agroshop"
+        width={52}
+        height={52}
+        priority
+      />
       <span className="brand-copy">
-        <strong>AquaFlora</strong>
-        <small>TV da loja</small>
+        <strong>AquaTV</strong>
+        <small>AquaFlora Agroshop</small>
       </span>
     </Link>
   );

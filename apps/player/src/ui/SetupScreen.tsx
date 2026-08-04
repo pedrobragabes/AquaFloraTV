@@ -1,16 +1,43 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 
+import brandLogo from '../../assets/brand/aquaflora-logo.webp';
 import { TvButton } from './TvButton';
+import {
+  displayRotationLabel,
+  nextDisplayRotation,
+  type DisplayRotation,
+} from '../mobile/display-orientation-store';
 
 interface SetupScreenProps {
   initialApiUrl: string;
   connecting: boolean;
   message: string;
+  displayRotation: DisplayRotation;
+  onSetDisplayRotation: (rotation: DisplayRotation) => Promise<void>;
   onConnect: (apiUrl: string) => Promise<void>;
 }
 
-export function SetupScreen({ initialApiUrl, connecting, message, onConnect }: SetupScreenProps) {
+function rotationValue(rotation: DisplayRotation): string {
+  return rotation === 'system' ? 'Automatica / sistema' : `${rotation} graus`;
+}
+
+export function SetupScreen({
+  initialApiUrl,
+  connecting,
+  message,
+  displayRotation,
+  onSetDisplayRotation,
+  onConnect,
+}: SetupScreenProps) {
   const [apiUrl, setApiUrl] = useState(initialApiUrl);
 
   useEffect(() => {
@@ -27,65 +54,96 @@ export function SetupScreen({ initialApiUrl, connecting, message, onConnect }: S
     <View style={styles.screen}>
       <View pointerEvents="none" style={styles.glowTop} />
       <View pointerEvents="none" style={styles.glowBottom} />
-      <View style={styles.card}>
-        <View style={styles.brandRow}>
-          <View style={styles.brandMark}>
-            <Text style={styles.brandMarkText}>A</Text>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        style={styles.scroll}
+      >
+        <View style={styles.card}>
+          <View style={styles.brandRow}>
+            <Image
+              accessibilityLabel="AquaFlora Agroshop"
+              resizeMode="contain"
+              source={brandLogo}
+              style={styles.brandLogo}
+            />
+            <View>
+              <Text style={styles.eyebrow}>AQUAFLORA AGROSHOP</Text>
+              <Text style={styles.title}>AquaTV</Text>
+            </View>
           </View>
-          <View>
-            <Text style={styles.eyebrow}>AQUAFLORA GROW SHOP</Text>
-            <Text style={styles.title}>AquaTV</Text>
+
+          <Text style={styles.description}>
+            Conecte esta TV ao computador da loja. O cadastro do aparelho sera automatico.
+          </Text>
+
+          <Text style={styles.label}>Endereco da API</Text>
+          <TextInput
+            autoCapitalize="none"
+            autoCorrect={false}
+            editable={!connecting}
+            keyboardType="url"
+            onChangeText={setApiUrl}
+            onSubmitEditing={connect}
+            placeholder="192.168.1.10:7741"
+            placeholderTextColor="#648274"
+            returnKeyType="done"
+            selectionColor="#4ade80"
+            style={styles.input}
+            value={apiUrl}
+          />
+
+          <TvButton
+            disabled={connecting}
+            hasTVPreferredFocus
+            label={connecting ? 'Conectando...' : 'Conectar TV'}
+            onPress={connect}
+            style={styles.connectButton}
+          />
+
+          <View style={styles.orientationRow}>
+            <View style={styles.orientationCopy}>
+              <Text style={styles.label}>Orientacao da tela</Text>
+              <Text style={styles.orientationValue}>
+                {displayRotationLabel(displayRotation)} ({rotationValue(displayRotation)})
+              </Text>
+            </View>
+            <TvButton
+              disabled={connecting}
+              label="Girar"
+              onPress={() => void onSetDisplayRotation(nextDisplayRotation(displayRotation))}
+              tone="secondary"
+            />
+          </View>
+
+          <View style={styles.statusRow}>
+            {connecting ? <ActivityIndicator color="#4ade80" size="small" /> : null}
+            <Text style={styles.status}>{message}</Text>
           </View>
         </View>
-
-        <Text style={styles.description}>
-          Conecte esta TV ao computador da loja. O cadastro do aparelho sera automatico.
-        </Text>
-
-        <Text style={styles.label}>Endereco da API</Text>
-        <TextInput
-          autoCapitalize="none"
-          autoCorrect={false}
-          editable={!connecting}
-          keyboardType="url"
-          onChangeText={setApiUrl}
-          onSubmitEditing={connect}
-          placeholder="192.168.1.10:7741"
-          placeholderTextColor="#648274"
-          returnKeyType="done"
-          selectionColor="#4ade80"
-          style={styles.input}
-          value={apiUrl}
-        />
-
-        <TvButton
-          disabled={connecting}
-          hasTVPreferredFocus
-          label={connecting ? 'Conectando...' : 'Conectar TV'}
-          onPress={connect}
-          style={styles.connectButton}
-        />
-
-        <View style={styles.statusRow}>
-          {connecting ? <ActivityIndicator color="#4ade80" size="small" /> : null}
-          <Text style={styles.status}>{message}</Text>
-        </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    alignItems: 'center',
     backgroundColor: '#020b08',
     flex: 1,
-    justifyContent: 'center',
     overflow: 'hidden',
-    padding: 32,
+  },
+  scroll: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollContent: {
+    alignItems: 'center',
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: 24,
   },
   glowTop: {
-    backgroundColor: '#14532d',
+    backgroundColor: '#512a70',
     borderRadius: 260,
     height: 520,
     opacity: 0.32,
@@ -95,7 +153,7 @@ const styles = StyleSheet.create({
     width: 520,
   },
   glowBottom: {
-    backgroundColor: '#0c4a6e',
+    backgroundColor: '#ff5a12',
     borderRadius: 220,
     bottom: -240,
     height: 440,
@@ -112,27 +170,19 @@ const styles = StyleSheet.create({
     maxWidth: 680,
     padding: 36,
     width: '100%',
+    flexShrink: 1,
   },
   brandRow: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 18,
   },
-  brandMark: {
-    alignItems: 'center',
-    backgroundColor: '#4ade80',
-    borderRadius: 18,
-    height: 64,
-    justifyContent: 'center',
-    width: 64,
-  },
-  brandMarkText: {
-    color: '#052e16',
-    fontSize: 36,
-    fontWeight: '900',
+  brandLogo: {
+    height: 92,
+    width: 92,
   },
   eyebrow: {
-    color: '#86efac',
+    color: '#f6aa18',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 1.8,
@@ -176,6 +226,21 @@ const styles = StyleSheet.create({
     gap: 10,
     minHeight: 24,
     marginTop: 18,
+  },
+  orientationRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 18,
+    justifyContent: 'space-between',
+    marginTop: 22,
+  },
+  orientationCopy: {
+    flex: 1,
+  },
+  orientationValue: {
+    color: '#f0fdf4',
+    fontSize: 18,
+    marginTop: 4,
   },
   status: {
     color: '#86a995',

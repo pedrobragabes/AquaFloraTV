@@ -43,7 +43,12 @@ function ensureIntentFilter(activity, requiredCategories) {
 
 module.exports = function withAndroidTvKiosk(config) {
   return withAndroidManifest(config, (manifestConfig) => {
-    const screenOrientation = config.orientation === 'landscape' ? 'landscape' : 'portrait';
+    const screenOrientation =
+      config.orientation === 'landscape'
+        ? 'landscape'
+        : config.orientation === 'portrait'
+          ? 'portrait'
+          : null;
     const mainApplication = AndroidConfig.Manifest.getMainApplicationOrThrow(
       manifestConfig.modResults,
     );
@@ -57,7 +62,12 @@ module.exports = function withAndroidTvKiosk(config) {
     }
 
     mainActivity.$['android:exported'] = 'true';
-    mainActivity.$['android:screenOrientation'] = screenOrientation;
+    mainApplication.$['android:banner'] = '@drawable/aquaflora_tv_banner';
+    if (screenOrientation) {
+      mainActivity.$['android:screenOrientation'] = screenOrientation;
+    } else {
+      delete mainActivity.$['android:screenOrientation'];
+    }
 
     ensureIntentFilter(mainActivity, [
       'android.intent.category.HOME',

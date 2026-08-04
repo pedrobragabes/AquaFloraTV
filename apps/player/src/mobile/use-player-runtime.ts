@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import * as Device from 'expo-device';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 import type { CurrentPlaylistItem, CurrentPlaylistResponse } from '@aquatv/types';
 
@@ -19,6 +20,13 @@ import {
   savePlayerSettings,
   type PlayerSettings,
 } from './settings-store';
+import {
+  defaultDisplayRotation,
+  displayRotationLabel,
+  loadDisplayRotation,
+  saveDisplayRotation,
+  type DisplayRotation,
+} from './display-orientation-store';
 import { usePlayerHeartbeat } from './use-player-heartbeat';
 import { useSyncSchedule } from './use-sync-schedule';
 
@@ -38,6 +46,7 @@ interface SyncOperation {
 
 export interface PlayerRuntime {
   settings: PlayerSettings | null;
+  displayRotation: DisplayRotation;
   setupApiUrl: string;
   phase: PlayerPhase;
   message: string;
@@ -50,6 +59,8 @@ export interface PlayerRuntime {
   lastPlaybackError: string | null;
   adminVisible: boolean;
   connect: (apiUrl: string) => Promise<void>;
+  setDisplayRotation: (rotation: DisplayRotation) => Promise<void>;
+  toggleAudio: () => Promise<void>;
   resetConnection: () => Promise<void>;
   syncNow: () => Promise<void>;
   advance: () => void;
@@ -68,8 +79,23 @@ function credentialsFromSettings(settings: PlayerSettings): DeviceCredentials {
   return { id: settings.deviceId, token: settings.deviceToken };
 }
 
+function orientationLockFor(rotation: DisplayRotation): ScreenOrientation.OrientationLock {
+  if (rotation === 'system') {
+    return ScreenOrientation.OrientationLock.DEFAULT;
+  }
+  if (rotation === 0) {
+    return ScreenOrientation.OrientationLock.LANDSCAPE;
+  }
+  if (rotation === 90) {
+    return ScreenOrientation.OrientationLock.PORTRAIT_UP;
+  }
+  return ScreenOrientation.OrientationLock.PORTRAIT_DOWN;
+}
+
 export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
   const [settings, setSettings] = useState<PlayerSettings | null>(null);
+  const [displayRotation, setDisplayRotationState] =
+    useState<DisplayRotation>(defaultDisplayRotation);
   const [setupApiUrl, setSetupApiUrl] = useState(initialApiUrl);
   const [phase, setPhase] = useState<PlayerPhase>('booting');
   const [message, setMessage] = useState('Inicializando player');
@@ -99,6 +125,34 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function applyStoredDisplayRotation(): Promise<void> {
+      const storedRotation = await loadDisplayRotation();
+      if (cancelled) {
+        return;
+      }
+
+      try {
+        await ScreenOrientation.lockAsync(orientationLockFor(storedRotation));
+      } catch {
+        if (!cancelled) {
+          setMessage('Nao foi possivel aplicar a orientacao salva');
+        }
+      }
+
+      if (!cancelled) {
+        setDisplayRotationState(storedRotation);
+      }
+    }
+
+    void applyStoredDisplayRotation();
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -326,6 +380,7 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
           deviceId: credentials.id,
           deviceToken: credentials.token,
           deviceName,
+          audioEnabled: false,
         };
         await savePlayerSettings(nextSettings);
         registered = true;
@@ -343,6 +398,46 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
     },
     [runSync],
   );
+
+  const toggleAudio = useCallback(async (): Promise<void> => {
+    const currentSettings = settingsRef.current;
+    if (!currentSettings) {
+      return;
+    }
+
+    const nextSettings: PlayerSettings = {
+      ...currentSettings,
+      audioEnabled: !currentSettings.audioEnabled,
+    };
+
+    try {
+      await savePlayerSettings(nextSettings);
+      settingsRef.current = nextSettings;
+      setSettings(nextSettings);
+      setMessage(nextSettings.audioEnabled ? 'Som ativado' : 'Som desativado');
+    } catch (error) {
+      setMessage(getErrorMessage(error, 'Nao foi possivel alterar o som'));
+    }
+  }, []);
+
+  const setDisplayRotation = useCallback(async (rotation: DisplayRotation): Promise<void> => {
+    try {
+      await ScreenOrientation.lockAsync(orientationLockFor(rotation));
+      await saveDisplayRotation(rotation);
+      if (mountedRef.current) {
+        setDisplayRotationState(rotation);
+        setMessage(`Orientacao ${displayRotationLabel(rotation)} aplicada`);
+      }
+    } catch (error) {
+      if (mountedRef.current) {
+        setMessage(
+          error instanceof Error
+            ? `Nao foi possivel girar a tela: ${error.message}`
+            : 'Nao foi possivel girar a tela',
+        );
+      }
+    }
+  }, []);
 
   const resetConnection = useCallback(async (): Promise<void> => {
     const previousApiUrl = settingsRef.current?.apiUrl ?? setupApiUrl;
@@ -390,6 +485,7 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
 
   return {
     settings,
+    displayRotation,
     setupApiUrl,
     phase,
     message,
@@ -402,6 +498,8 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
     lastPlaybackError,
     adminVisible,
     connect,
+    setDisplayRotation,
+    toggleAudio,
     resetConnection,
     syncNow,
     advance,

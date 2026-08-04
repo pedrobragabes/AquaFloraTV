@@ -1,84 +1,68 @@
-# AquaTV — Contexto para Claude Code
+# AquaTV — contexto para agentes
 
-Este arquivo é lido automaticamente por agentes Claude ao abrir o projeto. Mantém a visão consolidada pra sessões rápidas; detalhes ficam em `docs/`.
+Este arquivo é um resumo rápido para agentes que abrem o repositório. A fonte operacional principal é `AGENTS.md`, seguida de `README.md`, `docs/14-GITHUB-MILESTONES.md` e `docs/15-PLANO-APK-ANDROID-TV.md`.
 
-## O que é
+## Produto atual
 
-Digital signage customizado para a loja **Aquaflora Grow Shop** (aquário). Usa uma stack própria com **agendamento contextual por dia/hora** e **auto-update da APK**.
+Digital signage local da **AquaFlora Agroshop**. O operador usa o dashboard no navegador; o PC Windows da loja hospeda o dashboard Next.js, a API Express, o SQLite e as mídias; a STV-3000 Plus executa o player Expo/React Native TV.
 
-## Quem é quem
-
-- **Pedro** (dev): dono da implementação. Hospeda na própria conta Hostinger Business. Fala português.
-- **Diego** (cliente/chefe): dono da loja. Faz upload de mídia, monta playlists. Sem pressa — prioridade é fazer certo.
-
-## Arquitetura em uma frase
-
-Dashboard Next.js + API Node/Express no **Hostinger Business** (`app.aquafloragroshop.com.br`) ↔ TV Box **Aquário STV-3000 Plus** (Android TV 11) rodando Expo bare, via HTTPS público.
-
-```
-Diego (browser)  ─►  app.aquafloragroshop.com.br (Hostinger)
-                        │   Next.js dashboard + Express API + MySQL
-                        ▼
-                    Storage (vídeos + APKs)
-                        │
-                        ▼  HTTPS pública
-                    TV Box STV-3000 Plus (loja)
-                        Expo bare, cache local, playback loop portrait
+```text
+Navegador
+   -> PC Windows da loja
+      Dashboard :7740
+      API      :7741
+      SQLite   apps/api/prisma/dev.db
+      storage/media
+   -> STV-3000 Plus
+      apps/player — Android TV, cache local e reprodução offline
 ```
 
-Sem Tailscale. Sem Proxmox. Tudo público via HTTPS.
+O IP atual do servidor de teste é `192.168.0.114`. O endereço deve ser configurável e não deve ser substituído por `localhost` no APK.
+
+## Estado real
+
+- Dashboard responsivo com login, conteúdos, playlists, programação e TVs.
+- API protegida com Express, Prisma, SQLite, uploads validados e heartbeat.
+- Player nativo com cadastro, cache transacional, polling/backoff, watchdog e fallback offline.
+- Som configurável e orientação persistente (`Automática`, `Horizontal`, `Vertical lado A`, `Vertical lado B`) pelo controle remoto.
+- Identidade em finalização: **AquaFlora Agroshop**, logo, splash, launcher e banner Android TV.
+- APK atual usa pacote `com.aquatv.player`; releases precisam usar a mesma keystore.
 
 ## Stack
 
-- **Monorepo**: pnpm workspaces + turborepo
-- **Dashboard**: Next.js 15, TypeScript, Tailwind, NextAuth (Google), SWR, dnd-kit, ffmpeg.wasm
-- **API**: Node + Express + Prisma + MySQL + Multer + SSE
-- **Android**: Expo bare (Android TV 11 target), expo-video (fallback react-native-video), expo-file-system, expo-background-fetch
-- **Infra**: Hostinger Business (50GB, 6GB já usados por outros sites — 44GB livres), EAS Build, GitHub Actions
+- pnpm 11.11.0, workspaces e Turborepo;
+- Next.js 15, React e TypeScript estrito;
+- Express, Prisma, SQLite e Multer;
+- Expo 55, React Native TV, Hermes, `expo-video` e `expo-screen-orientation`;
+- Windows PowerShell e Task Scheduler.
 
-Detalhes: `docs/03-STACK.md`.
+## Regras de operação
 
-## Estado atual
+- Responder em português, exceto código.
+- Não introduzir `any` em TypeScript.
+- Preservar cache, sincronização, heartbeat, watchdog e contrato da API.
+- Não reintroduzir player web, WebView legado, SSE, force-sync, auto-update de APK ou exposição pública.
+- Não usar `prisma db push`; migrations e backup são obrigatórios para schema.
+- Não versionar `.env`, banco, mídias, logs, backups, APK/AAB, senhas ou keystores.
+- Não marcar teste físico como concluído sem evidência na STV-3000 Plus.
+- Não apagar arquivos rastreados ou worktrees de agentes sem verificar uso e autorização.
 
-**Planejamento concluído em 2026-04-23.** Nenhum código escrito ainda. Próximo passo: Fase 0 (setup do monorepo + Hostinger Node.js app + subdomínio).
+## Validação
 
-Roadmap completo: `docs/05-ROADMAP.md`.
+```powershell
+corepack pnpm peers check
+corepack pnpm lint
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm build
+corepack pnpm format
+```
 
-## Decisões importantes (resumo)
+Para o player, use também `corepack pnpm --filter @aquatv/player test`. Para release, JDK 17, SDK Android e `apksigner` são obrigatórios.
 
-- **Hostinger** (não Proxmox) — já pago, SLA profissional, elimina dependência da casa do Pedro
-- **MySQL** (não Postgres) — default da Hostinger, Prisma suporta tranquilo
-- **Portrait no app** (não pré-rotação server-side) — abordagem já validada via código Expo
-- **Poll + SSE híbrido** — baseline 5min + push instantâneo via SSE
-- **App como launcher** (kiosk mode) — boot direto, auto-restart grátis via OS
-- **ffmpeg.wasm no browser** — Hostinger não roda ffmpeg server-side
+## Guias
 
-ADRs completos: `docs/11-DECISOES.md`.
-
-## Features core
-
-1. **Upload + playlist manual** (baseline do MVP)
-2. **Agendamento contextual** — grade semanal visual, banners temporários, pré-agendamento sazonal (DIFERENCIAL)
-3. **Auto-update da APK** — app baixa nova versão sozinho, Pedro nunca mais sobe escada com pendrive (DIFERENCIAL)
-4. **Métricas ricas de device** — uptime, espaço livre, mídia atual, histórico
-
-Detalhes: `docs/04-FEATURES.md`.
-
-## Device em produção
-
-**Aquário STV-3000 Plus**, Android TV 11, patch de segurança 2021-10, launcher vendor "Aquário V5.5.5". Uma plataforma anterior já rodou nele — Android TV 11 + portrait + sideload via pendrive confirmados funcionando. Setup específico: `docs/06-DEVICE-SETUP.md`.
-
-## Riscos abertos
-
-1. `expo-video` pode bugar nesse device — plano B `react-native-video` (testar dia 1 Fase 2)
-2. OTA do vendor pode resetar configs — desativar nos primeiros minutos de setup
-3. Hostinger Node.js Selector tem limitações não exploradas — validar antes de Fase 1
-
-## Como agentes Claude devem operar neste projeto
-
-- **Sempre em português** (exceto código)
-- **Honestidade > validação** — Pedro quer crítica construtiva, não concordância
-- **Sem pressa artificial** — chefe não tem pressa, privilegiar decisões bem pensadas sobre velocidade
-- Quando criar código: TypeScript estrito, sem `any`, sem comentários óbvios
-- Quando sugerir dependência nova: justificar por que, qual a alternativa, qual o trade-off
-- Nunca criar arquivos `.md` sem Pedro pedir explicitamente (exceção: atualizar os que já existem aqui)
+- README executável: `README.md`;
+- milestones e issues: `docs/14-GITHUB-MILESTONES.md`;
+- APK e operação da box: `docs/15-PLANO-APK-ANDROID-TV.md`;
+- finalização incremental para o Luna: `docs/16-GUIA-LUNA-FINALIZACAO-AQUATV.md`.
