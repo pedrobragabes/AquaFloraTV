@@ -1,12 +1,12 @@
 # AquaTV
 
-Digital signage próprio para a **Aquaflora Grow Shop**. O AquaTV permite que a loja envie imagens e vídeos, organize playlists, programe conteúdos e acompanhe a TV sem depender de uma assinatura mensal.
+Digital signage próprio para a **AquaFlora Agroshop**. O AquaTV permite que a loja envie imagens e vídeos, organize playlists, programe conteúdos e acompanhe a TV sem depender de uma assinatura mensal.
 
 O MVP foi desenhado para operar na rede local: o dashboard, a API, o banco e os arquivos ficam no PC da loja; a STV-3000 Plus usa um app Android TV dedicado, com cache para continuar reproduzindo durante falhas de rede.
 
 ## Estado do projeto
 
-Em 31 de julho de 2026, a reescrita principal está concluída e validada:
+Em 4 de agosto de 2026, o núcleo local está concluído e o primeiro APK release assinado foi instalado com sucesso na STV-3000 Plus:
 
 - dashboard responsivo com login, conteúdos, playlists, programação e TVs;
 - API protegida para operações administrativas;
@@ -14,10 +14,12 @@ Em 31 de julho de 2026, a reescrita principal está concluída e validada:
 - playlist padrão, pausa global e agendamentos, inclusive durante a madrugada;
 - player Expo/React Native TV com cache transacional e fallback offline;
 - polling com backoff, heartbeat e recuperação de travamentos de vídeo;
+- áudio configurável e orientação persistente pelo controle remoto;
+- logo e identidade AquaFlora Agroshop aplicadas às telas principais;
 - instalação, inicialização, diagnóstico, firewall, backup e smoke test para Windows;
-- 14 testes automatizados e 16 verificações no smoke de integração.
+- 19 testes automatizados (4 da API e 15 do player) e 16 verificações no smoke de integração.
 
-O código está pronto como candidato de go-live. A publicação definitiva depende da configuração do PC, do APK assinado e do teste físico na STV-3000 Plus. O acompanhamento está detalhado em [Milestones e issues](docs/14-GITHUB-MILESTONES.md).
+O código é candidato a go-live. A instalação física inicial foi aprovada; ainda é necessário concluir a calibração dos dois lados portrait, o teste completo de codec/cache/reboot, o soak de 48 horas e o backup fora do PC. O acompanhamento está detalhado em [Milestones e issues](docs/14-GITHUB-MILESTONES.md).
 
 ## Arquitetura
 
@@ -154,7 +156,7 @@ Os logs do smoke são criados em `logs/integration-smoke-*` e permanecem fora do
 Configure `apps/player/.env` com o endereço real do PC da loja, nunca com `localhost`:
 
 ```env
-API_URL=http://IP-DO-PC:7741/api
+API_URL=http://192.168.0.114:7741/api
 ```
 
 Para desenvolvimento:
@@ -163,7 +165,7 @@ Para desenvolvimento:
 pnpm --filter @aquatv/player dev
 ```
 
-Para gerar um release é necessário instalar o Android SDK e fornecer as quatro credenciais de assinatura esperadas pelo Gradle:
+Para gerar um release é necessário usar JDK 17, Android SDK e fornecer as quatro credenciais de assinatura esperadas pelo Gradle:
 
 - `AQUATV_RELEASE_STORE_FILE`;
 - `AQUATV_RELEASE_STORE_PASSWORD`;
@@ -176,6 +178,23 @@ Depois:
 cd apps\player\android
 .\gradlew.bat assembleRelease
 ```
+
+O APK final é `app/build/outputs/apk/release/app-release.apk`. Verifique-o antes de instalar:
+
+```powershell
+& "$env:ANDROID_HOME\build-tools\36.0.0\apksigner.bat" verify --verbose --print-certs .\app\build\outputs\apk\release\app-release.apk
+Get-FileHash .\app\build\outputs\apk\release\app-release.apk -Algorithm SHA256
+```
+
+O pacote é `com.aquatv.player`, a versão final em preparação é `1.0.0` (`versionCode 2`) e o certificado deve manter o digest `f0de69f62bb4a348b069275e39cd26930229e5423839f65b99a3a4d387be7005`. Nunca envie a senha ou o keystore para o GitHub.
+
+### Controles do player
+
+- segure OK/centro por aproximadamente 1,5 segundo para abrir o painel administrativo;
+- o som começa desligado e pode ser ativado/desativado;
+- `Girar tela` alterna Automática, Horizontal, Vertical lado A e Vertical lado B;
+- a orientação é salva na própria TV e não é enviada à API;
+- a configuração da API pode ser redefinida pelo botão **Reconectar**.
 
 Keystores de release, APKs e AABs são artefatos privados e estão bloqueados pelo `.gitignore`.
 
@@ -205,6 +224,8 @@ docs/             arquitetura, operação e decisões
 ## Planejamento e documentação
 
 - [Milestones e issues do GitHub](docs/14-GITHUB-MILESTONES.md)
+- [Plano de APK e validação na STV-3000 Plus](docs/15-PLANO-APK-ANDROID-TV.md)
+- [Guia de finalização para o Luna](docs/16-GUIA-LUNA-FINALIZACAO-AQUATV.md)
 - [Instalação no PC da loja](INSTALACAO-PC-CHEFE.md)
 - [Contexto atual para agentes](AGENTS.md)
 - [CI no GitHub](.github/workflows/ci.yml)
@@ -213,4 +234,4 @@ Os documentos numerados de `docs/01` a `docs/13` preservam decisões e planos an
 
 ## Licença e autoria
 
-Projeto privado da Aquaflora Grow Shop, mantido por Pedro Braga.
+Projeto privado da AquaFlora Agroshop, mantido por Pedro Braga.

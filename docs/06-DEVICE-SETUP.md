@@ -1,207 +1,157 @@
-# 06 — Device Setup (STV-3000 Plus) [INCOMPLETO]
+# 06 — Configuração do dispositivo (STV-3000 Plus)
 
-## Hardware
+Este é o procedimento atual para instalar e operar o player **AquaTV** na
+STV-3000 Plus. A arquitetura vigente é local: o PC da loja hospeda o
+dashboard e a API, e a TV Box acessa a API pela rede privada.
 
-**Aquário STV-3000 Plus**
+## Hardware conhecido
 
-- Android TV 11 (oficial, com Leanback)
-- Kernel 5.4.125
-- Patch de segurança: 2021-10-01 (desatualizado mas OK pro uso fechado)
-- Build: `RD2A.211001.002.R3.20250320 release-keys`
-- Launcher padrão do vendor: "Aquário V5.5.5"
-- OTA version: 904111003097
-- Storage interno: ~16GB (tratar como capacidade máxima do player)
+- Android TV 11 com Leanback;
+- launcher do fabricante: Aquário V5.5.5;
+- armazenamento interno de aproximadamente 16 GB;
+- TV Box usada em modo de sinalização, sem necessidade de acesso público.
 
-## Política de espaço no device (MVP)
+## Endereços da instalação atual
 
-- Cache local limitado a **playlist ativa + fallback**
-- Alertar quando uso de disco passar de **70%**
-- Marcar crítico quando uso de disco passar de **85%**
-- Limpar automaticamente arquivos órfãos ou sem uso no cache local
-- Meta operacional: manter pelo menos **2GB livres** no STV-3000 Plus
+| Serviço       | Endereço                           |
+| ------------- | ---------------------------------- |
+| Dashboard     | `http://192.168.0.114:7740`        |
+| API do player | `http://192.168.0.114:7741/api`    |
+| Health check  | `http://192.168.0.114:7741/health` |
 
-## Estado do app Android — 2026-04-28
+O endereço `192.168.0.114` é a configuração atual da loja, não um valor
+embutido no aplicativo. Em outra rede, informe o endereço correspondente na
+tela inicial do player.
 
-O app Android real ainda nao foi instalado na STV-3000. O que ja existe em `apps/player`:
+## Preparar a rede e o PC
 
-- tipos compartilhados para device, heartbeat, playlist atual, logs e releases;
-- cliente API tipado;
-- manifesto local de cache;
-- planner de sync que decide quais midias baixar e quais remover antes de trocar a playlist ativa.
+1. Conecte o PC e a TV Box à mesma rede Wi-Fi ou Ethernet privada.
+2. Confirme no PC que a rede do Windows está marcada como **Privada**.
+3. Inicie o AquaTV com `iniciar-aquatv.bat` e confirme a saúde com
+   `diagnostico-aquatv.bat`.
+4. Abra o firewall somente para a sub-rede local com `liberar-firewall.bat`.
+5. No navegador do PC, valide o dashboard em `http://192.168.0.114:7740`.
 
-Ainda falta implementar a camada Expo/Android:
+Se a API não responder, corrija o PC e a rede antes de mexer no APK. Não use
+`localhost` na TV Box: nesse dispositivo, `localhost` aponta para a própria TV.
 
-- storage real com `expo-file-system`;
-- MD5 com `expo-crypto`;
-- player visual com `expo-video` ou fallback `react-native-video`;
-- manifest Android TV/Leanback;
-- PackageInstaller para auto-update;
-- teste fisico na STV-3000 Plus.
+## Instalação inicial por pendrive
 
-## Passos de setup — primeira vez
+1. Gere e verifique o APK release assinado conforme
+   [15-PLANO-APK-ANDROID-TV.md](15-PLANO-APK-ANDROID-TV.md).
+2. Copie somente o APK para um pendrive FAT32.
+3. Conecte o pendrive à STV-3000 Plus e abra o gerenciador de arquivos.
+4. Se o Android pedir, permita a instalação para o gerenciador de arquivos.
+5. Instale o APK. Para uma atualização, use **instalar por cima**; não
+   desinstale antes de confirmar que a assinatura é compatível.
+6. Abra **AquaTV** pelo launcher.
+7. Na tela inicial, informe `192.168.0.114:7741` (ou a URL completa da API) e
+   selecione **Conectar TV**.
+8. Aguarde o cadastro automático e a primeira sincronização da playlist.
 
-### 1. Desativar atualizações automáticas do vendor (**CRÍTICO**)
+O aplicativo é `com.aquatv.player`, usa HOME/LEANBACK e não implementa
+auto-update de APK. Atualizações futuras são instaladas manualmente com um
+APK assinado pela mesma chave.
 
-**Sintoma se não fizer**: vendor pode pushar OTA que reseta "fontes desconhecidas" ou configurações de orientação.
+## Configuração no primeiro uso
 
-- Configurações → Sobre → Atualização de Software
-- Desativar "Verificar atualizações automaticamente"
-- Se possível, desativar notificação também
+### Orientação
 
-### 2. Ativar modo desenvolvedor
+A instalação começa em **Vertical — lado A** porque a TV será posicionada em
+portrait. Segure OK/centro por aproximadamente 1,5 segundo em uma tela de
+status ou playback para abrir o painel administrativo. O botão **Girar tela**
+alterna:
 
-- Configurações → Sobre → clica 7× em "Build" / "Versão do SO do Android TV"
-- "Você agora é um desenvolvedor" aparece
+1. Automática / sistema;
+2. Horizontal;
+3. Vertical — lado A (`90°`);
+4. Vertical — lado B (`270°`).
 
-### 3. Ativar depuração USB e ADB via rede
+A mesma opção existe antes do cadastro, na tela de setup. A escolha é salva
+localmente na TV Box, permanece após **Reconectar** e é reaplicada no boot. Os
+rótulos lado A/B são deliberadamente neutros até a confirmação física de qual
+lado corresponde ao topo desejado.
 
-- Configurações → Opções do desenvolvedor
-- ☑ Depuração USB
-- ☑ Depuração sem fio / ADB via rede (se disponível)
-- Anote a porta (geralmente 5555)
+### Áudio
 
-### 4. Ativar fontes desconhecidas
+O player inicia com o som desligado. No painel administrativo, use **Ativar
+som** ou **Desativar som**. A preferência fica salva localmente; a mídia não
+é alterada.
 
-- Configurações → Segurança e restrições
-- ☑ Fontes desconhecidas (permitir cada app individualmente quando solicitado)
+### Launcher e energia
 
-### 5. Explorar item "Android TV as config"
+O APK declara HOME e LEANBACK para poder ser escolhido como launcher. Se o
+Android perguntar, escolha AquaTV somente depois de confirmar que o botão
+Voltar do controle ainda permite retornar ao launcher para manutenção.
 
-**Pendente de investigação** — esse item no menu "Sobre" pode ser um switch entre modo Android TV (Leanback) e modo tablet/phone. Se permitir mudar, simplifica muito (tira o Leanback, portrait vira nativo).
+Desative protetores de tela e economia de energia que interrompam a
+reprodução. Não é necessário configurar `RECEIVE_BOOT_COMPLETED`: o projeto
+atual não usa receiver de boot nem instala APK sozinho.
 
-**Pedro, antes de começar Fase 2: entra nesse menu e me conta o que tem.**
+## Matriz de aceite físico
 
-### 6. Configurar rede
+Registrar data, versão do APK e resultado de cada item:
 
-- Wi-Fi da loja configurado
-- Verificar velocidade: idealmente ≥ 10 Mbps pra download de vídeos
-- Anotar IP local pra ADB: `adb connect <ip>:5555`
+- [ ] instalação por cima da versão anterior sem erro de assinatura;
+- [ ] cadastro/heartbeat aparecem no dashboard;
+- [ ] Automática, Horizontal, Vertical lado A e Vertical lado B ficam legíveis;
+- [ ] orientação permanece após fechar o app, reiniciar a TV Box e usar
+      Reconectar;
+- [ ] foco, OK longo, OK normal e Voltar funcionam em horizontal e portrait;
+- [ ] som começa mudo e alterna corretamente;
+- [ ] JPG, PNG, WebP e MP4 são reproduzidos sem corte ou deformação;
+- [ ] playlist mantém ordem, duração e loop;
+- [ ] cache continua reproduzindo com a rede desligada;
+- [ ] sincronização retorna quando a rede volta;
+- [ ] reboot retorna ao comportamento esperado;
+- [ ] logo, nome AquaFlora Agroshop, splash, ícone e banner aparecem;
+- [ ] soak de 48 horas concluído (pendente até haver registro);
+- [ ] backup externo e restauração testados (pendente até haver registro).
 
-### 7. Ajustes de exibição
+O teste inicial de instalação e reprodução foi reportado como aprovado em
+4 de agosto de 2026. Isso não substitui os itens ainda não executados acima.
 
-- Configurações → Dispositivo → Display
-- Resolução: 1080p 60Hz
-- Orientação: se menu existir, portrait. Se não, usar `wm rotation` via ADB:
-  ```
-  adb shell settings put system accelerometer_rotation 0
-  adb shell settings put system user_rotation 1
-  ```
-- Screen saver: desativar (loop contínuo do app cobre)
-- Modo de economia de energia: desativar
+## Diagnóstico rápido
 
-### 8. Configurar auto-start
+### TV não aparece online
 
-Duas estratégias, escolher uma:
+1. Confira se o PC ainda está em `192.168.0.114` e na rede privada.
+2. Abra `http://192.168.0.114:7741/health` em outro dispositivo da mesma rede.
+3. No painel do player, confirme a URL da API e use **Reconectar**.
+4. Rode `diagnostico-aquatv.bat` no PC e verifique o firewall.
 
-**A) App AquaTV como launcher (recomendado)**
+### Tela preta ou mídia sem reprodução
 
-- Após instalar APK, Android pergunta qual launcher usar
-- Selecionar AquaTV como default
-- Benefício: boot direto, auto-restart grátis, botão Home volta pro app
+1. Confira no dashboard se a playlist está ativa e contém mídia.
+2. Use **Sincronizar agora** no painel administrativo.
+3. Confirme que a mídia foi baixada e que há espaço livre na TV Box.
+4. Teste o arquivo no VLC para separar problema de codec de problema do app.
+5. Preserve a evidência e o nome do arquivo antes de trocar o APK.
 
-**B) BOOT_COMPLETED receiver + launcher vendor**
+### Orientação não muda
 
-- AquaTV lida ao boot via BroadcastReceiver
-- Launcher Aquário continua como home
-- Usuário vê tela do launcher por alguns segundos antes de abrir AquaTV
+1. Aguarde a mensagem de aplicação no painel.
+2. Tente Automática e depois os dois modos verticais.
+3. Reinicie a TV Box para confirmar se o firmware aceitou o lock nativo.
+4. Se somente um portrait funcionar, registre o sentido físico e use esse
+   modo; não aplique `wm rotation` como correção permanente sem evidência.
 
-Escolha A é mais simples e robusta. Escolhida no plano.
+### Atualização recusada
 
----
+Pare e não desinstale o aplicativo. Verifique o pacote
+`com.aquatv.player`, o `versionCode` maior e o digest do certificado com
+`apksigner`. Uma instalação que exige desinstalação indica APK incompatível
+com o instalado e pode apagar credenciais e cache.
 
-## Instalação da APK
+## Manutenção e segurança
 
-### Primeira instalação: via pendrive
+- mantenha pelo menos 2 GB livres na TV Box;
+- não coloque APK, keystore, senha, token, banco, mídia, logs ou backups no
+  Git;
+- execute `backup-agora.bat` e copie o ZIP para outro equipamento ou mídia;
+- não use comandos destrutivos para limpar o cache sem registrar a evidência;
+- faça mudanças de firmware, launcher ou permissões somente com a TV Box
+  disponível para teste.
 
-1. Copiar `aquatv-v1.0.0.apk` pra um pendrive FAT32
-2. Plugar pendrive na STV-3000
-3. Abrir app "File Manager" do launcher (ou baixar "X-plore" se não tiver)
-4. Navegar até pendrive, clicar na APK
-5. Aceitar "Fontes desconhecidas"
-6. Instalar
-7. Abrir o app
-8. Inserir device token (obtido do dashboard ao registrar o device)
-9. Selecionar AquaTV como launcher padrão
-
-### Instalações subsequentes: via auto-update
-
-Uma vez instalado, o app cuida de atualizações sozinho via `REQUEST_INSTALL_PACKAGES`:
-
-1. App checa `/api/app/latest` no boot
-2. Compara versionCode local × remoto
-3. Se remoto for maior, baixa APK
-4. Valida MD5
-5. Chama `PackageInstaller.createSession()` + `commit()`
-6. Android reinstala (mantém dados)
-7. App reinicia
-
-### Fallback: ADB via rede
-
-Se auto-update falhar e Pedro estiver fora da loja:
-
-```bash
-adb connect <tailscale-ou-ip-publico>:5555
-adb install -r aquatv-v1.1.0.apk
-```
-
-Requer VPN/Tailscale pra chegar até a TV Box atrás do NAT do router da loja.
-
----
-
-## Checklist pós-setup
-
-Antes de considerar o device "em produção":
-
-- [ ] OTA automático desativado
-- [ ] Wi-Fi estável (24h sem cair)
-- [ ] Device token inserido e heartbeat chegando no dashboard
-- [ ] APK instalado e rodando
-- [ ] AquaTV é launcher default
-- [ ] Vídeo de teste baixou e tá tocando em loop
-- [ ] Orientação portrait travada
-- [ ] Sem som (mute)
-- [ ] Reboot completo: app abre sozinho em < 60s
-- [ ] Auto-update testado (sobe APK +1 patch, confirma que baixa + instala)
-- [ ] Cache local respeita política (ativa + fallback) e mantém folga de disco
-
----
-
-## Troubleshooting
-
-### TV Box não tá aparecendo como online no dashboard
-
-1. Conferir se Wi-Fi da loja tá conectado (sair do AquaTV temporariamente, ver status no launcher)
-2. Conferir se device token está correto no app
-3. `adb logcat | grep AquaTV` via rede pra ver erros
-4. Conferir se endpoint `/api/devices/:id/heartbeat` tá respondendo 200
-
-### Vídeo não tá tocando / tela preta
-
-1. Conferir se MP4 baixou completo (tamanho bate?)
-2. Conferir MD5 (tá corrompido?)
-3. Testar o mesmo MP4 abrindo no VLC do Android (tem codec suportado?)
-4. Se `expo-video` falhar: recompilar com `react-native-video`
-
-### Orientação voltou a landscape
-
-Provavelmente vendor OTA resetou. Aplicar:
-
-```
-adb shell settings put system accelerometer_rotation 0
-adb shell settings put system user_rotation 1
-```
-
-E verificar `android:screenOrientation="portrait"` no manifest da APK.
-
-### App não abre no boot
-
-1. Confirmar que AquaTV é launcher default
-2. Confirmar `RECEIVE_BOOT_COMPLETED` permission concedida
-3. Conferir que não tem Doze/App Standby matando o app (desativar em configs do device)
-
-### Disco cheio
-
-1. Dashboard alerta em dois níveis: 70% (warn) e 85% (crítico)
-2. Player remove arquivos fora da playlist ativa/fallback e revalida espaço livre
-3. Se ainda insuficiente, forçar sync com catálogo mínimo (ativa + fallback)
-4. Manual via ADB: `adb shell rm -rf /sdcard/Android/data/com.aquatv.player/files/media/*`
+O plano completo de release e a definição de pronto estão em
+[16-GUIA-LUNA-FINALIZACAO-AQUATV.md](16-GUIA-LUNA-FINALIZACAO-AQUATV.md).

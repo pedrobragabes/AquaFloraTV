@@ -60,15 +60,19 @@ export default function App() {
       ) : !runtime.settings ? (
         <SetupScreen
           connecting={runtime.phase === 'connecting'}
+          displayRotation={runtime.displayRotation}
           initialApiUrl={runtime.setupApiUrl}
           message={runtime.message}
           onConnect={runtime.connect}
+          onSetDisplayRotation={runtime.setDisplayRotation}
         />
       ) : runtime.currentItem && runtime.currentMediaUri ? (
         <PlaybackScreen
           key={runtime.playbackKey}
+          displayRotation={runtime.displayRotation}
           item={runtime.currentItem}
           mediaUri={runtime.currentMediaUri}
+          muted={!runtime.settings.audioEnabled}
           onAdminRequest={runtime.openAdmin}
           onAdvance={runtime.advance}
           onError={runtime.handlePlaybackError}
@@ -84,11 +88,14 @@ export default function App() {
       {runtime.adminVisible && runtime.settings ? (
         <AdminOverlay
           cacheProgress={runtime.cacheProgress}
+          displayRotation={runtime.displayRotation}
           lastPlaybackError={runtime.lastPlaybackError}
           lastSyncAt={runtime.lastSyncAt}
           message={runtime.message}
+          onToggleAudio={runtime.toggleAudio}
           onClose={runtime.closeAdmin}
           onResetConnection={runtime.resetConnection}
+          onSetDisplayRotation={runtime.setDisplayRotation}
           onSync={runtime.syncNow}
           phase={runtime.phase}
           settings={runtime.settings}

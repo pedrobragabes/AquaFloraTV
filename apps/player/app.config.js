@@ -2,14 +2,20 @@ const apiUrl = process.env.API_URL ?? '';
 
 module.exports = {
   expo: {
-    name: 'AquaTV Player',
+    name: 'AquaTV',
     slug: 'aquatv-player',
-    version: '0.1.0',
+    version: '1.0.0',
     platforms: ['android'],
-    orientation: 'portrait',
+    orientation: 'default',
     userInterfaceStyle: 'dark',
+    icon: './assets/brand/aquaflora-symbol.png',
+    splash: {
+      image: './assets/brand/aquaflora-agroshop.png',
+      resizeMode: 'contain',
+      backgroundColor: '#050309',
+    },
     plugins: [
-      // Manifest mods run in reverse order; kiosk must restore portrait after config-tv removes it.
+      // Manifest mods run in reverse order; kiosk preserves the configured orientation after config-tv runs.
       './plugins/with-android-tv-kiosk.cjs',
       [
         '@react-native-tvos/config-tv',
@@ -22,7 +28,11 @@ module.exports = {
     ],
     android: {
       package: 'com.aquatv.player',
-      versionCode: 1,
+      versionCode: 2,
+      adaptiveIcon: {
+        foregroundImage: './assets/brand/aquaflora-symbol.png',
+        backgroundColor: '#050309',
+      },
       allowBackup: false,
       usesCleartextTraffic: true,
       permissions: ['android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE'],

@@ -5,11 +5,15 @@ export interface PlayerSettings {
   deviceId: string;
   deviceToken: string;
   deviceName: string;
+  audioEnabled: boolean;
 }
 
 const settingsKey = 'aquatv.player.settings.v1';
 
-function isPlayerSettings(value: unknown): value is PlayerSettings {
+type StoredPlayerSettings = Omit<PlayerSettings, 'audioEnabled'> &
+  Partial<Pick<PlayerSettings, 'audioEnabled'>>;
+
+function isStoredPlayerSettings(value: unknown): value is StoredPlayerSettings {
   if (!value || typeof value !== 'object') {
     return false;
   }
@@ -23,7 +27,8 @@ function isPlayerSettings(value: unknown): value is PlayerSettings {
     typeof candidate.deviceToken === 'string' &&
     candidate.deviceToken.trim().length > 0 &&
     typeof candidate.deviceName === 'string' &&
-    candidate.deviceName.trim().length > 0
+    candidate.deviceName.trim().length > 0 &&
+    (candidate.audioEnabled === undefined || typeof candidate.audioEnabled === 'boolean')
   );
 }
 
@@ -35,11 +40,14 @@ export async function loadPlayerSettings(): Promise<PlayerSettings | null> {
     }
 
     const parsed = JSON.parse(raw) as unknown;
-    if (!isPlayerSettings(parsed)) {
+    if (!isStoredPlayerSettings(parsed)) {
       return null;
     }
 
-    return parsed;
+    return {
+      ...parsed,
+      audioEnabled: parsed.audioEnabled ?? false,
+    };
   } catch {
     return null;
   }

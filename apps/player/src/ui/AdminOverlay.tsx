@@ -1,7 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import brandLogo from '../../assets/brand/aquaflora-logo.webp';
 import type { PlayerPhase } from '../mobile/use-player-runtime';
+import {
+  displayRotationLabel,
+  nextDisplayRotation,
+  type DisplayRotation,
+} from '../mobile/display-orientation-store';
 import type { PlayerSettings } from '../mobile/settings-store';
 import type { CacheProgress } from '../mobile/media-cache';
 import { TvButton } from './TvButton';
@@ -13,13 +19,20 @@ interface AdminOverlayProps {
   lastSyncAt: Date | null;
   lastPlaybackError: string | null;
   cacheProgress: CacheProgress;
+  displayRotation: DisplayRotation;
   onClose: () => void;
+  onSetDisplayRotation: (rotation: DisplayRotation) => Promise<void>;
+  onToggleAudio: () => Promise<void>;
   onResetConnection: () => Promise<void>;
   onSync: () => Promise<void>;
 }
 
 function formatSyncTime(value: Date | null): string {
   return value ? value.toLocaleString('pt-BR') : 'Ainda nao sincronizou';
+}
+
+function rotationValue(rotation: DisplayRotation): string {
+  return rotation === 'system' ? 'Automatica / sistema' : `${rotation} graus`;
 }
 
 export function AdminOverlay({
@@ -29,7 +42,10 @@ export function AdminOverlay({
   lastSyncAt,
   lastPlaybackError,
   cacheProgress,
+  displayRotation,
   onClose,
+  onSetDisplayRotation,
+  onToggleAudio,
   onResetConnection,
   onSync,
 }: AdminOverlayProps) {
@@ -37,8 +53,18 @@ export function AdminOverlay({
   const syncing = phase === 'syncing' || cacheProgress.total > 0;
 
   return (
-    <View accessibilityViewIsModal style={styles.backdrop}>
+    <ScrollView
+      accessibilityViewIsModal
+      contentContainerStyle={styles.backdropContent}
+      style={styles.backdrop}
+    >
       <View style={styles.panel}>
+        <Image
+          accessibilityLabel="AquaFlora Agroshop"
+          resizeMode="contain"
+          source={brandLogo}
+          style={styles.brandLogo}
+        />
         <Text style={styles.eyebrow}>ADMINISTRACAO LOCAL</Text>
         <Text style={styles.title}>AquaTV</Text>
 
@@ -51,6 +77,12 @@ export function AdminOverlay({
           <Text style={styles.value}>{settings.deviceId.slice(0, 12)}</Text>
           <Text style={styles.label}>ESTADO</Text>
           <Text style={styles.value}>{message}</Text>
+          <Text style={styles.label}>SOM</Text>
+          <Text style={styles.value}>{settings.audioEnabled ? 'Ativado' : 'Desativado'}</Text>
+          <Text style={styles.label}>ORIENTACAO</Text>
+          <Text style={styles.value}>
+            {displayRotationLabel(displayRotation)} ({rotationValue(displayRotation)})
+          </Text>
           <Text style={styles.label}>ULTIMO SYNC</Text>
           <Text style={styles.value}>{formatSyncTime(lastSyncAt)}</Text>
           {lastPlaybackError ? (
@@ -76,6 +108,16 @@ export function AdminOverlay({
             tone="secondary"
           />
           <TvButton
+            label={settings.audioEnabled ? 'Desativar som' : 'Ativar som'}
+            onPress={() => void onToggleAudio()}
+            tone="secondary"
+          />
+          <TvButton
+            label="Girar tela"
+            onPress={() => void onSetDisplayRotation(nextDisplayRotation(displayRotation))}
+            tone="secondary"
+          />
+          <TvButton
             label={confirmReset ? 'Confirmar reconexao' : 'Reconectar'}
             onPress={() => {
               if (confirmReset) {
@@ -88,21 +130,24 @@ export function AdminOverlay({
           />
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   backdrop: {
-    alignItems: 'center',
     backgroundColor: 'rgba(0, 8, 5, 0.94)',
     bottom: 0,
-    justifyContent: 'center',
     left: 0,
-    padding: 28,
     position: 'absolute',
     right: 0,
     top: 0,
+  },
+  backdropContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100%',
+    padding: 24,
   },
   panel: {
     backgroundColor: '#07150f',
@@ -111,10 +156,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     maxWidth: 760,
     padding: 30,
+    flexShrink: 1,
     width: '100%',
   },
+  brandLogo: {
+    alignSelf: 'flex-start',
+    height: 72,
+    marginBottom: 6,
+    width: 72,
+  },
   eyebrow: {
-    color: '#86efac',
+    color: '#f6aa18',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 1.8,

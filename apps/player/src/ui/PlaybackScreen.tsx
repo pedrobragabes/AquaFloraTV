@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, useWindowDimensions } from 'react-native';
 import { useEventListener } from 'expo';
 import { VideoView, useVideoPlayer } from 'expo-video';
 
 import type { CurrentPlaylistItem } from '@aquatv/types';
+import type { DisplayRotation } from '../mobile/display-orientation-store';
 
 interface PlaybackScreenProps {
   item: CurrentPlaylistItem;
   mediaUri: string;
+  muted: boolean;
+  displayRotation: DisplayRotation;
   onAdvance: () => void;
   onError: (message: string) => void;
   onAdminRequest: () => void;
@@ -17,6 +20,22 @@ const fallbackImageDurationMs = 10_000;
 const mediaLoadTimeoutMs = 30_000;
 const videoStallTimeoutMs = 35_000;
 const errorDelayMs = 1_500;
+
+function mediaStyle(
+  rotation: DisplayRotation,
+  windowWidth: number,
+  windowHeight: number,
+): { height: number; transform: [{ rotate: string }]; width: number } | undefined {
+  if (rotation === 'system' || rotation === 0) {
+    return undefined;
+  }
+
+  return {
+    height: windowWidth,
+    transform: [{ rotate: `${rotation}deg` }],
+    width: windowHeight,
+  };
+}
 
 function useCompletion(onAdvance: () => void, onError: (message: string) => void) {
   const completedRef = useRef(false);
@@ -56,11 +75,13 @@ function useCompletion(onAdvance: () => void, onError: (message: string) => void
 function ImageMedia({
   item,
   mediaUri,
+  displayRotation,
   onAdvance,
   onError,
-}: Omit<PlaybackScreenProps, 'onAdminRequest'>) {
+}: Omit<PlaybackScreenProps, 'onAdminRequest' | 'muted'>) {
   const [loaded, setLoaded] = useState(false);
   const { complete, fail } = useCompletion(onAdvance, onError);
+  const { width, height } = useWindowDimensions();
 
   useEffect(() => {
     if (loaded) {
@@ -88,7 +109,7 @@ function ImageMedia({
       onLoad={() => setLoaded(true)}
       resizeMode="contain"
       source={{ uri: mediaUri }}
-      style={styles.media}
+      style={[styles.media, mediaStyle(displayRotation, width, height)]}
     />
   );
 }
@@ -96,10 +117,13 @@ function ImageMedia({
 function VideoMedia({
   item,
   mediaUri,
+  muted,
+  displayRotation,
   onAdvance,
   onError,
 }: Omit<PlaybackScreenProps, 'onAdminRequest'>) {
   const { complete, fail } = useCompletion(onAdvance, onError);
+  const { width, height } = useWindowDimensions();
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastProgressRef = useRef<number | null>(null);
 
@@ -120,10 +144,14 @@ function VideoMedia({
 
   const player = useVideoPlayer(mediaUri, (instance) => {
     instance.loop = false;
-    instance.muted = true;
+    instance.muted = muted;
     instance.timeUpdateEventInterval = 2;
     instance.play();
   });
+
+  useEffect(() => {
+    player.muted = muted;
+  }, [muted, player]);
 
   useEventListener(player, 'playToEnd', () => {
     clearWatchdog();
@@ -160,8 +188,8 @@ function VideoMedia({
       nativeControls={false}
       onFirstFrameRender={armWatchdog}
       player={player}
-      style={styles.media}
-      surfaceType="surfaceView"
+      style={[styles.media, mediaStyle(displayRotation, width, height)]}
+      surfaceType="textureView"
     />
   );
 }
@@ -181,6 +209,8 @@ function UnsupportedMedia({ item, onError }: Pick<PlaybackScreenProps, 'item' | 
 export function PlaybackScreen({
   item,
   mediaUri,
+  muted,
+  displayRotation,
   onAdvance,
   onError,
   onAdminRequest,
@@ -197,10 +227,23 @@ export function PlaybackScreen({
       style={styles.stage}
     >
       {isVideo ? (
-        <VideoMedia item={item} mediaUri={mediaUri} onAdvance={onAdvance} onError={onError} />
+        <VideoMedia
+          displayRotation={displayRotation}
+          item={item}
+          mediaUri={mediaUri}
+          muted={muted}
+          onAdvance={onAdvance}
+          onError={onError}
+        />
       ) : null}
       {isImage ? (
-        <ImageMedia item={item} mediaUri={mediaUri} onAdvance={onAdvance} onError={onError} />
+        <ImageMedia
+          displayRotation={displayRotation}
+          item={item}
+          mediaUri={mediaUri}
+          onAdvance={onAdvance}
+          onError={onError}
+        />
       ) : null}
       {!isVideo && !isImage ? <UnsupportedMedia item={item} onError={onError} /> : null}
     </Pressable>

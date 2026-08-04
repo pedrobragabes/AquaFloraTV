@@ -1,6 +1,6 @@
 # Instalação do AquaTV no PC da loja
 
-Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a API, o banco SQLite e as mídias da Aquaflora.
+Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a API, o banco SQLite e as mídias da AquaFlora Agroshop.
 
 ## Antes de começar
 
@@ -13,7 +13,7 @@ Confirme:
 - STV-3000 Plus na mesma rede;
 - uma pasta definitiva para o projeto, que não será movida depois.
 
-Não use o APK, o keystore ou o player WebView antigos. O player atual está em `apps/player` e precisa de um APK release assinado com uma chave nova.
+Não use o APK ou o player WebView antigos. O player atual está em `apps/player` e precisa de um APK release assinado com a keystore privada `aquatv-release-v2.jks`.
 
 ## 1. Preparar o projeto
 

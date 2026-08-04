@@ -57,7 +57,7 @@ export function TvButton({
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: '#4ade80',
+    backgroundColor: '#248f88',
     borderColor: 'transparent',
     borderRadius: 12,
     borderWidth: 3,
@@ -66,13 +66,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   secondary: {
-    backgroundColor: '#13251e',
+    backgroundColor: '#1b1424',
+    borderColor: '#512a70',
   },
   danger: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#d84a1a',
   },
   focused: {
-    borderColor: '#f0fdf4',
+    borderColor: '#f6aa18',
     transform: [{ scale: 1.035 }],
   },
   pressed: {
@@ -82,11 +83,11 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   label: {
-    color: '#052e16',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: '800',
   },
   secondaryLabel: {
-    color: '#dcfce7',
+    color: '#f7efff',
   },
 });
