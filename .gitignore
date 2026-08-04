@@ -38,6 +38,10 @@ coverage/
 **/local.properties
 **/*.hprof
 
+# Legacy local trees; the current Android TV player lives in apps/player
+apk/
+apps/tv-apk/
+
 # Dados de execução do AquaTV
 storage/
 backups/

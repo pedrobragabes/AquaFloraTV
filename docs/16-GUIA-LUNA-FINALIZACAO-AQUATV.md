@@ -394,7 +394,8 @@ Classificar cada candidato:
 
 Candidatos já identificados para análise:
 
-- `apps/tv-apk/`: árvore legada ignorada, não é o player atual. Remover somente após confirmar que nenhum arquivo único precisa ser preservado;
+- `apps/tv-apk/`: árvore legada ignorada, não é o player atual. Foi limpa localmente em 04/08/2026; a regra explícita no `.gitignore` impede seu retorno;
+- `apk/`: APKs locais de 05/05/2026, com IP antigo `192.168.0.29`, foram removidos em 04/08/2026. O único caminho válido para gerar APK é `apps/player/android`;
 - `.claude/worktrees/`: worktrees ignoradas de agentes. Não apagar enquanto houver trabalho ativo; pedir confirmação de Pedro;
 - `apps/player/android/app/build/`: saída reproduzível e ignorada. Pode ser limpa localmente quando não for necessário preservar o APK de teste;
 - APKs antigos em pastas de build: não versionar e não confundir com o release atual;

@@ -212,6 +212,11 @@ storage/          mídias locais; não versionado
 docs/             arquitetura, operação e decisões
 ```
 
+A geração de APK usa exclusivamente `apps/player/android`. As pastas locais
+`apk/` e `apps/tv-apk/` pertenciam a builds antigos e ficam ignoradas para
+evitar que artefatos ou o player WebView legado voltem a ser confundidos com
+o aplicativo atual.
+
 ## Segurança e limites do MVP
 
 - O sistema usa HTTP porque opera somente na rede privada da loja.
