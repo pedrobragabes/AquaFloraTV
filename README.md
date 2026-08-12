@@ -136,11 +136,13 @@ Comandos de qualidade:
 
 ```bash
 pnpm peers check
+pnpm prisma:generate
 pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
 pnpm format
+pnpm format:write # aplique a formatação somente quando necessário
 ```
 
 Smoke completo no Windows, usando banco e portas isolados:

@@ -14,7 +14,8 @@
     "typecheck": "turbo run typecheck",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "prepare": "husky || echo husky skipped"
+    "prisma:generate": "pnpm --filter @aquatv/api prisma:generate",
+    "prepare": "pnpm prisma:generate && (husky || echo husky skipped)"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.8.0",
