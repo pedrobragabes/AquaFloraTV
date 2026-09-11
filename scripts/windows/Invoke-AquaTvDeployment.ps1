@@ -27,7 +27,7 @@ function Assert-PathUnder([string]$Path, [string]$Parent) {
 }
 
 function Invoke-Git([string[]]$Arguments) {
-  $output = @(& git -C $runtime @Arguments 2>&1)
+  $output = @(& git -c "safe.directory=$runtime" -C $runtime @Arguments 2>&1)
   if ($LASTEXITCODE -ne 0) {
     throw "git $($Arguments[0]) falhou com codigo $LASTEXITCODE."
   }
@@ -78,7 +78,7 @@ try {
   Invoke-Git @("fetch", "--no-tags", $bundlePath, "HEAD:$temporaryRef") | Out-Null
   $incomingCommit = Invoke-Git @("rev-parse", $temporaryRef)
   if ($incomingCommit -ne $request.commitSha) { throw "Commit do bundle diverge do pedido." }
-  & git -C $runtime merge-base --is-ancestor $beforeCommit $incomingCommit
+  & git -c "safe.directory=$runtime" -C $runtime merge-base --is-ancestor $beforeCommit $incomingCommit
   if ($LASTEXITCODE -ne 0) { throw "O deploy nao e fast-forward; runtime preservado." }
 
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runtime "scripts\windows\backup-aquatv.ps1") -ProjectPath $runtime
@@ -134,7 +134,7 @@ catch {
   throw
 }
 finally {
-  & git -C $runtime update-ref -d $temporaryRef 2>$null
+  & git -c "safe.directory=$runtime" -C $runtime update-ref -d $temporaryRef 2>$null
   if ($transcriptStarted) { Stop-Transcript | Out-Null }
   if ($lock) { $lock.Dispose() }
 }
