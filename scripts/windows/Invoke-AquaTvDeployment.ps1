@@ -75,8 +75,6 @@ try {
     throw "O runtime do AquaTV possui alteracoes locais; deploy recusado."
   }
   $beforeCommit = Invoke-Git @("rev-parse", "HEAD")
-  & git -c "safe.directory=$runtime" -C $runtime bundle verify $bundlePath 2>$null | Out-Null
-  if ($LASTEXITCODE -ne 0) { throw "Bundle do AquaTV invalido." }
   Invoke-Git @("fetch", "--no-tags", $bundlePath, "HEAD:$temporaryRef") | Out-Null
   $incomingCommit = Invoke-Git @("rev-parse", $temporaryRef)
   if ($incomingCommit -ne $request.commitSha) { throw "Commit do bundle diverge do pedido." }
