@@ -40,6 +40,7 @@ $requestFile = $null
 $request = $null
 $logPath = Join-Path $logRoot "deploy-$(Get-Date -Format 'yyyy-MM-dd').log"
 $errorLogPath = Join-Path $logRoot "deploy-errors-$(Get-Date -Format 'yyyy-MM-dd').log"
+$errorLogPath = Join-Path $deploy "deploy-errors.log"
 $temporaryRef = "refs/aquatv-deploy/incoming"
 try {
   try {
