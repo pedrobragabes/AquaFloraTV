@@ -39,6 +39,7 @@ $transcriptStarted = $false
 $requestFile = $null
 $request = $null
 $logPath = Join-Path $logRoot "deploy-$(Get-Date -Format 'yyyy-MM-dd').log"
+$errorLogPath = Join-Path $logRoot "deploy-errors-$(Get-Date -Format 'yyyy-MM-dd').log"
 $temporaryRef = "refs/aquatv-deploy/incoming"
 try {
   try {
@@ -118,7 +119,7 @@ try {
 }
 catch {
   try {
-    Add-Content -LiteralPath $logPath -Value ("DEPLOY_ERROR " + $_.Exception.ToString()) -Encoding UTF8
+    Add-Content -LiteralPath $errorLogPath -Value ("$(Get-Date -Format o) DEPLOY_ERROR " + $_.Exception.ToString()) -Encoding UTF8
   }
   catch {
     # A diagnostic write must never replace the original deployment failure.
