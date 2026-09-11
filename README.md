@@ -125,6 +125,15 @@ backup-agora.bat
 
 O backup contém um snapshot consistente do SQLite e do `storage/`. Para proteção contra perda do PC, copie os ZIPs também para outro equipamento ou mídia.
 
+### 5. Deploy automático depois da CI
+
+O servidor da loja pode receber automaticamente cada commit da `main` que passar pela
+CI. O workflow `Deploy production` usa um runner privado apenas para colocar o bundle
+Git validado em uma fila local. A tarefa `AquaTV-Deploy`, executada como `SYSTEM`, faz
+backup, aplica somente fast-forward, instala dependências, executa migrations e build,
+reinicia API/dashboard e confirma a saúde nas portas 7741 e 7740. Configurações, banco,
+mídias, logs e backups permanecem fora do Git e não são enviados ao runner.
+
 ## Desenvolvimento
 
 ```bash

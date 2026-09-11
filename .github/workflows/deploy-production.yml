@@ -1,0 +1,47 @@
+name: Deploy production
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    types:
+      - completed
+    branches:
+      - main
+
+concurrency:
+  group: aquatv-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  queue-deployment:
+    name: Queue deployment on store server
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on:
+      - self-hosted
+      - Windows
+      - X64
+      - aquatv-production
+    timeout-minutes: 50
+
+    steps:
+      - name: Checkout validated commit
+        uses: actions/checkout@v7
+        with:
+          clean: true
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Queue release for the protected deployment task
+        shell: powershell
+        run: >-
+          .\scripts\windows\Publish-AquaTvDeployment.ps1
+          -SourceRoot $env:GITHUB_WORKSPACE
+          -CommitSha '${{ github.event.workflow_run.head_sha }}'
+          -WaitForCompletion
