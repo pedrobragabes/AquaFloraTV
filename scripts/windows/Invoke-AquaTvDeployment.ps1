@@ -27,9 +27,17 @@ function Assert-PathUnder([string]$Path, [string]$Parent) {
 }
 
 function Invoke-Git([string[]]$Arguments) {
-  $output = @(& git -c "safe.directory=$runtime" -C $runtime @Arguments 2>$null)
-  if ($LASTEXITCODE -ne 0) {
-    throw "git $($Arguments[0]) falhou com codigo $LASTEXITCODE."
+  $previousErrorActionPreference = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $output = @(& git -c "safe.directory=$runtime" -C $runtime @Arguments 2>&1)
+    $exitCode = $LASTEXITCODE
+  }
+  finally {
+    $ErrorActionPreference = $previousErrorActionPreference
+  }
+  if ($exitCode -ne 0) {
+    throw "git $($Arguments[0]) falhou com codigo $exitCode."
   }
   return (($output | ForEach-Object { $_.ToString() }) -join "`n").Trim()
 }
