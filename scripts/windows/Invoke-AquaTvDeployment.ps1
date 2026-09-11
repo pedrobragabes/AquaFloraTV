@@ -27,7 +27,7 @@ function Assert-PathUnder([string]$Path, [string]$Parent) {
 }
 
 function Invoke-Git([string[]]$Arguments) {
-  $output = @(& git -c "safe.directory=$runtime" -C $runtime @Arguments 2>&1)
+  $output = @(& git -c "safe.directory=$runtime" -C $runtime @Arguments 2>$null)
   if ($LASTEXITCODE -ne 0) {
     throw "git $($Arguments[0]) falhou com codigo $LASTEXITCODE."
   }
