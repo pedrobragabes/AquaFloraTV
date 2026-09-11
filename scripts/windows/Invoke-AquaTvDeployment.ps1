@@ -93,11 +93,11 @@ try {
   if ($LASTEXITCODE -ne 0) { throw "O backup pre-deploy do AquaTV falhou." }
 
   Invoke-Git @("merge", "--ff-only", $incomingCommit) | Out-Null
+  & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runtime "scripts\windows\stop-aquatv.ps1") -ProjectPath $runtime
+  if ($LASTEXITCODE -ne 0) { throw "O AquaTV antigo nao foi encerrado com seguranca." }
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runtime "scripts\windows\prepare-aquatv.ps1") -ProjectPath $runtime
   if ($LASTEXITCODE -ne 0) { throw "Dependencias, migrations ou build do AquaTV falharam." }
 
-  & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runtime "scripts\windows\stop-aquatv.ps1") -ProjectPath $runtime
-  if ($LASTEXITCODE -ne 0) { throw "O AquaTV antigo nao foi encerrado com seguranca." }
   & powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File (Join-Path $runtime "scripts\windows\start-aquatv-background.ps1") -ProjectPath $runtime
   if ($LASTEXITCODE -ne 0) { throw "O AquaTV atualizado nao iniciou." }
 
