@@ -38,6 +38,7 @@ $lock = $null
 $transcriptStarted = $false
 $requestFile = $null
 $request = $null
+$logPath = Join-Path $logRoot "deploy-$(Get-Date -Format 'yyyy-MM-dd').log"
 $temporaryRef = "refs/aquatv-deploy/incoming"
 try {
   try {
@@ -61,7 +62,6 @@ try {
   $bundlePath = Assert-PathUnder (Join-Path $incoming $request.bundleName) $incoming
   if (-not (Test-Path -LiteralPath $bundlePath -PathType Leaf)) { throw "Bundle do deploy ausente." }
 
-  $logPath = Join-Path $logRoot "deploy-$(Get-Date -Format 'yyyy-MM-dd').log"
   Start-Transcript -Path $logPath -Append | Out-Null
   $transcriptStarted = $true
   Write-Host "Iniciando deploy do AquaTV $($request.commitSha)."
@@ -117,6 +117,12 @@ try {
   Write-Host "Deploy do AquaTV concluido: $($request.commitSha)."
 }
 catch {
+  try {
+    Add-Content -LiteralPath $logPath -Value ("DEPLOY_ERROR " + $_.Exception.ToString()) -Encoding UTF8
+  }
+  catch {
+    # A diagnostic write must never replace the original deployment failure.
+  }
   if ($requestFile -and (Test-Path -LiteralPath $requestFile.FullName -PathType Leaf)) {
     Move-Item -LiteralPath $requestFile.FullName -Destination "$($requestFile.FullName).failed" -Force
   }
