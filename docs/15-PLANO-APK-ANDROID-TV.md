@@ -1,6 +1,6 @@
 # 15 — Plano de APK e validação na STV-3000 Plus
 
-Este documento é o roteiro operacional para o Luna preparar o ambiente Android, gerar um APK release assinado e validar o AquaTV na box real. Ele foi atualizado em **4 de agosto de 2026**. Pedro confirmou a instalação e a reprodução inicial na STV-3000 Plus; a matriz completa e o soak continuam pendentes.
+Este documento é o roteiro operacional para o Luna preparar o ambiente Android, gerar um APK release assinado e validar o Retail Signage na box real. Ele foi atualizado em **4 de agosto de 2026**. Pedro confirmou a instalação e a reprodução inicial na STV-3000 Plus; a matriz completa e o soak continuam pendentes.
 
 ## Resposta direta: como a box recebe as informações
 
@@ -10,7 +10,7 @@ O dashboard não é instalado na Android TV. A arquitetura correta é:
 Dashboard no navegador
         |
         v
-PC da loja — 192.168.0.114 (IP do servidor confirmado por `/health`)
+PC da loja — 192.0.2.10 (IP do servidor confirmado por `/health`)
 ├── Dashboard :7740
 ├── API       :7741
 ├── SQLite
@@ -27,7 +27,7 @@ STV-3000 Plus
     └── continua tocando quando a rede cai
 ```
 
-Na primeira abertura, o app pede o endereço do PC. Pode ser informado apenas `192.168.0.114:7741`; o player normaliza para `http://192.168.0.114:7741/api`, registra a TV e guarda URL, ID e token no armazenamento seguro do Android.
+Na primeira abertura, o app pede o endereço do PC. Pode ser informado apenas `192.0.2.10:7741`; o player normaliza para `http://192.0.2.10:7741/api`, registra a TV e guarda URL, ID e token no armazenamento seguro do Android.
 
 `API_URL` em `apps/player/.env` serve somente como valor inicial preenchido no APK. Não é necessário gerar outro APK quando o IP muda, porque a conexão pode ser redefinida no menu administrativo. Mesmo assim, o IP do PC deve ser reservado para evitar interrupções.
 
@@ -35,15 +35,15 @@ Na primeira abertura, o app pede o endereço do PC. Pode ser informado apenas `1
 
 - **Som:** começa desligado para não surpreender a operação da loja. No playback, segure o centro da tela por 1,5 segundo para abrir a administração, navegue com o controle até **Ativar som** ou **Desativar som** e confirme. A preferência fica salva no SecureStore da box e vale para os vídeos seguintes.
 - **Orientação:** o app inicia em vertical (`90°`) e oferece **Automática**, **Horizontal**, **Vertical lado A** e **Vertical lado B** pelo botão **Girar tela**. A escolha fica no SecureStore, não é enviada à API e não é apagada pelo botão Reconectar. Em portrait, imagens e vídeos usam viewport com dimensões trocadas e `TextureView` para aplicar `90°`/`270°`; a mídia continua em `contain`, preservando a proporção com barras quando necessário.
-- **Reconexão:** o mesmo painel administrativo tem **Reconectar**, que limpa as credenciais locais e retorna à tela para informar novamente `192.168.0.114:7741`.
+- **Reconexão:** o mesmo painel administrativo tem **Reconectar**, que limpa as credenciais locais e retorna à tela para informar novamente `192.0.2.10:7741`.
 
 ## Estado verificado antes do trabalho
 
 | Item                         | Estado em 04/08/2026                                                                                             |
 | ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | API local                    | responde em `http://localhost:7741/health`                                                                       |
-| API pelo IPv4 do servidor    | responde em `http://192.168.0.114:7741/health` (`status: ok`)                                                    |
-| IPv4 atualmente ativo aqui   | `192.168.0.36`; não é o endereço que será gravado no APK                                                         |
+| API pelo IPv4 do servidor    | responde em `http://192.0.2.10:7741/health` (`status: ok`)                                                       |
+| IPv4 atualmente ativo aqui   | `192.0.2.10`; não é o endereço que será gravado no APK                                                           |
 | Rede Windows                 | Ethernet, perfil Privado                                                                                         |
 | Firewall                     | regras `AquaTV Local TCP 7740/7741` ativas, perfil Private                                                       |
 | Tarefa de backup             | criada                                                                                                           |
@@ -55,7 +55,7 @@ Na primeira abertura, o app pede o endereço do PC. Pode ser informado apenas `1
 | Java do Android Studio       | Java 25; o Gradle 8.13 falhou com `Unsupported class file major version 69`                                      |
 | Java necessário              | JDK 17                                                                                                           |
 | Android exigido pelo projeto | Platform/compile SDK 36, target SDK 36, Build Tools 36.0.0, min SDK 24                                           |
-| `apps/player/.env`           | criado localmente com `192.168.0.114`                                                                            |
+| `apps/player/.env`           | criado localmente com `192.0.2.10`                                                                               |
 | `android/local.properties`   | criado localmente e ignorado pelo Git                                                                            |
 | APK release                  | APK anterior `1.0.0`, `versionCode 2`, assinado e verificado; rebuild final pendente de credenciais nesta sessão |
 
@@ -65,13 +65,13 @@ Na primeira abertura, o app pede o endereço do PC. Pode ser informado apenas `1
 - Command-line Tools oficiais instaladas; SHA-256 do ZIP conferido antes da extração.
 - Licenças do SDK aceitas e Platform 36 instalado.
 - `pnpm --filter @aquatv/player lint`, `typecheck` e `test` aprovados (15 testes).
-- `expo config` confirmou `http://192.168.0.114:7741/api` no `extra.apiUrl`.
+- `expo config` confirmou `http://192.0.2.10:7741/api` no `extra.apiUrl`.
 - um APK release anterior foi gerado com a chave `aquatv-release-v2.jks` fora do repositório e validado com `apksigner`;
 - O certificado release foi verificado com digest `f0de69f62bb4a348b069275e39cd26930229e5423839f65b99a3a4d387be7005`.
-- o `extra.apiUrl` do APK anterior contém `192.168.0.114`.
+- o `extra.apiUrl` do APK anterior contém `192.0.2.10`.
 - `.114/health` respondeu `status: ok` nesta máquina; a box já instalou e abriu o APK por pendrive.
 - áudio configurável e orientação persistente foram incluídos; o padrão é vertical e mudo.
-- logo, splash, ícone e banner da AquaFlora Agroshop foram preparados; validar a aparência final na TV real.
+- logo, splash, ícone e banner da loja piloto foram preparados; validar a aparência final na TV real.
 
 Após as alterações finais de rotação e marca, `assembleRelease` foi executado
 com JDK 17 e compilou o APK nativo sem erros. Como as variáveis de assinatura
@@ -88,7 +88,7 @@ registrar o hash final ou fazer novo teste físico.
 - Não versionar `.env`, `local.properties`, APK, AAB, keystore ou senhas.
 - Não usar a `debug.keystore` para o release.
 - Não publicar o APK nem o keystore em release do GitHub ou no dashboard.
-- Não escolher o AquaTV como launcher “Sempre” antes de validar a saída e a recuperação com ADB/controle.
+- Não escolher o Retail Signage como launcher “Sempre” antes de validar a saída e a recuperação com ADB/controle.
 - Não fechar a validação física usando emulador como evidência.
 
 ## Fase 1 — Fechar a rede entre PC e box
@@ -99,7 +99,7 @@ Garantir que o endereço usado pelo player continue válido e seja acessível pe
 
 ### Tarefas
 
-1. No roteador, reservar `192.168.0.114` para o MAC da placa Ethernet do servidor. Se o servidor ainda estiver em outra máquina, mover o runtime ou confirmar o novo endereço antes de continuar.
+1. No roteador, reservar `192.0.2.10` para o MAC da placa Ethernet do servidor. Se o servidor ainda estiver em outra máquina, mover o runtime ou confirmar o novo endereço antes de continuar.
 2. Confirmar no Windows:
 
    ```powershell
@@ -122,13 +122,13 @@ Garantir que o endereço usado pelo player continue válido e seja acessível pe
 5. Conectar PC e box à mesma rede local. Antes de instalar o app, abrir na box ou em outro aparelho da mesma rede:
 
    ```text
-   http://192.168.0.114:7741/health
+   http://192.0.2.10:7741/health
    ```
 
 ### Evidência obrigatória
 
 - reserva DHCP ou IP estático anotado;
-- JSON com `"status":"ok"` visto a partir de outro aparelho, especificamente em `192.168.0.114`;
+- JSON com `"status":"ok"` visto a partir de outro aparelho, especificamente em `192.0.2.10`;
 - tarefa `AquaTV Local Startup` existente e testada após reinício;
 - novo ZIP de backup com data atual.
 
@@ -181,7 +181,7 @@ Gerar um APK que abra sem Metro, já sugira o PC correto e tenha identidade crip
 1. Depois de reservar o IP, criar `apps/player/.env`:
 
    ```env
-   API_URL=http://192.168.0.114:7741/api
+   API_URL=http://192.0.2.10:7741/api
    ```
 
 2. Confirmar a configuração pública que será embutida:
@@ -273,9 +273,9 @@ Se o ADB não for viável, instalar por pendrive e habilitar temporariamente a i
 
 ### Primeiro cadastro
 
-1. Abrir o AquaTV pelo launcher Android TV.
+1. Abrir o Retail Signage pelo launcher Android TV.
 2. Usar somente o controle remoto para chegar ao campo da API.
-3. Confirmar ou digitar `192.168.0.114:7741`.
+3. Confirmar ou digitar `192.0.2.10:7741`.
 4. Selecionar **Conectar TV**.
 5. No dashboard, confirmar que a nova TV apareceu e recebeu heartbeat.
 6. Associar uma playlist padrão com conteúdo real da loja.
@@ -297,7 +297,7 @@ Se o ADB não for viável, instalar por pendrive e habilitar temporariamente a i
 | Retomada                    | nova sincronização baixa e toca a playlist                                |
 | Rede desligada após cache   | conteúdo continua tocando do cache local                                  |
 | Rede restabelecida          | player volta a sincronizar sem reiniciar o app                            |
-| Reboot da box               | AquaTV reabre/é selecionável e recupera o cache                           |
+| Reboot da box               | Retail Signage reabre/é selecionável e recupera o cache                   |
 | Reboot do PC                | serviços voltam pela tarefa e a box se reconecta                          |
 | HOME/launcher               | comportamento é conhecido e existe caminho de recuperação                 |
 | Som                         | começa mudo; **Ativar som** no painel libera áudio e persiste após reboot |

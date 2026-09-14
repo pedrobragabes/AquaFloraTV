@@ -125,7 +125,7 @@ aquatv/
 - MySQL incluído
 - SSL/HTTPS automático
 - Bandwidth ilimitado (no plano Business)
-- Subdomain wildcard (pra `app.aquafloragroshop.com.br`)
+- Subdomain wildcard (pra `app.store.example.invalid`)
 
 **Limitação conhecida**: Node.js Selector não permite binários arbitrários (ffmpeg fora). Mitigamos com `ffmpeg.wasm` no browser.
 
@@ -145,8 +145,8 @@ aquatv/
 
 ### DNS
 
-- Domínio base: `aquafloragroshop.com.br` (já do Pedro)
-- Subdomain: `app.aquafloragroshop.com.br` → Hostinger
+- Domínio base: `store.example.invalid` (já do Pedro)
+- Subdomain: `app.store.example.invalid` → Hostinger
 - Gerenciado via Hostinger DNS (ou Cloudflare se preferir)
 
 ## Shared packages

@@ -1,6 +1,6 @@
-# Instalação do AquaTV no PC da loja
+# Instalação do Retail Signage no PC da loja
 
-Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a API, o banco SQLite e as mídias da AquaFlora Agroshop.
+Este é o guia operacional para preparar o PC Windows que hospeda o dashboard, a API, o banco SQLite e as mídias da loja piloto.
 
 ## Antes de começar
 
@@ -208,4 +208,4 @@ Não use `prisma db push`. Pare os serviços, preserve o banco atual e restaure 
 - [ ] Existe cópia do backup fora do PC.
 - [ ] APK release novo está assinado e seu SHA-256 foi registrado.
 - [ ] STV-3000 toca a playlist, funciona offline e se recupera após reboot.
-- [ ] Diego aprovou a operação e a aparência.
+- [ ] responsável pela operação aprovou a operação e a aparência.

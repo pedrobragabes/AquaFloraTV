@@ -1,10 +1,10 @@
-# Guia estrito para o Luna — finalização do AquaTV
+# Guia estrito para o Luna — finalização do Retail Signage
 
 > Este documento é uma ordem de execução para o Luna. O objetivo é finalizar o produto existente, não reescrevê-lo. Antes de alterar qualquer arquivo, leia `AGENTS.md`, `README.md`, `docs/14-GITHUB-MILESTONES.md` e `docs/15-PLANO-APK-ANDROID-TV.md` por inteiro.
 
 ## 1. Resultado esperado
 
-Entregar uma versão final do AquaTV para a **AQUAFLORA AGROSHOP**, preservando tudo que já funciona na STV-3000 Plus e acrescentando somente:
+Entregar uma versão final do Retail Signage para a **loja piloto**, preservando tudo que já funciona na STV-3000 Plus e acrescentando somente:
 
 1. rotação configurável dentro do app, incluindo os dois lados possíveis da TV vertical;
 2. nome correto da empresa em todo conteúdo atual;
@@ -17,9 +17,9 @@ Não transformar esta tarefa em uma nova arquitetura. O núcleo do produto já f
 
 ## 2. Contexto confirmado em 4 de agosto de 2026
 
-- Dashboard Next.js: `http://192.168.0.114:7740`.
-- API Express: `http://192.168.0.114:7741/api`.
-- Health check: `http://192.168.0.114:7741/health`.
+- Dashboard Next.js: `http://192.0.2.10:7740`.
+- API Express: `http://192.0.2.10:7741/api`.
+- Health check: `http://192.0.2.10:7741/health`.
 - Player atual: `apps/player`, Expo 55, React Native TV e Hermes.
 - Pacote Android atual: `com.aquatv.player`.
 - Versão instalada inicialmente: `0.1.0`, `versionCode 1`.
@@ -38,12 +38,12 @@ O hash do APK mudará a cada nova compilação. O hash do certificado deve conti
 
 ### 3.1 Nome e marca
 
-- Nome canônico da empresa em textos: **AquaFlora Agroshop**.
-- Forma institucional ou etiqueta curta: **AQUAFLORA AGROSHOP**.
-- Nome do produto: **AquaTV**.
-- Nome sugerido do aplicativo no launcher: **AquaTV**.
-- Não alterar o domínio `aquafloragroshop.com.br`; ele já usa “agroshop” corretamente.
-- Remover referências atuais a “Aquaflora Grow Shop”, “AquaFlora Grow Shop” e “AQUAFLORA GROW SHOP”.
+- Nome canônico da empresa em textos: **loja piloto**.
+- Forma institucional ou etiqueta curta: **loja piloto**.
+- Nome do produto: **Retail Signage**.
+- Nome sugerido do aplicativo no launcher: **Retail Signage**.
+- Não alterar o domínio `store.example.invalid`; ele já usa “agroshop” corretamente.
+- Remover referências atuais a “loja piloto”, “loja piloto” e “loja piloto”.
 
 ### 3.2 Logo oficial
 
@@ -58,7 +58,7 @@ Características conferidas da fonte:
 - WebP de `300 × 300` pixels;
 - transparência real no fundo (`RGBA`, alpha de 0 a 255); o visualizador pode apresentá-la sobre preto;
 - símbolo colorido de animais/casa;
-- assinatura “AquaFlora agroshop” em branco;
+- assinatura “loja piloto” em branco;
 - tamanho atual de 6.394 bytes.
 
 Copiar a fonte original sem modificá-la para um diretório versionado de marca, por exemplo:
@@ -223,7 +223,7 @@ Adicionar testes para:
 
 Critério de saída: rotação muda ao vivo, persiste e não afeta áudio, cache, sincronização ou controle remoto.
 
-### Fase 2 — aplicar a identidade da AquaFlora Agroshop
+### Fase 2 — aplicar a identidade da loja piloto
 
 #### 2.1 Preparar derivados da logo
 
@@ -328,7 +328,7 @@ Corrigir as referências de marca atuais, especialmente:
 - `apps/player/src/ui/SetupScreen.tsx`;
 - metadata e textos visíveis do dashboard.
 
-Não alterar URLs, nomes de pacote, nomes de banco, IDs ou caminhos apenas por conterem “aquaflora”.
+Não alterar URLs, nomes de pacote, nomes de banco, IDs ou caminhos apenas por conterem “loja piloto”.
 
 #### 3.2 README final
 
@@ -337,7 +337,7 @@ O README deve permitir que outro PC reproduza a instalação. Atualizar:
 - marca correta;
 - arquitetura local atual;
 - requisitos e instalação;
-- endereço `192.168.0.114` como configuração atual da loja, deixando claro que é ajustável;
+- endereço `192.0.2.10` como configuração atual da loja, deixando claro que é ajustável;
 - build do APK assinado;
 - quatro modos de orientação;
 - som configurável;
@@ -395,7 +395,7 @@ Classificar cada candidato:
 Candidatos já identificados para análise:
 
 - `apps/tv-apk/`: árvore legada ignorada, não é o player atual. Foi limpa localmente em 04/08/2026; a regra explícita no `.gitignore` impede seu retorno;
-- `apk/`: APKs locais de 05/05/2026, com IP antigo `192.168.0.29`, foram removidos em 04/08/2026. O único caminho válido para gerar APK é `apps/player/android`;
+- `apk/`: APKs locais de 05/05/2026, com IP antigo `192.0.2.10`, foram removidos em 04/08/2026. O único caminho válido para gerar APK é `apps/player/android`;
 - `.claude/worktrees/`: worktrees ignoradas de agentes. Não apagar enquanto houver trabalho ativo; pedir confirmação de Pedro;
 - `apps/player/android/app/build/`: saída reproduzível e ignorada. Pode ser limpa localmente quando não for necessário preservar o APK de teste;
 - APKs antigos em pastas de build: não versionar e não confundir com o release atual;
@@ -481,7 +481,7 @@ Critérios:
 - package continua `com.aquatv.player`;
 - manifest não fixa uma única orientação;
 - assets finais aparecem no APK;
-- URL inicial continua apontando para `192.168.0.114:7741/api`.
+- URL inicial continua apontando para `192.0.2.10:7741/api`.
 
 #### 5.4 Teste físico obrigatório
 
@@ -558,7 +558,7 @@ Estas melhorias têm valor alto e cabem nesta finalização:
 - transições avançadas entre mídias;
 - métricas e analytics.
 
-Essas ideias só entram se aparecer uma necessidade real após uso contínuo. O AquaTV não precisa delas para cumprir sua função atual.
+Essas ideias só entram se aparecer uma necessidade real após uso contínuo. O Retail Signage não precisa delas para cumprir sua função atual.
 
 ## 8. Relatório obrigatório do Luna
 
@@ -588,7 +588,7 @@ O relatório deve distinguir claramente:
 
 A finalização só está pronta quando:
 
-- o nome visível é AquaFlora Agroshop;
+- o nome visível é loja piloto;
 - a logo oficial aparece com boa qualidade;
 - o dashboard continua funcional e responsivo;
 - o player mantém o fluxo já aprovado;

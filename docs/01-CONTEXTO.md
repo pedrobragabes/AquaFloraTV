@@ -7,7 +7,7 @@
 
 ## O negócio
 
-**AquaFlora Agroshop** é uma loja física que vende produtos pra aquarismo (peixes, rações, acessórios, plantas, equipamentos). A loja tem uma **TV vertical** posicionada no balcão / vitrine, que roda vídeos de marketing em loop contínuo durante o horário comercial.
+**loja piloto** é uma loja física que vende produtos pra aquarismo (peixes, rações, acessórios, plantas, equipamentos). A loja tem uma **TV vertical** posicionada no balcão / vitrine, que roda vídeos de marketing em loop contínuo durante o horário comercial.
 
 A TV tem dois papéis:
 
@@ -36,13 +36,13 @@ A plataforma atual funciona bem pro básico, mas tem teto baixo de customizaçã
 - Full-stack TypeScript/React/Node
 - Dono da implementação
 - Tem Hostinger Business com 50GB (6GB usados por 10 sites existentes — 44GB livres)
-- Tem domínios `aquafloragroshop.com.br` e `.com`
+- Tem domínios `store.example.invalid` e `.com`
 - Proxmox em casa como infra pessoal (ficará como plano B)
 - Objetivo pessoal: **aprendizado + portfólio**
 
-### Diego (cliente / chefe)
+### responsável pela operação (cliente / chefe)
 
-- Dono da AquaFlora Agroshop
+- Dono da loja piloto
 - Faz upload do conteúdo, monta playlists
 - Hoje usa plataforma SaaS de signage
 - **Sem pressa** — prefere qualidade sobre velocidade
@@ -77,9 +77,9 @@ Vale muito mais no currículo que "mais um CRUD".
 
 ### Paridade mínima com a solução atual
 
-- [ ] Diego faz upload de mídia via browser
-- [ ] Diego monta playlist com drag-and-drop
-- [ ] Diego vê status online/offline do device
+- [ ] responsável pela operação faz upload de mídia via browser
+- [ ] responsável pela operação monta playlist com drag-and-drop
+- [ ] responsável pela operação vê status online/offline do device
 - [ ] TV Box baixa e toca em loop automaticamente
 - [ ] Sincronização automática de novo conteúdo em ≤ 5 min
 
@@ -94,7 +94,7 @@ Vale muito mais no currículo que "mais um CRUD".
 ### Operacionais
 
 - [ ] Sistema roda estável ≥ 2 semanas antes de desativar a solução atual
-- [ ] Documentação suficiente pra Diego operar sozinho
+- [ ] Documentação suficiente pra responsável pela operação operar sozinho
 - [ ] Runbook de troubleshooting pra Pedro em caso de quebra
 
 ## O que NÃO está no escopo (pro MVP)

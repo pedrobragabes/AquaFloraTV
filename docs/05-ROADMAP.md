@@ -33,7 +33,7 @@ Ainda pendente para considerar MVP operacional na loja:
 
 ### Sprint A — Operacao local no PC do escritorio
 
-Objetivo: Diego acessa o dashboard na rede local e o servidor sobe sozinho.
+Objetivo: responsável pela operação acessa o dashboard na rede local e o servidor sobe sozinho.
 
 - [x] Dashboard protegido por senha local
 - [x] Backup diario registrado no Task Scheduler
@@ -92,7 +92,7 @@ Objetivo: substituir a solucao atual com confianca.
 - [ ] Religando internet, confirmar sync em ate 5 min
 - [ ] Reboot completo da TV: app abre sozinho em ate 60s
 - [ ] Backup ZIP existe e restaura banco/storage em ambiente limpo
-- [ ] Diego faz upload, playlist, agenda e force-sync sem ajuda
+- [ ] responsável pela operação faz upload, playlist, agenda e force-sync sem ajuda
 
 Se a sessao cair ou acabar token, retomar por aqui:
 
@@ -135,7 +135,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [x] `.env.example` em cada app
 - [x] README raiz com quickstart
 - [x] GitHub Actions: CI com lint + typecheck (sem deploy ainda)
-- [ ] Configurar subdomain `app.aquafloragroshop.com.br` no painel Hostinger
+- [ ] Configurar subdomain `app.store.example.invalid` no painel Hostinger
 - [ ] Criar Node.js app na Hostinger vazio, responder "hello world" em GET /
 - [ ] Criar MySQL database + user + grant na Hostinger
 - [ ] Testar deploy manual via SSH (apenas ver se funciona)
@@ -144,7 +144,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 
 - `pnpm install` funciona na raiz
 - `pnpm dev` sobe dashboard + api localmente
-- Acesso a `app.aquafloragroshop.com.br` retorna hello world
+- Acesso a `app.store.example.invalid` retorna hello world
 - CI verde em PR de teste
 
 ---
@@ -261,7 +261,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 
 ## Fase 3 — Dashboard (5-7 dias)
 
-**Objetivo**: Diego consegue operar tudo pelo browser sem CLI.
+**Objetivo**: responsável pela operação consegue operar tudo pelo browser sem CLI.
 
 ### Tasks
 
@@ -311,8 +311,8 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 
 ### Critério de aceite
 
-- Diego loga, faz upload, monta playlist, agenda, sync chega no device em ≤ 5 min
-- Diego vê device online em tempo real
+- responsável pela operação loga, faz upload, monta playlist, agenda, sync chega no device em ≤ 5 min
+- responsável pela operação vê device online em tempo real
 - Pedro sobe nova APK pelo dashboard e device baixa sozinho
 
 ---
@@ -331,7 +331,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 - [ ] Handle gracioso de todos os caminhos de erro
 - [ ] Empty states e loading states bonitos
 - [ ] Animações sutis (framer-motion onde faz sentido)
-- [ ] Mobile-responsive (Diego no celular)
+- [ ] Mobile-responsive (responsável pela operação no celular)
 - [ ] Documentação interna:
   - [ ] `docs/runbook.md` — como resolver os 10 problemas mais prováveis
   - [ ] `docs/operacao-diego.md` — manual do usuário
@@ -342,7 +342,7 @@ Fases 2 e 3 podem rodar em paralelo (API já pronta), mas sozinho é mais limpo 
 ### Critério de aceite
 
 - 2 semanas sem crash em produção
-- Diego consegue operar sozinho sem tirar dúvida
+- responsável pela operação consegue operar sozinho sem tirar dúvida
 - README bom o suficiente pra mostrar em portfólio
 
 ---

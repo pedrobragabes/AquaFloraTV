@@ -1,10 +1,10 @@
-# AquaTV — contexto para agentes Codex
+# Retail Signage — contexto para agentes Codex
 
 Este arquivo deve refletir o estado real do repositório. Pedro fala português e prefere crítica construtiva, código simples e validações reproduzíveis.
 
 ## Produto
 
-Digital signage da **AquaFlora Agroshop**. O dashboard permite upload de mídia, playlists, programação e gestão das TVs. O player Android TV sincroniza a playlist, mantém cache local e continua reproduzindo durante falhas de rede.
+Digital signage da **loja piloto**. O dashboard permite upload de mídia, playlists, programação e gestão das TVs. O player Android TV sincroniza a playlist, mantém cache local e continua reproduzindo durante falhas de rede.
 
 ## Arquitetura atual
 
@@ -40,7 +40,7 @@ Implementado:
 - cadastro, heartbeat e exclusão administrativa de TVs sem vazamento de token;
 - player nativo com configuração, cache transacional, fallback offline, backoff e watchdog;
 - áudio configurável e rotação persistente no próprio player via controle remoto;
-- logo, splash/banner e nome AquaFlora Agroshop em finalização;
+- logo, splash/banner e nome loja piloto em finalização;
 - manifest Android TV com HOME/LEANBACK e suporte a portrait;
 - scripts seguros de preparação, start/stop, diagnóstico, firewall, backup e smoke;
 - migration `20260730134500_playback_enabled`.

@@ -1,6 +1,6 @@
 # 06 — Configuração do dispositivo (STV-3000 Plus)
 
-Este é o procedimento atual para instalar e operar o player **AquaTV** na
+Este é o procedimento atual para instalar e operar o player **Retail Signage** na
 STV-3000 Plus. A arquitetura vigente é local: o PC da loja hospeda o
 dashboard e a API, e a TV Box acessa a API pela rede privada.
 
@@ -13,13 +13,13 @@ dashboard e a API, e a TV Box acessa a API pela rede privada.
 
 ## Endereços da instalação atual
 
-| Serviço       | Endereço                           |
-| ------------- | ---------------------------------- |
-| Dashboard     | `http://192.168.0.114:7740`        |
-| API do player | `http://192.168.0.114:7741/api`    |
-| Health check  | `http://192.168.0.114:7741/health` |
+| Serviço       | Endereço                        |
+| ------------- | ------------------------------- |
+| Dashboard     | `http://192.0.2.10:7740`        |
+| API do player | `http://192.0.2.10:7741/api`    |
+| Health check  | `http://192.0.2.10:7741/health` |
 
-O endereço `192.168.0.114` é a configuração atual da loja, não um valor
+O endereço `192.0.2.10` é a configuração atual da loja, não um valor
 embutido no aplicativo. Em outra rede, informe o endereço correspondente na
 tela inicial do player.
 
@@ -27,10 +27,10 @@ tela inicial do player.
 
 1. Conecte o PC e a TV Box à mesma rede Wi-Fi ou Ethernet privada.
 2. Confirme no PC que a rede do Windows está marcada como **Privada**.
-3. Inicie o AquaTV com `iniciar-aquatv.bat` e confirme a saúde com
+3. Inicie o Retail Signage com `iniciar-aquatv.bat` e confirme a saúde com
    `diagnostico-aquatv.bat`.
 4. Abra o firewall somente para a sub-rede local com `liberar-firewall.bat`.
-5. No navegador do PC, valide o dashboard em `http://192.168.0.114:7740`.
+5. No navegador do PC, valide o dashboard em `http://192.0.2.10:7740`.
 
 Se a API não responder, corrija o PC e a rede antes de mexer no APK. Não use
 `localhost` na TV Box: nesse dispositivo, `localhost` aponta para a própria TV.
@@ -44,8 +44,8 @@ Se a API não responder, corrija o PC e a rede antes de mexer no APK. Não use
 4. Se o Android pedir, permita a instalação para o gerenciador de arquivos.
 5. Instale o APK. Para uma atualização, use **instalar por cima**; não
    desinstale antes de confirmar que a assinatura é compatível.
-6. Abra **AquaTV** pelo launcher.
-7. Na tela inicial, informe `192.168.0.114:7741` (ou a URL completa da API) e
+6. Abra **Retail Signage** pelo launcher.
+7. Na tela inicial, informe `192.0.2.10:7741` (ou a URL completa da API) e
    selecione **Conectar TV**.
 8. Aguarde o cadastro automático e a primeira sincronização da playlist.
 
@@ -81,7 +81,7 @@ som** ou **Desativar som**. A preferência fica salva localmente; a mídia não
 ### Launcher e energia
 
 O APK declara HOME e LEANBACK para poder ser escolhido como launcher. Se o
-Android perguntar, escolha AquaTV somente depois de confirmar que o botão
+Android perguntar, escolha Retail Signage somente depois de confirmar que o botão
 Voltar do controle ainda permite retornar ao launcher para manutenção.
 
 Desative protetores de tela e economia de energia que interrompam a
@@ -104,7 +104,7 @@ Registrar data, versão do APK e resultado de cada item:
 - [ ] cache continua reproduzindo com a rede desligada;
 - [ ] sincronização retorna quando a rede volta;
 - [ ] reboot retorna ao comportamento esperado;
-- [ ] logo, nome AquaFlora Agroshop, splash, ícone e banner aparecem;
+- [ ] logo, nome loja piloto, splash, ícone e banner aparecem;
 - [ ] soak de 48 horas concluído (pendente até haver registro);
 - [ ] backup externo e restauração testados (pendente até haver registro).
 
@@ -115,8 +115,8 @@ O teste inicial de instalação e reprodução foi reportado como aprovado em
 
 ### TV não aparece online
 
-1. Confira se o PC ainda está em `192.168.0.114` e na rede privada.
-2. Abra `http://192.168.0.114:7741/health` em outro dispositivo da mesma rede.
+1. Confira se o PC ainda está em `192.0.2.10` e na rede privada.
+2. Abra `http://192.0.2.10:7741/health` em outro dispositivo da mesma rede.
 3. No painel do player, confirme a URL da API e use **Reconectar**.
 4. Rode `diagnostico-aquatv.bat` no PC e verifique o firewall.
 

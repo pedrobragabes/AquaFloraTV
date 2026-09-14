@@ -45,11 +45,11 @@ Endpoints ja implementados:
 
 Auth de browser ainda nao esta ativa; os endpoints administrativos estao abertos no MVP local. O token de device ja existe para registro/heartbeat/player.
 
-Base URL produção: `https://app.aquafloragroshop.com.br/api`
+Base URL produção: `https://app.store.example.invalid/api`
 
 Auth:
 
-- **Browser (Diego)**: session cookie via NextAuth
+- **Browser (responsável pela operação)**: session cookie via NextAuth
 - **Device (TV Box)**: header `Authorization: Bearer <device-token>`
 
 Formato: JSON (exceto upload multipart e download de arquivos).
@@ -267,7 +267,7 @@ Detalhe com últimos 20 heartbeats + stats.
   "appVersion": "1.0.3",
   "currentMediaId": "clx...",
   "networkType": "wifi",
-  "ipAddress": "192.168.1.50"
+  "ipAddress": "192.0.2.10"
 }
 ```
 

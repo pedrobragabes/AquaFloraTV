@@ -10,7 +10,7 @@ O roteiro operacional detalhado para o Luna está em [Plano de APK e validação
 | -------------------------------------------------------------------------------------------- | ---------- | --------- | -------------------------------------------------------------------------------------- |
 | [MVP local — código funcional](https://github.com/pedrobragabes/AquaFloraTV/milestone/1)     | 31/07/2026 | Concluída | Dashboard, API, player nativo e operação Windows implementados e validados em software |
 | [APK e validação na STV-3000 Plus](https://github.com/pedrobragabes/AquaFloraTV/milestone/2) | 05/08/2026 | Aberta    | APK assinado, rotação calibrada e aceite inicial no hardware                           |
-| [Go-live e estabilização local](https://github.com/pedrobragabes/AquaFloraTV/milestone/3)    | 08/08/2026 | Aberta    | Soak de 48 horas, backup externo e identidade AquaFlora Agroshop                       |
+| [Go-live e estabilização local](https://github.com/pedrobragabes/AquaFloraTV/milestone/3)    | 08/08/2026 | Aberta    | Soak de 48 horas, backup externo e identidade loja piloto                              |
 | [Backlog técnico pós-MVP](https://github.com/pedrobragabes/AquaFloraTV/milestone/4)          | Sem prazo  | Aberta    | Manutenção que não bloqueia o uso na loja                                              |
 
 As datas são metas operacionais. Uma milestone não deve ser fechada pela data: os critérios de aceite e as evidências têm prioridade.
@@ -46,8 +46,8 @@ Esta é a milestone ativa imediata. As issues são sequenciais.
 
 Estado verificado:
 
-- o servidor alvo `192.168.0.114:7741` respondeu `status: ok` nesta máquina;
-- a interface ativa desta máquina continua em `192.168.0.36`, que não deve ser embutido no APK;
+- o servidor alvo `192.0.2.10:7741` respondeu `status: ok` nesta máquina;
+- a interface ativa desta máquina continua em `192.0.2.10`, que não deve ser embutido no APK;
 - rede Ethernet está como Privada;
 - firewall permite 7740/7741 somente no perfil Private e na sub-rede local;
 - tarefa de backup existe;
@@ -67,9 +67,9 @@ Estado verificado:
 - lint, typecheck e 15 testes do player aprovados após a rotação configurável;
 - APK `1.0.0`, `versionCode 2`, gerado com a keystore `aquatv-release-v2.jks` fora do repositório;
 - certificado release verificado com digest `f0de69f62bb4a348b069275e39cd26930229e5423839f65b99a3a4d387be7005`;
-- o APK usa o pacote `com.aquatv.player` e embute `192.168.0.114` como URL inicial;
+- o APK usa o pacote `com.aquatv.player` e embute `192.0.2.10` como URL inicial;
 - áudio começa mudo e a orientação é persistida localmente;
-- ícone, splash e banner AquaFlora Agroshop foram aplicados;
+- ícone, splash e banner loja piloto foram aplicados;
 - o APK assinado anterior permanece como evidência de continuidade da chave;
 - após esta rodada de rotação e marca, o Gradle nativo foi recompilado com sucesso,
   mas a sessão não tinha as variáveis de assinatura e gerou somente o artefato
@@ -95,7 +95,7 @@ Criar cópia automática fora do PC e comprovar uma restauração completa de ba
 
 ### [#14 — Aplicar identidade visual final no app da TV](https://github.com/pedrobragabes/AquaFloraTV/issues/14)
 
-Aplicar e validar logo, nome AquaFlora Agroshop, ícone, banner Android TV, splash e foco visual das telas administrativas em 1080p e à distância real de uso. A rotação configurável pertence ao aceite da issue #11.
+Aplicar e validar logo, nome loja piloto, ícone, banner Android TV, splash e foco visual das telas administrativas em 1080p e à distância real de uso. A rotação configurável pertence ao aceite da issue #11.
 
 ## Milestone 4 — Backlog técnico pós-MVP
 

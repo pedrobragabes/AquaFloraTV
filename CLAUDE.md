@@ -1,10 +1,10 @@
-# AquaTV — contexto para agentes
+# Retail Signage — contexto para agentes
 
 Este arquivo é um resumo rápido para agentes que abrem o repositório. A fonte operacional principal é `AGENTS.md`, seguida de `README.md`, `docs/14-GITHUB-MILESTONES.md` e `docs/15-PLANO-APK-ANDROID-TV.md`.
 
 ## Produto atual
 
-Digital signage local da **AquaFlora Agroshop**. O operador usa o dashboard no navegador; o PC Windows da loja hospeda o dashboard Next.js, a API Express, o SQLite e as mídias; a STV-3000 Plus executa o player Expo/React Native TV.
+Digital signage local da **loja piloto**. O operador usa o dashboard no navegador; o PC Windows da loja hospeda o dashboard Next.js, a API Express, o SQLite e as mídias; a STV-3000 Plus executa o player Expo/React Native TV.
 
 ```text
 Navegador
@@ -17,7 +17,7 @@ Navegador
       apps/player — Android TV, cache local e reprodução offline
 ```
 
-O IP atual do servidor de teste é `192.168.0.114`. O endereço deve ser configurável e não deve ser substituído por `localhost` no APK.
+O IP atual do servidor de teste é `192.0.2.10`. O endereço deve ser configurável e não deve ser substituído por `localhost` no APK.
 
 ## Estado real
 
@@ -25,7 +25,7 @@ O IP atual do servidor de teste é `192.168.0.114`. O endereço deve ser configu
 - API protegida com Express, Prisma, SQLite, uploads validados e heartbeat.
 - Player nativo com cadastro, cache transacional, polling/backoff, watchdog e fallback offline.
 - Som configurável e orientação persistente (`Automática`, `Horizontal`, `Vertical lado A`, `Vertical lado B`) pelo controle remoto.
-- Identidade em finalização: **AquaFlora Agroshop**, logo, splash, launcher e banner Android TV.
+- Identidade em finalização: **loja piloto**, logo, splash, launcher e banner Android TV.
 - APK atual usa pacote `com.aquatv.player`; releases precisam usar a mesma keystore.
 
 ## Stack

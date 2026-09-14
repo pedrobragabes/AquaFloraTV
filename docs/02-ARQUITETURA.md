@@ -43,7 +43,7 @@ Três componentes principais se comunicando via HTTPS público:
            │                                    │
            ▼                                    ▼
     ┌──────────────────────────────────────────────┐
-    │  app.aquafloragroshop.com.br                 │
+    │  app.store.example.invalid                 │
     │  (Hostinger Business)                        │
     │                                              │
     │  ┌──────────────────┐   ┌─────────────────┐  │
@@ -218,7 +218,7 @@ Schema mínimo em `docs/08-DATA-MODEL.md`. Tabelas core:
 - Rate limit básico no upload (express-rate-limit)
 - Multer com filtro de MIME + tamanho máx
 - SQL injection: Prisma é safe por default
-- CORS: API aceita só `app.aquafloragroshop.com.br`
+- CORS: API aceita só `app.store.example.invalid`
 - APKs servidos de path público mas com MD5 pra validar integridade
 
 Não é fortaleza bancária. É o suficiente pra uso comercial small-scale.
@@ -239,11 +239,11 @@ Não é fortaleza bancária. É o suficiente pra uso comercial small-scale.
 
 ### Se o app crashar
 
-- Se AquaTV estiver como launcher (HOME intent), Android reinicia automaticamente
+- Se Retail Signage estiver como launcher (HOME intent), Android reinicia automaticamente
 - Se não, BOOT_COMPLETED receiver inicia no próximo reboot
 - Heartbeat ausente > 5 min = alerta no dashboard (email/push opcional)
 
-### Se Diego derrubar o dashboard
+### Se responsável pela operação derrubar o dashboard
 
-- Dashboard rodando na Hostinger, não tem como Diego "derrubar" do browser
+- Dashboard rodando na Hostinger, não tem como responsável pela operação "derrubar" do browser
 - Ele pode subir mídia corrompida — validação no upload bloqueia

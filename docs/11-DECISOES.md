@@ -11,7 +11,7 @@ Registro de decisões arquiteturais importantes, com contexto e trade-offs. Form
 
 ### Contexto
 
-Depois da conversa de implementacao, ficou claro que o app vai ficar no PC do escritorio do Diego, que tem hardware suficiente (i9 9900K) e pode rodar o servidor ao ligar/logar no Windows. Para uma loja, baixa concorrencia e uso em rede local, Hostinger + MySQL adiciona custo operacional antes de provar o fluxo.
+Depois da conversa de implementacao, ficou claro que o app vai ficar no PC do escritorio do responsável pela operação, que tem hardware suficiente (i9 9900K) e pode rodar o servidor ao ligar/logar no Windows. Para uma loja, baixa concorrencia e uso em rede local, Hostinger + MySQL adiciona custo operacional antes de provar o fluxo.
 
 ### Decisao
 
@@ -54,7 +54,7 @@ Pedro tem duas opções de hospedagem:
 ### Consequências
 
 ✅ Não depende da casa do Pedro (uptime superior)
-✅ URL profissional `app.aquafloragroshop.com.br`
+✅ URL profissional `app.store.example.invalid`
 ✅ Cert HTTPS automático (Let's Encrypt)
 ✅ Elimina Tailscale (simplifica muito)
 ❌ Limitação: Node.js Selector não permite ffmpeg server-side
@@ -110,7 +110,7 @@ TV na loja é vertical. Opções pra fazer o vídeo tocar certo:
 
 ✅ Validação em plataforma anterior prova que funciona — bug de orientação foi resolvido via update do app
 ✅ Elimina necessidade de ffmpeg server-side (confirma ADR-001)
-✅ Diego sobe vídeo "tal qual recebe" (reels do Instagram são nativamente portrait)
+✅ responsável pela operação sobe vídeo "tal qual recebe" (reels do Instagram são nativamente portrait)
 ⚠️ Risco: overlays do sistema (volume, notificações) podem quebrar layout — aceitável pra signage fechada
 
 ---
@@ -150,7 +150,7 @@ SSE em vez de WebSocket porque:
 
 ---
 
-## ADR-005 — App AquaTV como launcher do device
+## ADR-005 — App Retail Signage como launcher do device
 
 **Data**: 2026-04-23
 **Status**: Proposed (validar na Fase 2)
@@ -169,11 +169,11 @@ Auto-start do app no boot tem várias abordagens no Android:
 
 ### Consequências
 
-✅ Boot direto no AquaTV (sem tela do launcher Aquário V5.5.5)
+✅ Boot direto no Retail Signage (sem tela do launcher Aquário V5.5.5)
 ✅ Se app crashar, OS reinicia automaticamente (grátis)
-✅ Botão Home volta pro AquaTV
+✅ Botão Home volta pro Retail Signage
 ✅ Watchdog externo fica desnecessário
-❌ Precisa do usuário marcar AquaTV como launcher default na 1ª instalação
+❌ Precisa do usuário marcar Retail Signage como launcher default na 1ª instalação
 ⚠️ Vendor OTA pode resetar launcher default — mitigação: desativar OTA (ADR-006)
 
 ---
@@ -187,7 +187,7 @@ Auto-start do app no boot tem várias abordagens no Android:
 
 STV-3000 Plus tem OTA auto do vendor. OTA pode:
 
-- Resetar "fontes desconhecidas" (impede updates do AquaTV)
+- Resetar "fontes desconhecidas" (impede updates do Retail Signage)
 - Resetar orientação portrait
 - Resetar launcher default
 - Instalar bloatware que consome storage
@@ -251,7 +251,7 @@ Precisamos gerar thumbnail + validar codec do vídeo antes do upload. Hostinger 
 ✅ Sem dependência de ffmpeg no servidor
 ✅ Validação imediata (UX: erro antes de esperar upload)
 ✅ Thumbnail gerado local, enviado junto com vídeo
-❌ Consome CPU/RAM do browser (pode ser lento em máquinas fracas do Diego)
+❌ Consome CPU/RAM do browser (pode ser lento em máquinas fracas do responsável pela operação)
 ❌ Arquivo grande (~25MB do wasm) carrega uma vez e cacheia
 ⚠️ Fallback: se `ffmpeg.wasm` falhar, aceita upload sem thumb + server gera thumb "depois" via Worker externo (fase futura)
 
@@ -295,7 +295,7 @@ Opções:
 
 ### Contexto
 
-Auth pra Diego e Pedro. Precisa ser simples, seguro, e com allowlist de emails.
+Auth pra responsável pela operação e Pedro. Precisa ser simples, seguro, e com allowlist de emails.
 
 Opções:
 
@@ -310,7 +310,7 @@ Opções:
 ### Consequências
 
 ✅ Zero gestão de senha (Google cuida)
-✅ Diego já tem Google, experiência familiar
+✅ responsável pela operação já tem Google, experiência familiar
 ✅ Session via cookie HTTP-only (seguro)
 ✅ Next.js 15 + Auth.js v5 têm integração canônica
 ❌ Dependência de Google (se conta Google sumir, perde acesso — aceitável pra esse caso)

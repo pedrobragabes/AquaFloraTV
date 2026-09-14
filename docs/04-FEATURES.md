@@ -58,15 +58,15 @@
 
 ### Auth
 
-- [ ] Login do Diego via Google OAuth
-- [ ] Allowlist de emails (Diego + Pedro)
+- [ ] Login do responsável pela operação via Google OAuth
+- [ ] Allowlist de emails (responsável pela operação + Pedro)
 - [x] Session persistente no browser via cookie assinado local
 
 ## P1 — Diferenciais chave
 
 ### 🌟 Agendamento contextual
 
-**Motivação**: A solução atual só tem playlist linear. Diego quer "quarta de 9-18h roda promo ração" sem precisar trocar manualmente toda semana.
+**Motivação**: A solução atual só tem playlist linear. responsável pela operação quer "quarta de 9-18h roda promo ração" sem precisar trocar manualmente toda semana.
 
 - [x] Criar `Schedule` associando playlist a janela temporal
 - [x] Grade visual semanal no dashboard
@@ -95,7 +95,7 @@
 
 ### Métricas ricas de device
 
-**Motivação**: A solução atual só mostra online/offline. Diego/Pedro querem saber o que tá rolando.
+**Motivação**: A solução atual só mostra online/offline. responsável pela operação/Pedro querem saber o que tá rolando.
 
 - [ ] Heartbeat envia: uptime, freeDisk, currentMediaId, appVersion, lastSyncAt, networkType
 - [x] Dashboard mostra card por device com todas métricas
@@ -108,7 +108,7 @@
 
 ### Banner "HOJE TEM X"
 
-**Motivação**: Diego quer marketing em tempo real. Sem precisar gravar vídeo novo.
+**Motivação**: responsável pela operação quer marketing em tempo real. Sem precisar gravar vídeo novo.
 
 - [ ] Dashboard: cria "banner" (texto + cor + opcional imagem)
 - [ ] Agendar banner pra data X (one-off) ou dia Y (recorrente)
@@ -119,7 +119,7 @@
 
 - [ ] Dark mode no dashboard (padrão atual)
 - [ ] Modo claro opcional
-- [x] Mobile-responsive dashboard (Diego pode gerenciar do celular)
+- [x] Mobile-responsive dashboard (responsável pela operação pode gerenciar do celular)
 - [ ] Notificação email quando device offline > 15 min
 - [ ] Log exportável (CSV) de uptime
 - [ ] Transição fade entre mídias (tempo configurável)
@@ -140,7 +140,7 @@
 ### Analytics avançado
 
 - [ ] Integração com contador de pessoas (câmera + IA)
-- [ ] Correlação tempo-de-exibição × vendas (se Diego compartilhar ERP)
+- [ ] Correlação tempo-de-exibição × vendas (se responsável pela operação compartilhar ERP)
 - [ ] A/B test de playlists
 - [ ] Heatmap de atenção (daria precisar de câmera)
 
@@ -156,19 +156,19 @@
 - [ ] Plano de assinatura (vira SaaS próprio no segmento)
 - [ ] Billing integrado
 
-## Feature matrix: AquaTV vs solução atual
+## Feature matrix: Retail Signage vs solução atual
 
-| Feature                  | Solução atual    | AquaTV (MVP)                                 | AquaTV (full) |
-| ------------------------ | ---------------- | -------------------------------------------- | ------------- |
-| Upload mídia             | ✅               | ✅                                           | ✅            |
-| Playlist                 | ✅               | ✅                                           | ✅            |
-| Push pra device          | ✅               | ✅                                           | ✅            |
-| Online/offline           | ✅               | ✅                                           | ✅            |
-| Agendamento por hora/dia | ❌               | ✅                                           | ✅            |
-| Banners dinâmicos        | ❌               | ⏳ P2                                        | ✅            |
-| Auto-update APK          | ❌               | ⏳ backend + dashboard prontos, app pendente | ✅            |
-| Métricas detalhadas      | ❌               | ⏳ parcial                                   | ✅            |
-| Histórico de uptime      | ❌               | ⏳ P2                                        | ✅            |
-| Multi-device             | ❓ (não testado) | ⏳ P3                                        | ✅            |
-| Custo                    | R$35/mês         | R$0                                          | R$0           |
-| Independência de vendor  | ❌               | ✅                                           | ✅            |
+| Feature                  | Solução atual    | Retail Signage (MVP)                         | Retail Signage (full) |
+| ------------------------ | ---------------- | -------------------------------------------- | --------------------- |
+| Upload mídia             | ✅               | ✅                                           | ✅                    |
+| Playlist                 | ✅               | ✅                                           | ✅                    |
+| Push pra device          | ✅               | ✅                                           | ✅                    |
+| Online/offline           | ✅               | ✅                                           | ✅                    |
+| Agendamento por hora/dia | ❌               | ✅                                           | ✅                    |
+| Banners dinâmicos        | ❌               | ⏳ P2                                        | ✅                    |
+| Auto-update APK          | ❌               | ⏳ backend + dashboard prontos, app pendente | ✅                    |
+| Métricas detalhadas      | ❌               | ⏳ parcial                                   | ✅                    |
+| Histórico de uptime      | ❌               | ⏳ P2                                        | ✅                    |
+| Multi-device             | ❓ (não testado) | ⏳ P3                                        | ✅                    |
+| Custo                    | R$35/mês         | R$0                                          | R$0                   |
+| Independência de vendor  | ❌               | ✅                                           | ✅                    |

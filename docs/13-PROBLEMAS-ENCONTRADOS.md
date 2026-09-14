@@ -128,11 +128,11 @@ O campo se chama `apkMd5` em todo o stack (banco, tipo compartilhado, API, Java)
 **Arquivo:** `apps/tv-apk/app/build.gradle` (linhas 19–20)
 
 ```groovy
-buildConfigField "String", "PLAYER_URL", "\"http://192.168.0.114:7740/player?rotation=90\""
-buildConfigField "String", "API_URL",    "\"http://192.168.0.114:7741/api\""
+buildConfigField "String", "PLAYER_URL", "\"http://192.0.2.10:7740/player?rotation=90\""
+buildConfigField "String", "API_URL",    "\"http://192.0.2.10:7741/api\""
 ```
 
-O IP `192.168.0.114` é o endereço LAN do PC do Pedro. Qualquer build desta APK vai tentar conectar nesse IP, não no servidor de produção. A APK publicada em produção não funciona fora da rede local do Pedro.
+O IP `192.0.2.10` é o endereço LAN do PC do Pedro. Qualquer build desta APK vai tentar conectar nesse IP, não no servidor de produção. A APK publicada em produção não funciona fora da rede local do Pedro.
 
 ---
 
@@ -360,11 +360,11 @@ Tem `app.config.js` com `'http://IP-DO-PC:7741/api'` como placeholder, nenhum `A
 
 ---
 
-### M6 · Seed reseta config do Diego a cada restart
+### M6 · Seed reseta config do responsável pela operação a cada restart
 
 **Arquivo:** `apps/api/prisma/seed.ts`, `scripts/windows/start-aquatv.ps1` (linha 47)
 
-O script de startup chama `prisma:seed` em todo boot. O seed faz upsert em `globalConfig.defaultPlaylistId` para `"Playlist Padrao"`. Qualquer configuração de playlist padrão feita pelo Diego via dashboard é sobrescrita na próxima vez que o servidor reinicia.
+O script de startup chama `prisma:seed` em todo boot. O seed faz upsert em `globalConfig.defaultPlaylistId` para `"Playlist Padrao"`. Qualquer configuração de playlist padrão feita pelo responsável pela operação via dashboard é sobrescrita na próxima vez que o servidor reinicia.
 
 ---
 

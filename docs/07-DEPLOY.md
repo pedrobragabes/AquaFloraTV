@@ -45,7 +45,7 @@ Se o Windows retornar `Acesso negado`, abrir PowerShell com permissao suficiente
 
 ### Acesso pela rede local
 
-Para Diego/TV acessarem de outro aparelho:
+Para responsável pela operação/TV acessarem de outro aparelho:
 
 1. Descobrir o IP do PC do escritorio.
 2. Liberar as portas `7740` e `7741` no firewall do Windows.
@@ -100,8 +100,8 @@ Hostinger continua documentado abaixo como plano futuro para HTTPS publico.
 Painel Hostinger → Avançado → Node.js
 
 - **Node.js version**: 20.x LTS
-- **Application root**: `/home/<user>/domains/app.aquafloragroshop.com.br/public_html`
-- **Application URL**: `app.aquafloragroshop.com.br`
+- **Application root**: `/home/<user>/domains/app.store.example.invalid/public_html`
+- **Application URL**: `app.store.example.invalid`
 - **Application startup file**: `api/dist/index.js`
 - **Environment variables** (ver seção abaixo)
 
@@ -123,12 +123,12 @@ mysql://aquatv_user:<password>@localhost:3306/aquatv_prod
 
 ### 3. DNS
 
-Painel Hostinger → Domains → `aquafloragroshop.com.br` → DNS
+Painel Hostinger → Domains → `store.example.invalid` → DNS
 
 - Adicionar registro A ou CNAME: `app` → IP do servidor (ou CNAME pro apex)
 - TTL: 3600s
 
-Propagação: 5-30 min. Testar via `dig app.aquafloragroshop.com.br`.
+Propagação: 5-30 min. Testar via `dig app.store.example.invalid`.
 
 ### 4. SSL
 
@@ -168,7 +168,7 @@ STORAGE_WARN_PCT=70
 STORAGE_CRITICAL_PCT=85
 MEDIA_RETENTION_DAYS=45
 
-ALLOWED_ORIGINS=https://app.aquafloragroshop.com.br
+ALLOWED_ORIGINS=https://app.store.example.invalid
 
 GOOGLE_CLIENT_ID=REDACTED
 GOOGLE_CLIENT_SECRET=REDACTED
@@ -179,8 +179,8 @@ ADMIN_EMAILS=diego@loja.com,pedrobraga855@gmail.com
 ### `apps/dashboard/.env.production`
 
 ```env
-NEXT_PUBLIC_API_URL=https://app.aquafloragroshop.com.br/api
-NEXTAUTH_URL=https://app.aquafloragroshop.com.br
+NEXT_PUBLIC_API_URL=https://app.store.example.invalid/api
+NEXTAUTH_URL=https://app.store.example.invalid
 NEXTAUTH_SECRET=REDACTED
 
 GOOGLE_CLIENT_ID=REDACTED
@@ -195,7 +195,7 @@ Via `app.config.ts`:
 export default {
   expo: {
     extra: {
-      apiUrl: process.env.API_URL ?? 'https://app.aquafloragroshop.com.br/api',
+      apiUrl: process.env.API_URL ?? 'https://app.store.example.invalid/api',
     },
   },
 };
