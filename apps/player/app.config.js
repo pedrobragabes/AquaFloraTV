@@ -2,7 +2,7 @@ const apiUrl = process.env.API_URL ?? '';
 
 module.exports = {
   expo: {
-    name: 'AquaTV',
+    name: process.env.APP_NAME ?? 'Retail Signage',
     slug: 'aquatv-player',
     version: '1.0.0',
     platforms: ['android'],
