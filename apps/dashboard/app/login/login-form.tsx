@@ -1,7 +1,8 @@
 'use client';
 
+import { appName, storeName } from '../../lib/brand';
+
 import { useMemo, useState } from 'react';
-import Image from 'next/image';
 
 function resolveNextPath(): string {
   if (typeof window === 'undefined') {
@@ -53,18 +54,10 @@ export function LoginForm() {
   return (
     <main className="login-screen">
       <section className="login-panel">
-        <Image
-          className="login-logo"
-          src="/brand/aquaflora-logo.webp"
-          alt="AquaFlora Agroshop"
-          width={190}
-          height={190}
-          priority
-        />
         <div>
           <p className="eyebrow">Acesso local</p>
-          <h1>AquaTV</h1>
-          <p className="login-brand-name">AquaFlora Agroshop</p>
+          <h1>{appName}</h1>
+          <p className="login-brand-name">{storeName}</p>
         </div>
 
         <form className="login-form" onSubmit={(event) => void submitLogin(event)}>

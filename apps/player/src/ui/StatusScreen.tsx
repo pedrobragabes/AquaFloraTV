@@ -1,6 +1,5 @@
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 
-import brandLogo from '../../assets/brand/aquaflora-logo.webp';
 import type { PlayerPhase } from '../mobile/use-player-runtime';
 
 interface StatusScreenProps {
@@ -20,13 +19,7 @@ export function StatusScreen({ phase, message, onAdminRequest }: StatusScreenPro
       onLongPress={onAdminRequest}
       style={styles.screen}
     >
-      <Image
-        accessibilityLabel="AquaFlora Agroshop"
-        resizeMode="contain"
-        source={brandLogo}
-        style={styles.brandLogo}
-      />
-      <Text style={styles.title}>AquaTV</Text>
+      <Text style={styles.title}>Retail Signage</Text>
       {loading ? <ActivityIndicator color="#4ade80" size="large" style={styles.spinner} /> : null}
       <Text style={styles.message}>{message}</Text>
     </Pressable>

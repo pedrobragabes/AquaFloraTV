@@ -1,7 +1,8 @@
 'use client';
 
+import { appName, storeName } from '../../lib/brand';
+
 import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
 
@@ -71,19 +72,11 @@ function Brand() {
     <Link
       className="brand-mark"
       href="/dashboard"
-      aria-label="AquaTV — AquaFlora Agroshop — Início"
+      aria-label={`${appName} — ${storeName} — Início`}
     >
-      <Image
-        className="brand-image"
-        src="/brand/aquaflora-logo.webp"
-        alt="AquaFlora Agroshop"
-        width={52}
-        height={52}
-        priority
-      />
       <span className="brand-copy">
-        <strong>AquaTV</strong>
-        <small>AquaFlora Agroshop</small>
+        <strong>{appName}</strong>
+        <small>{storeName}</small>
       </span>
     </Link>
   );
@@ -132,7 +125,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
             <span aria-hidden="true" />
             <div>
               <strong>Operação local</strong>
-              <small>Rede da AquaFlora</small>
+              <small>Rede local</small>
             </div>
           </div>
           <a className="logout-link" href="/api/auth/logout">

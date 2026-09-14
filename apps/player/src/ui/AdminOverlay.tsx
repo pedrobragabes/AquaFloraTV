@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import brandLogo from '../../assets/brand/aquaflora-logo.webp';
 import type { PlayerPhase } from '../mobile/use-player-runtime';
 import {
   displayRotationLabel,
@@ -59,14 +58,8 @@ export function AdminOverlay({
       style={styles.backdrop}
     >
       <View style={styles.panel}>
-        <Image
-          accessibilityLabel="AquaFlora Agroshop"
-          resizeMode="contain"
-          source={brandLogo}
-          style={styles.brandLogo}
-        />
         <Text style={styles.eyebrow}>ADMINISTRACAO LOCAL</Text>
-        <Text style={styles.title}>AquaTV</Text>
+        <Text style={styles.title}>Retail Signage</Text>
 
         <View style={styles.details}>
           <Text style={styles.label}>API</Text>

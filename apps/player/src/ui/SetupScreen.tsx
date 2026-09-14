@@ -1,15 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Image,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import brandLogo from '../../assets/brand/aquaflora-logo.webp';
 import { TvButton } from './TvButton';
 import {
   displayRotationLabel,
@@ -61,15 +52,9 @@ export function SetupScreen({
       >
         <View style={styles.card}>
           <View style={styles.brandRow}>
-            <Image
-              accessibilityLabel="AquaFlora Agroshop"
-              resizeMode="contain"
-              source={brandLogo}
-              style={styles.brandLogo}
-            />
             <View>
-              <Text style={styles.eyebrow}>AQUAFLORA AGROSHOP</Text>
-              <Text style={styles.title}>AquaTV</Text>
+              <Text style={styles.eyebrow}>GESTÃO DE TELAS</Text>
+              <Text style={styles.title}>Retail Signage</Text>
             </View>
           </View>
 

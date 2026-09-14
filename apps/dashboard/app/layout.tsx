@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { appName, storeName } from '../lib/brand';
 
 export const metadata: Metadata = {
-  title: 'AquaTV — AquaFlora Agroshop',
-  description: 'Controle local de conteúdos, playlists e programação da AquaFlora Agroshop',
+  title: `${appName} — ${storeName}`,
+  description: 'Controle local de conteúdos, playlists e programação para varejo',
 };
 
 type RootLayoutProps = {

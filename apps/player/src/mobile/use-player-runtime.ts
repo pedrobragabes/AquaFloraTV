@@ -31,13 +31,7 @@ import { usePlayerHeartbeat } from './use-player-heartbeat';
 import { useSyncSchedule } from './use-sync-schedule';
 
 export type PlayerPhase =
-  | 'booting'
-  | 'setup'
-  | 'connecting'
-  | 'syncing'
-  | 'ready'
-  | 'empty'
-  | 'offline';
+  'booting' | 'setup' | 'connecting' | 'syncing' | 'ready' | 'empty' | 'offline';
 
 interface SyncOperation {
   session: number;
@@ -364,7 +358,7 @@ export function usePlayerRuntime(initialApiUrl: string): PlayerRuntime {
           return;
         }
 
-        const deviceName = Device.deviceName ?? 'AquaTV Player';
+        const deviceName = Device.deviceName ?? 'Retail Signage Player';
         const credentials = await registerPlayerDevice({
           apiUrl,
           deviceName,
