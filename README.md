@@ -1,8 +1,19 @@
-# AquaTV
+# Retail Digital Signage
 
-Digital signage próprio para a **AquaFlora Agroshop**. O AquaTV permite que a loja envie imagens e vídeos, organize playlists, programe conteúdos e acompanhe a TV sem depender de uma assinatura mensal.
+Sistema de digital signage desenvolvido para resolver um problema real de operação de varejo. Permite que a loja envie imagens e vídeos, organize playlists, programe conteúdos e acompanhe a TV sem depender de uma assinatura mensal.
 
 O MVP foi desenhado para operar na rede local: o dashboard, a API, o banco e os arquivos ficam no PC da loja; a STV-3000 Plus usa um app Android TV dedicado, com cache para continuar reproduzindo durante falhas de rede.
+
+## Problema, solução e arquitetura
+
+Displays comerciais precisam receber conteúdo atualizado e continuar reproduzindo quando a rede cai. O dashboard organiza mídia, playlists e horários; a API resolve a programação; o player mantém cache local com atualização transacional e recuperação de falhas.
+
+```text
+Dashboard Next.js → API Express → SQLite e mídia em disco
+                              → manifesto/polling → player Android TV → cache offline
+```
+
+O núcleo de cache, o planner de sincronização e os contratos de playlists são candidatos a componentes reutilizáveis. A operação atual é local; exposição pública, distribuição de APK e migração de marca nativa exigem validação própria. `NEXT_PUBLIC_APP_NAME` e `NEXT_PUBLIC_STORE_NAME` configuram o dashboard no build e nunca devem conter segredos.
 
 ## Estado do projeto
 
@@ -15,7 +26,7 @@ Em 4 de agosto de 2026, o núcleo local está concluído e o primeiro APK releas
 - player Expo/React Native TV com cache transacional e fallback offline;
 - polling com backoff, heartbeat e recuperação de travamentos de vídeo;
 - áudio configurável e orientação persistente pelo controle remoto;
-- logo e identidade AquaFlora Agroshop aplicadas às telas principais;
+- identidade visual separada da lógica de playlists e reprodução;
 - instalação, inicialização, diagnóstico, firewall, backup e smoke test para Windows;
 - 19 testes automatizados (4 da API e 15 do player) e 16 verificações no smoke de integração.
 
@@ -167,7 +178,8 @@ Os logs do smoke são criados em `logs/integration-smoke-*` e permanecem fora do
 Configure `apps/player/.env` com o endereço real do PC da loja, nunca com `localhost`:
 
 ```env
-API_URL=http://192.168.0.114:7741/api
+API_URL=http://192.0.2.10:7741/api
+# Exemplo reservado para documentação; substitua pelo endereço do seu servidor.
 ```
 
 Para desenvolvimento:
@@ -197,7 +209,7 @@ O APK final é `app/build/outputs/apk/release/app-release.apk`. Verifique-o ante
 Get-FileHash .\app\build\outputs\apk\release\app-release.apk -Algorithm SHA256
 ```
 
-O pacote é `com.aquatv.player`, a versão final em preparação é `1.0.0` (`versionCode 2`) e o certificado deve manter o digest `f0de69f62bb4a348b069275e39cd26930229e5423839f65b99a3a4d387be7005`. Nunca envie a senha ou o keystore para o GitHub.
+O pacote é `com.aquatv.player`, a versão final em preparação é `1.0.0` (`versionCode 2`) e atualizações de uma instalação existente devem manter o certificado autorizado dessa instalação. Nunca envie a senha ou o keystore para o GitHub.
 
 ### Controles do player
 
@@ -248,6 +260,10 @@ o aplicativo atual.
 
 Os documentos numerados de `docs/01` a `docs/13` preservam decisões e planos anteriores; alguns descrevem a arquitetura WebView/Hostinger abandonada e devem ser lidos como histórico. O estado executável atual está neste README, no `AGENTS.md` e no guia de milestones.
 
-## Licença e autoria
+## Origem, compatibilidade e direitos
 
-Projeto privado da AquaFlora Agroshop, mantido por Pedro Braga.
+Developed to solve a real production retail problem. Os registros anteriores documentam teste em hardware; soak, reboot, codecs e aceite operacional continuam exigindo o dispositivo real. Um build local não comprova esses resultados.
+
+O repositório foi encontrado público, embora a documentação anterior o descrevesse como projeto privado do cliente, mantido por Pedro Braga. Esta manutenção não altera titularidade, atribuições ou licença: revisar os direitos sobre código e ativos antes de promovê-lo como projeto-base distribuível.
+
+IDs Android, namespaces `@aquatv`, chaves de armazenamento, cookie e scripts mantêm nomes legados para preservar atualizações, sessões e configurações existentes. O nome apresentado no dashboard é configurável. Assets nativos e assinatura de release exigem uma migração separada, validada no hardware.
